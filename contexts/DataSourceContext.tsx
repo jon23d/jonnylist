@@ -27,7 +27,7 @@ export const DataSourceContextProvider = ({
 export const useDataSource = () => {
   const context = useContext(DataSourceContext);
   if (!context) {
-    throw new Error('useDataSource must be used within a DataProviderContextProvider');
+    throw new Error('useDataSource must be used within a DataSourceContextProvider');
   }
   return context.dataSource;
 };
