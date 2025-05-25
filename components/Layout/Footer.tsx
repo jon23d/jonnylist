@@ -4,7 +4,7 @@ import { Anchor, Text } from '@mantine/core';
 
 export default function Footer() {
   return (
-    <Text size="sm" ta="center" c="gray">
+    <Text size="xs" ta="center" c="gray">
       <Anchor href="https://github.com/jon23d/jonnylist" component={Link}>
         JonnyList
       </Anchor>{' '}

@@ -21,4 +21,5 @@ export type Task = {
 
 export interface DataSource {
   getTasks: (params: getTasksParams) => Promise<Task[]>;
+  getContexts: () => Promise<string[]>;
 }
