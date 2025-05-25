@@ -6,25 +6,15 @@ import {
   IconManualGearboxFilled,
   IconSettingsFilled,
 } from '@tabler/icons-react';
-import { AppShell, Burger, Group, NavLink, ScrollArea, Text } from '@mantine/core';
+import { AppShell, Burger, Group, NavLink, ScrollArea } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import ContextLinks from '@/components/Layout/ContextLinks';
 import Footer from '@/components/Layout/Footer';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [opened, { toggle }] = useDisclosure();
   const router = useRouter();
   const query = router.query;
-
-  const contextLinks = ['home', 'work', 'grocery-store'].map((context) => (
-    <NavLink
-      key={context}
-      href={`/contexts/?context=${context}`}
-      label={context}
-      component={Link}
-      active={query?.context === context}
-      pl={40}
-    />
-  ));
 
   const listLinks = ['grocery-store', 'hardware-store'].map((list) => (
     <NavLink
@@ -59,7 +49,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             active={router.pathname === '/contexts' && !query?.context}
             leftSection={<IconManualGearboxFilled />}
           />
-          {contextLinks}
+          <ContextLinks />
           <NavLink
             href="/lists"
             component={Link}
