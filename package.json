@@ -7,7 +7,7 @@
     "build": "next build",
     "analyze": "ANALYZE=true next build",
     "start": "next start",
-    "export": "next build && next export",
+    "serve": "next build && npx serve out",
     "typecheck": "tsc --noEmit",
     "lint": "npm run eslint && npm run stylelint",
     "eslint": "next lint",

@@ -20,9 +20,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </AppShell.Header>
       <AppShell.Navbar p="md">
         Contexts
-        <NavLink href="/contexts/home" component={Link} label="Home" />
-        <NavLink href="/contexts/work" component={Link} label="Work" />
-        <NavLink href="/contexts/grocery-store" component={Link} label="Grocery store" />
+        <NavLink href="/contexts?context=home" component={Link} label="Home" />
+        <NavLink href="/contexts?context=work" component={Link} label="Work" />
+        <NavLink href="/contexts?context=grocery-store" component={Link} label="Grocery store" />
         Reports
         <NavLink href="/reports/weekly" component={Link} label="Weekly" />
         <NavLink href="/reports/monthly" component={Link} label="Monthly" />

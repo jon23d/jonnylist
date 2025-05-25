@@ -1,4 +1,15 @@
+import { useRouter } from 'next/router';
+import ContextPage from '@/components/Contexts/ContextPage';
+
 export default function Page() {
+  const router = useRouter();
+  const query = router.query;
+
+  if (query.constructor) {
+    const contextName = query.context;
+    return <ContextPage contextName={contextName as string} />;
+  }
+
   return (
     <>
       <h1>Contexts</h1>
