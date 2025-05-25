@@ -1,14 +1,18 @@
 import { useRouter } from 'next/router';
+import { SimpleGrid } from '@mantine/core';
 import ContextPage from '@/components/Contexts/ContextPage';
+import ContextSummaryCard from '@/components/Contexts/ContextSummaryCard';
 
 export default function Page() {
   const router = useRouter();
   const query = router.query;
 
-  if (query.constructor) {
+  if (query.context) {
     const contextName = query.context;
     return <ContextPage contextName={contextName as string} />;
   }
+
+  const contexts = ['home', 'work'];
 
   return (
     <>
@@ -22,6 +26,11 @@ export default function Page() {
         might have a list of tasks to do at home, another list for work, and another list for the
         grocery store.
       </p>
+      <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
+        {contexts.map((context) => (
+          <ContextSummaryCard contextName={context} />
+        ))}
+      </SimpleGrid>
     </>
   );
 }

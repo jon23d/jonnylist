@@ -36,3 +36,13 @@ This template comes with the following features:
 - `storybook` – starts storybook dev server
 - `storybook:build` – build production storybook bundle to `storybook-static`
 - `prettier:write` – formats all files with Prettier
+
+# License
+Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+
+This license requires that reusers give credit to the creator. It allows reusers to distribute, remix, adapt, and build
+upon the material in any medium or format, for noncommercial purposes only. If others modify or adapt the material,
+they must license the modified material under identical terms.
+
+See [LICENSE](LICENSE) for more details.
+
