@@ -32,9 +32,9 @@ describe('DataSourceContextProvider', () => {
   });
 
   it('Initializes the context with a default local data source', () => {
-    let dataSource: any;
+    let observedDataSource: any;
     const TestComponent = () => {
-      dataSource = useDataSource();
+      observedDataSource = useDataSource();
       return <></>;
     };
 
@@ -44,6 +44,6 @@ describe('DataSourceContextProvider', () => {
       </DataSourceContextProvider>
     );
 
-    expect(dataSource).toBeInstanceOf(LocalDataSource);
+    expect(observedDataSource).toBe(dataSource);
   });
 });
