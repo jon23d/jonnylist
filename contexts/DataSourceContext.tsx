@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 import { DataSource } from '@/data/DataSource';
-import { LocalDataSource } from '@/data/LocalDatasource';
+import { LocalDataSource } from '@/data/LocalDataSource';
 
 export type DataSourceContextType = {
   dataSource: DataSource;
