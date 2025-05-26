@@ -23,4 +23,6 @@ export interface DataSource {
   getTasks: (params: getTasksParams) => Promise<Task[]>;
   getContexts: () => Promise<string[]>;
   addContext: (context: string) => Promise<void>;
+  watchContexts: (callback: (contexts: string[]) => void) => Promise<void>;
+  unwatchContexts: () => Promise<void>;
 }

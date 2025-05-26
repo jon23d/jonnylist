@@ -8,6 +8,7 @@ const CURRENT_VERSION = 1;
 
 export class LocalDataSource implements DataSource {
   protected db: PouchDB.Database<DocumentTypes>;
+  private contextChangesFeed?: PouchDB.Core.Changes<DocumentTypes>;
 
   constructor(database?: PouchDB.Database<DocumentTypes>) {
     if (database) {
@@ -40,5 +41,48 @@ export class LocalDataSource implements DataSource {
       version: CURRENT_VERSION,
     };
     await this.db.put(doc);
+  }
+
+  async watchContexts(callback: (contexts: string[]) => void): Promise<void> {
+    try {
+      const initialContexts = await this.getContexts();
+      callback(initialContexts);
+    } catch (error) {
+      // TODO
+      console.error('Error fetching initial contexts for watcher:', error);
+    }
+
+    // 2. Set up the PouchDB changes feed
+    this.contextChangesFeed = this.db
+      .changes({
+        live: true,
+        since: 'now',
+      })
+      .on('change', async (change) => {
+        // Check if the changed document's ID starts with our context prefix
+        if (change.id.startsWith('context-')) {
+          try {
+            const updatedContexts = await this.getContexts();
+            callback(updatedContexts);
+          } catch (error) {
+            // TODO
+            console.error('Error fetching updated contexts after change:', error);
+          }
+        }
+      })
+      .on('error', (err) => {
+        // TODO
+        console.error('Error in PouchDB changes feed for contexts:', err);
+      });
+
+    return Promise.resolve();
+  }
+
+  async unwatchContexts(): Promise<void> {
+    if (this.contextChangesFeed) {
+      this.contextChangesFeed.cancel();
+      this.contextChangesFeed = undefined;
+    }
+    return Promise.resolve();
   }
 }
