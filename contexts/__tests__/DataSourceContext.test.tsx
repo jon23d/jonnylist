@@ -1,5 +1,5 @@
 import { DataSourceContextProvider, useDataSource } from '@/contexts/DataSourceContext';
-import { LocalDataSource } from '@/data/LocalDatasource';
+import { LocalDataSource } from '@/data/LocalDataSource';
 import { render } from '@/test-utils';
 
 describe('DataSourceContextProvider', () => {
