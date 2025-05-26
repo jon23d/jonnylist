@@ -6,23 +6,25 @@ JonnyList is an open-source application that allows for the creation and managem
 * Lists
 * Trackers
 
-## Tasks
+## Entities
+
+### Tasks
 
 Tasks are items that need to be done! They belong to a [context](#contexts) and have additional optional properties such
 as: a due date, a priority, a description, and tags. Tasks have statuses such as "ready", "started", and "done".
 
-## Lists
+### Lists
 Lists are simple checkbox lists that can be used to track items. They are meant for shopping lists, errands, or any
 context-sensitive less-complex list of items.
 
-## Trackers
+### Trackers
 Trackers are lists of items that can be tracked over time. They are meant for tracking habits, measurables, or...
 
-## Contexts
+### Contexts
 Contexts are used to group tasks. They represent a situation in which tasks are performed. For example, some contexts
 could be "work", "home", "office".
 
-# Installation
+## Installation
 
 This project uses [Yarn](https://yarnpkg.com/) as a package manager.
 
@@ -58,7 +60,7 @@ on `http://localhost:3000`. This is useful for testing the production build loca
 ```
 This will build the application for production. The built application will be in the `out` folder.
    
-# Technology stack
+## Technology stack
 This project is built using the following technologies:
 * [Next.js](https://nextjs.org/) - a React framework for building server-rendered applications
 * [React](https://reactjs.org/) - a JavaScript library for building user interfaces
@@ -68,15 +70,15 @@ This project is built using the following technologies:
 * [Jest](https://jestjs.io/) - a JavaScript testing framework
 * [React Testing Library](https://testing-library.com/docs/react-testing-library/intro) - a library for testing React components
 
-# Additional documentation
+## Additional documentation
 
 * [Database architecture](docs/database-architecture.md)
 
-# Contributing
+## Contributing
 Contributions are welcome! If you have any ideas, suggestions, or issues, please open an issue or a pull request on
 the [JonnyList GitHub repository](https://github.com/jon23d/jonnylist).
 
-# License
+## License
 Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
 
 This license requires that reusers give credit to the creator. It allows reusers to distribute, remix, adapt, and build
