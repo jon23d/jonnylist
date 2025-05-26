@@ -8,6 +8,8 @@ const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.cjs'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
+    //'^pouchdb-adapter-memory$': require.resolve('pouchdb-adapter-memory'),
+    '^uuid$': 'uuid',
   },
   testEnvironment: 'jest-environment-jsdom',
 };

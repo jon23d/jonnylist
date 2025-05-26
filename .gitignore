@@ -132,3 +132,5 @@ dist
 .DS_Store
 
 .idea
+
+test_db_*
