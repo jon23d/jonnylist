@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { NavLink } from '@mantine/core';
 import { useDataSource } from '@/contexts/DataSourceContext';
+import { UnsubscribeFunction } from '@/data/DataSource';
 
 export default function ContextLinks() {
   const dataSource = useDataSource();
@@ -11,10 +12,15 @@ export default function ContextLinks() {
   const [contexts, setContexts] = useState<string[]>([]);
 
   useEffect(() => {
-    dataSource.watchContexts(setContexts);
+    let unsubscribe: UnsubscribeFunction;
+
+    const subscribe = async () => {
+      unsubscribe = await dataSource.watchContexts(setContexts);
+    };
+    subscribe();
 
     return () => {
-      dataSource.unwatchContexts();
+      unsubscribe();
     };
   }, []);
 

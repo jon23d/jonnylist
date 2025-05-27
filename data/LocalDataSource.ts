@@ -1,5 +1,11 @@
 import PouchDB from 'pouchdb';
-import { DataSource, getTasksParams, Task } from '@/data/DataSource';
+import {
+  ContextChangeCallback,
+  DataSource,
+  getTasksParams,
+  Task,
+  UnsubscribeFunction,
+} from '@/data/DataSource';
 import { DocumentTypes } from '@/data/interfaces';
 import { Context } from '@/data/interfaces/Context';
 
@@ -9,6 +15,7 @@ const CURRENT_VERSION = 1;
 export class LocalDataSource implements DataSource {
   protected db: PouchDB.Database<DocumentTypes>;
   private contextChangesFeed?: PouchDB.Core.Changes<DocumentTypes>;
+  private contextChangeSubscribers = new Set<ContextChangeCallback>();
 
   constructor(database?: PouchDB.Database<DocumentTypes>) {
     if (database) {
@@ -43,7 +50,28 @@ export class LocalDataSource implements DataSource {
     await this.db.put(doc);
   }
 
-  async watchContexts(callback: (contexts: string[]) => void): Promise<void> {
+  /**
+   * Subscribe to changes in contexts. This will initially fetch all contexts and invoke the
+   * callback with them, then set up a live changes feed to watch for updates, invoking the
+   * callback with the updated contexts whenever a change occurs.
+   *
+   * The return function should be used to unsubscribe from the changes feed when no longer needed
+   * or when the component using this is unmounted.
+   *
+   * @param callback
+   *
+   * @return A function to unsubscribe from the changes feed.
+   */
+  async watchContexts(callback: ContextChangeCallback): Promise<UnsubscribeFunction> {
+    // Register the callback so that we can notify it of changes
+    this.contextChangeSubscribers.add(callback);
+
+    // Set up the PouchDB changes feed if this is the first subscriber
+    if (this.contextChangeSubscribers.size === 1) {
+      this.initializeContextChangesFeed();
+    }
+
+    // Provide the initial contexts to the callback
     try {
       const initialContexts = await this.getContexts();
       callback(initialContexts);
@@ -52,7 +80,19 @@ export class LocalDataSource implements DataSource {
       console.error('Error fetching initial contexts for watcher:', error);
     }
 
-    // 2. Set up the PouchDB changes feed
+    // Return an unsubscribe function
+    return () => {
+      console.log('Unsubscribing from context changes feed');
+      this.contextChangeSubscribers.delete(callback);
+      if (this.contextChangeSubscribers.size === 0 && this.contextChangesFeed) {
+        this.contextChangesFeed.cancel();
+        this.contextChangesFeed = undefined;
+      }
+    };
+  }
+
+  private initializeContextChangesFeed(): void {
+    console.log('Initializing PouchDB changes feed for contexts');
     this.contextChangesFeed = this.db
       .changes({
         live: true,
@@ -63,7 +103,8 @@ export class LocalDataSource implements DataSource {
         if (change.id.startsWith('context-')) {
           try {
             const updatedContexts = await this.getContexts();
-            callback(updatedContexts);
+            console.log('Updated contexts after change:', updatedContexts);
+            this.notifyContextChangeSubscribers(updatedContexts);
           } catch (error) {
             // TODO
             console.error('Error fetching updated contexts after change:', error);
@@ -74,8 +115,17 @@ export class LocalDataSource implements DataSource {
         // TODO
         console.error('Error in PouchDB changes feed for contexts:', err);
       });
+  }
 
-    return Promise.resolve();
+  private notifyContextChangeSubscribers(contexts: string[]): void {
+    this.contextChangeSubscribers.forEach((callback) => {
+      try {
+        callback(contexts);
+      } catch (error) {
+        // TODO
+        console.error('Error notifying context change subscriber:', error);
+      }
+    });
   }
 
   async unwatchContexts(): Promise<void> {
