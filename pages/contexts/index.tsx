@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
-import { Button, FocusTrap, Modal, SimpleGrid, Stack, TextInput, Title } from '@mantine/core';
-import { useForm } from '@mantine/form';
+import { Button, Modal, SimpleGrid, Title } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import ContextSummaryCard from '@/components/Contexts/ContextSummaryCard';
+import NewContextForm from '@/components/Contexts/NewContextForm';
 import { useDataSource } from '@/contexts/DataSourceContext';
 
 export default function Page() {
@@ -11,40 +11,16 @@ export default function Page() {
   const [contexts, setContexts] = useState<string[]>([]);
   const [opened, { open, close }] = useDisclosure(false);
 
-  const form = useForm({
-    mode: 'uncontrolled',
-    initialValues: {
-      newContextName: '',
-    },
-    validate: {
-      newContextName: (value) => (value.trim() ? null : 'Context name is required'),
-    },
-    transformValues: (values) => ({
-      newContextName: values.newContextName.trim(),
-    }),
-  });
-
   useEffect(() => {
-    const fetchData = async () => {
-      return await dataSource.getContexts();
+    const unsubscribe = dataSource.watchContexts(setContexts);
+
+    return () => {
+      unsubscribe();
     };
-    fetchData().then(setContexts);
-  }, []);
+  }, [dataSource]);
 
   const handleAddContext = () => {
     open();
-  };
-
-  const handleCloseModal = () => {
-    form.reset();
-    close();
-  };
-
-  const saveContext = async () => {
-    const newContextName = form.getTransformedValues().newContextName;
-    await dataSource.addContext(newContextName);
-    setContexts((prev) => [...prev, newContextName]);
-    handleCloseModal();
   };
 
   return (
@@ -73,23 +49,7 @@ export default function Page() {
       </SimpleGrid>
 
       <Modal opened={opened} onClose={close} size="xs" title="Add Context">
-        <FocusTrap>
-          <Stack gap="md">
-            <form onSubmit={form.onSubmit(saveContext)}>
-              <TextInput
-                label="Context name"
-                placeholder="e.g. Home, Work"
-                withAsterisk
-                data-autofocus
-                {...form.getInputProps('newContextName')}
-              />
-              <Button type="submit">Save</Button>
-              <Button variant="outline" onClick={handleCloseModal}>
-                Cancel
-              </Button>
-            </form>
-          </Stack>
-        </FocusTrap>
+        <NewContextForm onClose={close} />
       </Modal>
     </>
   );

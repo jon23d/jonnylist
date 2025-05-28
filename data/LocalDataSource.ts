@@ -62,7 +62,7 @@ export class LocalDataSource implements DataSource {
    *
    * @return A function to unsubscribe from the changes feed.
    */
-  async watchContexts(callback: ContextChangeCallback): Promise<UnsubscribeFunction> {
+  watchContexts(callback: ContextChangeCallback): UnsubscribeFunction {
     // Register the callback so that we can notify it of changes
     this.contextChangeSubscribers.add(callback);
 
@@ -73,8 +73,7 @@ export class LocalDataSource implements DataSource {
 
     // Provide the initial contexts to the callback
     try {
-      const initialContexts = await this.getContexts();
-      callback(initialContexts);
+      this.getContexts().then((contexts) => callback(contexts));
     } catch (error) {
       // TODO
       console.error('Error fetching initial contexts for watcher:', error);
