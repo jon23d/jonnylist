@@ -11,19 +11,20 @@ export default function ContextLinks() {
   const [contexts, setContexts] = useState<string[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      return await dataSource.getContexts();
+    const unsubscribe = dataSource.watchContexts(setContexts);
+
+    return () => {
+      unsubscribe();
     };
-    fetchData().then(setContexts);
-  }, []);
+  }, [dataSource]);
 
   return contexts.map((context) => (
     <NavLink
       key={context}
-      href={`/contexts/?context=${context}`}
+      href={`/contexts/view?name=${context}`}
       label={context}
       component={Link}
-      active={query?.context === context}
+      active={query?.name === context && router.pathname === '/contexts/view'}
       pl={40}
     />
   ));

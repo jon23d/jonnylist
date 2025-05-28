@@ -19,8 +19,13 @@ export type Task = {
   updatedAt: string;
 };
 
+export type UnsubscribeFunction = () => void;
+export type ContextChangeCallback = (contexts: string[]) => void;
+
 export interface DataSource {
   getTasks: (params: getTasksParams) => Promise<Task[]>;
   getContexts: () => Promise<string[]>;
   addContext: (context: string) => Promise<void>;
+  watchContexts: (callback: ContextChangeCallback) => UnsubscribeFunction;
+  unwatchContexts: () => Promise<void>;
 }

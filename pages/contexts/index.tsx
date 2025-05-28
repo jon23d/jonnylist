@@ -1,22 +1,37 @@
-import { useRouter } from 'next/router';
-import { SimpleGrid } from '@mantine/core';
-import ContextPage from '@/components/Contexts/ContextPage';
+import { useEffect, useState } from 'react';
+import Head from 'next/head';
+import { Button, Modal, SimpleGrid, Title } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 import ContextSummaryCard from '@/components/Contexts/ContextSummaryCard';
+import NewContextForm from '@/components/Contexts/NewContextForm';
+import { useDataSource } from '@/contexts/DataSourceContext';
 
 export default function Page() {
-  const router = useRouter();
-  const query = router.query;
+  const dataSource = useDataSource();
+  const [contexts, setContexts] = useState<string[]>([]);
+  const [opened, { open, close }] = useDisclosure(false);
 
-  if (query.context) {
-    const contextName = query.context;
-    return <ContextPage contextName={contextName as string} />;
-  }
+  useEffect(() => {
+    const unsubscribe = dataSource.watchContexts(setContexts);
 
-  const contexts = ['home', 'work'];
+    return () => {
+      unsubscribe();
+    };
+  }, [dataSource]);
+
+  const handleAddContext = () => {
+    open();
+  };
 
   return (
     <>
-      <h1>Contexts</h1>
+      <Head>
+        <title>Contexts | JonnyList</title>
+      </Head>
+
+      <Title order={1}>Contexts</Title>
+
+      <Button onClick={handleAddContext}>Add Context</Button>
       <p>
         Contexts represent a location where you want to perform tasks, such as 'home, 'work', or
         'grocery store'.
@@ -26,11 +41,16 @@ export default function Page() {
         might have a list of tasks to do at home, another list for work, and another list for the
         grocery store.
       </p>
+
       <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
         {contexts.map((context) => (
-          <ContextSummaryCard contextName={context} />
+          <ContextSummaryCard key={context} contextName={context} />
         ))}
       </SimpleGrid>
+
+      <Modal opened={opened} onClose={close} size="xs" title="Add Context">
+        <NewContextForm onClose={close} />
+      </Modal>
     </>
   );
 }
