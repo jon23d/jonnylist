@@ -15,8 +15,8 @@ export default function List(viewProps: ViewProps) {
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
-          {viewProps.tasks.map((task, index) => (
-            <Table.Tr key={index}>
+          {viewProps.tasks.map((task) => (
+            <Table.Tr key={task._id}>
               <Table.Td>{task._id}</Table.Td>
               <Table.Td>{task.title}</Table.Td>
               <Table.Td>{task.description}</Table.Td>
