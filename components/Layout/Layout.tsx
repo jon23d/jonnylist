@@ -6,7 +6,17 @@ import {
   IconManualGearboxFilled,
   IconSettingsFilled,
 } from '@tabler/icons-react';
-import { AppShell, Burger, Group, NavLink, ScrollArea } from '@mantine/core';
+import {
+  Anchor,
+  AppShell,
+  Box,
+  Burger,
+  Center,
+  Group,
+  NavLink,
+  ScrollArea,
+  Text,
+} from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import ContextLinks from '@/components/Layout/ContextLinks';
 import Footer from '@/components/Layout/Footer';
@@ -29,15 +39,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <AppShell
-      header={{ height: 60 }}
-      navbar={{ width: 300, breakpoint: 'sm', collapsed: { mobile: !opened } }}
+      header={{ height: 30 }}
+      navbar={{ width: 225, breakpoint: 'sm', collapsed: { mobile: !opened } }}
       footer={{ height: 40 }}
       padding="md"
     >
       <AppShell.Header>
-        <Group h="100%" px="md">
+        <Group h="100%" px="md" bg="blue.1" wrap="nowrap" align="center" justify="space-between">
           <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
-          JonnyList
+          <Text size="xs" fw={800} c="black" ml={{ xs: 0, sm: 60 }}>
+            &#123; JonnyList &#125;
+          </Text>
+          <Text size="xs" c="gray.6">
+            <Anchor href="#">4 tasks due today</Anchor> /{' '}
+            <Anchor href="#">12 tasks in progress</Anchor> /{' '}
+            <Anchor href="#">3 open projects</Anchor>
+          </Text>
         </Group>
       </AppShell.Header>
       <AppShell.Navbar p="md">
@@ -70,7 +87,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </AppShell.Section>
       </AppShell.Navbar>
       <AppShell.Main>{children}</AppShell.Main>
-      <AppShell.Footer p="xs">
+      <AppShell.Footer p="xs" bg="blue.1">
         <Footer />
       </AppShell.Footer>
     </AppShell>

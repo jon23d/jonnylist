@@ -5,13 +5,11 @@ import ContextPage from '@/components/Contexts/ContextPage';
 
 export default function Page() {
   const router = useRouter();
-  // Destructure name directly from query for cleaner dependencies and handling
   const { name: contextNameInQuery } = router.query;
-
-  // Initialize contextName state, perhaps to null or undefined to indicate loading
   const [contextName, setContextName] = useState<string | null>(null);
 
   useEffect(() => {
+    // This is required in case a hard refresh was done on the page
     if (!router.isReady) {
       return; // Wait for the router to be fully initialized
     }
@@ -24,6 +22,7 @@ export default function Page() {
     }
   }, [router.isReady, contextNameInQuery, router]);
 
+  // A loading UI
   if (contextName === null || !router.isReady) {
     return (
       <>
