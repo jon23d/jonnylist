@@ -1,7 +1,6 @@
-export interface Context {
-  _id: string;
-  _rev?: string;
+import { Common } from '@/data/interfaces/Common';
+
+export interface Context extends Common {
   type: 'context';
   name: string;
-  version: number;
 }

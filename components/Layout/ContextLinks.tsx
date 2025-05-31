@@ -11,7 +11,7 @@ export default function ContextLinks() {
   const [contexts, setContexts] = useState<string[]>([]);
 
   useEffect(() => {
-    const unsubscribe = dataSource.watchContexts(setContexts);
+    const unsubscribe = dataSource.subscribeToContexts(setContexts);
 
     return () => {
       unsubscribe();
