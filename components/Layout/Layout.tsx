@@ -6,17 +6,7 @@ import {
   IconManualGearboxFilled,
   IconSettingsFilled,
 } from '@tabler/icons-react';
-import {
-  Anchor,
-  AppShell,
-  Box,
-  Burger,
-  Center,
-  Group,
-  NavLink,
-  ScrollArea,
-  Text,
-} from '@mantine/core';
+import { Anchor, AppShell, Burger, Group, NavLink, ScrollArea, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import ContextLinks from '@/components/Layout/ContextLinks';
 import Footer from '@/components/Layout/Footer';

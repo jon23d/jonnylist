@@ -2,7 +2,8 @@ export enum TaskStatus {
   Ready = 'ready',
   Started = 'started',
   Completed = 'completed',
-  WontDo = 'wontdo',
+  Cancelled = 'cancelled',
+  Waiting = 'waiting',
 }
 
 export type getTasksParams = {
