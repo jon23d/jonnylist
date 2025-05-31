@@ -1,3 +1,4 @@
+import { waitFor } from '@testing-library/dom';
 import PouchDB from 'pouchdb';
 import { DocumentTypes } from '@/data/interfaces';
 import { LocalDataSource } from '@/data/LocalDataSource';
@@ -26,7 +27,7 @@ describe('LocalDataSource', () => {
     expect(contexts).toEqual([]);
   });
 
-  it('Should add a context and retrieve it', async () => {
+  it('addContext should add a context to the database', async () => {
     const contextName = 'test-context';
     await localDataSource.addContext(contextName);
 
@@ -43,5 +44,70 @@ describe('LocalDataSource', () => {
 
     const contexts = await localDataSource.getContexts();
     expect(contexts).toEqual(['context-1', 'context-2', 'context-3']);
+  });
+
+  describe('subscribeToContexts', () => {
+    it('Should register a context change subscriber and call getContexts', async () => {
+      const contextName = 'test-context';
+
+      await localDataSource.addContext(contextName);
+
+      const subscriber = jest.fn();
+
+      localDataSource.subscribeToContexts(subscriber);
+
+      await waitFor(() => {
+        expect(subscriber).toHaveBeenCalledWith([contextName]);
+      });
+    });
+
+    it('Should initialize the context changes feed on first subscriber', async () => {
+      const subscriber = jest.fn();
+      const initializeSpy = jest.spyOn(
+        localDataSource,
+        'initializeContextChangesFeed' as keyof LocalDataSource
+      );
+
+      localDataSource.subscribeToContexts(subscriber);
+
+      expect(initializeSpy).toHaveBeenCalled();
+
+      initializeSpy.mockRestore();
+    });
+
+    it('Should not init the context feed if a subscriber is already registered', async () => {
+      const subscriber1 = jest.fn();
+      const subscriber2 = jest.fn();
+      const initializeSpy = jest.spyOn(
+        localDataSource,
+        'initializeContextChangesFeed' as keyof LocalDataSource
+      );
+      // First subscription should initialize the feed
+      localDataSource.subscribeToContexts(subscriber1);
+      expect(initializeSpy).toHaveBeenCalled();
+      initializeSpy.mockReset();
+
+      // Second subscription should not re-initialize the feed
+      localDataSource.subscribeToContexts(subscriber2);
+      expect(initializeSpy).not.toHaveBeenCalled();
+
+      initializeSpy.mockRestore();
+    });
+  });
+
+  it('Should notify subscribers of context changes', async () => {
+    const subscriber = jest.fn();
+
+    localDataSource.subscribeToContexts(subscriber);
+
+    await waitFor(() => {
+      expect(subscriber).toHaveBeenCalledWith([]);
+    });
+
+    await localDataSource.addContext('a new context');
+
+    await waitFor(() => {
+      expect(subscriber).toHaveBeenCalledWith(['a new context']);
+    });
   });
 });

@@ -11,7 +11,7 @@ export default function ContextsPage() {
   const [opened, { open, close }] = useDisclosure(false);
 
   useEffect(() => {
-    const unsubscribe = dataSource.watchContexts(setContexts);
+    const unsubscribe = dataSource.subscribeToContexts(setContexts);
 
     return () => {
       unsubscribe();

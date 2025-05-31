@@ -10,13 +10,12 @@ jest.mock('next/router', () => ({
   useRouter: jest.fn(),
 }));
 
-const mockWatchContexts = jest.fn((callback) => {
+const mockSubscribeToContexts = jest.fn((callback) => {
   callback(['context1', 'context2']);
   return () => {};
 });
 const mockDataSource = {
-  watchContexts: mockWatchContexts,
-  unwatchContexts: jest.fn(),
+  subscribeToContexts: mockSubscribeToContexts,
 };
 jest.mock('@/contexts/DataSourceContext', () => ({
   ...jest.requireActual('@/contexts/DataSourceContext'),
@@ -54,7 +53,7 @@ describe('ContextLinks', () => {
     );
 
     await waitFor(() => {
-      expect(mockWatchContexts).toHaveBeenCalledTimes(1);
+      expect(mockSubscribeToContexts).toHaveBeenCalledTimes(1);
       expect(getLinkDescriptionElement('context1')).toBeInTheDocument();
       expect(getLinkDescriptionElement('context2')).toBeInTheDocument();
     });

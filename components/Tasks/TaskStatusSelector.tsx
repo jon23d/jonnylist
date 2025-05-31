@@ -1,6 +1,6 @@
 import React from 'react';
 import { Chip, Group } from '@mantine/core';
-import { TaskStatus } from '@/data/DataSource';
+import { TaskStatus } from '@/data/interfaces/Task';
 
 export default function TaskStatusSelector({
   value,

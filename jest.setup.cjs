@@ -25,3 +25,11 @@ class ResizeObserver {
 }
 
 window.ResizeObserver = ResizeObserver;
+
+global.console = {
+  ...console,
+  info: jest.fn(),
+  log: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+};

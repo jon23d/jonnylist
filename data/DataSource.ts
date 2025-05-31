@@ -1,32 +1,16 @@
-export enum TaskStatus {
-  Ready = 'ready',
-  Started = 'started',
-  Completed = 'completed',
-  Cancelled = 'cancelled',
-  Waiting = 'waiting',
-}
+import { Task, TaskStatus } from '@/data/interfaces/Task';
 
 export type getTasksParams = {
   context?: string;
-  status?: TaskStatus;
-};
-
-export type Task = {
-  id: string;
-  name: string;
-  status: TaskStatus;
-  context?: string;
-  createdAt: string;
-  updatedAt: string;
+  statuses?: TaskStatus[];
 };
 
 export type UnsubscribeFunction = () => void;
-export type ContextChangeCallback = (contexts: string[]) => void;
+export type ContextSubscriber = (contexts: string[]) => void;
 
 export interface DataSource {
   getTasks: (params: getTasksParams) => Promise<Task[]>;
   getContexts: () => Promise<string[]>;
   addContext: (context: string) => Promise<void>;
-  watchContexts: (callback: ContextChangeCallback) => UnsubscribeFunction;
-  unwatchContexts: () => Promise<void>;
+  subscribeToContexts: (callback: ContextSubscriber) => UnsubscribeFunction;
 }

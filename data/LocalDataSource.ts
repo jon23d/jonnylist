@@ -1,13 +1,15 @@
 import PouchDB from 'pouchdb';
 import {
-  ContextChangeCallback,
+  ContextSubscriber,
   DataSource,
   getTasksParams,
-  Task,
   UnsubscribeFunction,
 } from '@/data/DataSource';
 import { DocumentTypes } from '@/data/interfaces';
 import { Context } from '@/data/interfaces/Context';
+import { Task } from '@/data/interfaces/Task';
+import { Logger } from '@/helpers/logger';
+import { TaskFactory } from '@/test-utils/factories/TaskFactory';
 
 const DATABASE_NAME = 'jonnylist';
 const CURRENT_VERSION = 1;
@@ -15,8 +17,15 @@ const CURRENT_VERSION = 1;
 export class LocalDataSource implements DataSource {
   protected db: PouchDB.Database<DocumentTypes>;
   private contextChangesFeed?: PouchDB.Core.Changes<DocumentTypes>;
-  private contextChangeSubscribers = new Set<ContextChangeCallback>();
+  private contextChangeSubscribers = new Set<ContextSubscriber>();
 
+  /**
+   * Creates a new LocalDataSource instance.
+   * If a database is provided, it will use that database; otherwise, it will create a new
+   * PouchDB instance.
+   *
+   * @param database Optional PouchDB database instance to use.
+   */
   constructor(database?: PouchDB.Database<DocumentTypes>) {
     if (database) {
       this.db = database;
@@ -25,10 +34,24 @@ export class LocalDataSource implements DataSource {
     this.db = new PouchDB(DATABASE_NAME);
   }
 
+  /**
+   * Do a one-time fetch of tasks based on the provided parameters.
+   *
+   * @param _params
+   */
   async getTasks(_params: getTasksParams): Promise<Task[]> {
-    return Promise.resolve([]);
+    const taskFactory = new TaskFactory();
+    return [
+      taskFactory.create(),
+      taskFactory.create({
+        _id: '2',
+      }),
+    ];
   }
 
+  /**
+   * Fetch all context names from the database.
+   */
   async getContexts(): Promise<string[]> {
     const result = await this.db.allDocs<Context>({
       include_docs: true,
@@ -40,6 +63,12 @@ export class LocalDataSource implements DataSource {
     return result.rows.map((row) => row.doc!.name);
   }
 
+  /**
+   * Add a new context to the database.
+   * This will create a new document with the type 'context' and the provided name.
+   *
+   * @param context
+   */
   async addContext(context: string): Promise<void> {
     const doc: Context = {
       _id: `context-${context}`,
@@ -62,7 +91,7 @@ export class LocalDataSource implements DataSource {
    *
    * @return A function to unsubscribe from the changes feed.
    */
-  watchContexts(callback: ContextChangeCallback): UnsubscribeFunction {
+  subscribeToContexts(callback: ContextSubscriber): UnsubscribeFunction {
     // Register the callback so that we can notify it of changes
     this.contextChangeSubscribers.add(callback);
 
@@ -76,22 +105,21 @@ export class LocalDataSource implements DataSource {
       this.getContexts().then((contexts) => callback(contexts));
     } catch (error) {
       // TODO
-      console.error('Error fetching initial contexts for watcher:', error);
+      Logger.error('Error fetching initial contexts for watcher:', error);
     }
 
     // Return an unsubscribe function
-    return () => {
-      console.log('Unsubscribing from context changes feed');
-      this.contextChangeSubscribers.delete(callback);
-      if (this.contextChangeSubscribers.size === 0 && this.contextChangesFeed) {
-        this.contextChangesFeed.cancel();
-        this.contextChangesFeed = undefined;
-      }
-    };
+    return () => this.removeContextSubscriber(callback);
   }
 
+  /**
+   * Initialize the PouchDB changes feed to listen for changes to context documents.
+   * This will set up a live feed that listens for any changes to documents with IDs starting
+   * with 'context-' and notifies subscribers of the updated contexts.
+   * @private
+   */
   private initializeContextChangesFeed(): void {
-    console.log('Initializing PouchDB changes feed for contexts');
+    Logger.info('Initializing PouchDB changes feed for contexts');
     this.contextChangesFeed = this.db
       .changes({
         live: true,
@@ -102,36 +130,51 @@ export class LocalDataSource implements DataSource {
         if (change.id.startsWith('context-')) {
           try {
             const updatedContexts = await this.getContexts();
-            console.log('Updated contexts after change:', updatedContexts);
-            this.notifyContextChangeSubscribers(updatedContexts);
+            Logger.info('Updated contexts after change:', updatedContexts);
+            this.notifyContextSubscribers(updatedContexts);
           } catch (error) {
             // TODO
-            console.error('Error fetching updated contexts after change:', error);
+            Logger.error('Error fetching updated contexts after change:', error);
           }
         }
       })
       .on('error', (err) => {
         // TODO
-        console.error('Error in PouchDB changes feed for contexts:', err);
+        Logger.error('Error in PouchDB changes feed for contexts:', err);
       });
   }
 
-  private notifyContextChangeSubscribers(contexts: string[]): void {
+  /**
+   * Notify all subscribers of context changes.
+   *
+   * @param contexts
+   * @private
+   */
+  private notifyContextSubscribers(contexts: string[]): void {
     this.contextChangeSubscribers.forEach((callback) => {
       try {
         callback(contexts);
       } catch (error) {
         // TODO
-        console.error('Error notifying context change subscriber:', error);
+        Logger.error('Error notifying context change subscriber:', error);
       }
     });
   }
 
-  async unwatchContexts(): Promise<void> {
-    if (this.contextChangesFeed) {
+  /**
+   * Remove a context subscriber and cancel the changes feed if there are no more subscribers.
+   *
+   * @param callback
+   * @private
+   */
+  private removeContextSubscriber(callback: ContextSubscriber): void {
+    Logger.info('Removing context change subscriber');
+    this.contextChangeSubscribers.delete(callback);
+
+    if (this.contextChangeSubscribers.size === 0 && this.contextChangesFeed) {
+      Logger.info('No more context subscribers, cancelling changes feed');
       this.contextChangesFeed.cancel();
       this.contextChangesFeed = undefined;
     }
-    return Promise.resolve();
   }
 }
