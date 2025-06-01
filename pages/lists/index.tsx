@@ -18,7 +18,7 @@ export default function Page() {
       <h1>Lists</h1>
       <p>Lists are simple lists of checkbox items that can be used for things like shopping</p>
       {lists.map((list) => (
-        <ListSummaryCard listName={list} />
+        <ListSummaryCard listName={list} key={list} />
       ))}
     </>
   );

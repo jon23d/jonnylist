@@ -25,6 +25,7 @@ jest.mock('@/contexts/DataSourceContext', () => ({
 describe('ContextLinks', () => {
   let dataSource: LocalDataSource;
   let db: PouchDB.Database<DocumentTypes>;
+  const handleNavLinkClick = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -40,35 +41,31 @@ describe('ContextLinks', () => {
     await db.destroy();
   });
 
-  const getLinkDescriptionElement = (linkText: string) => {
-    const navLink = screen.getByRole('link', { name: linkText });
-    return navLink.querySelector('.mantine-NavLink-description');
-  };
-
   it('Gets contexts from data source', async () => {
     render(
       <DataSourceContextProvider dataSource={dataSource}>
-        <ContextLinks />
+        <ContextLinks handleNavLinkClick={handleNavLinkClick} />
       </DataSourceContextProvider>
     );
 
     await waitFor(() => {
       expect(mockSubscribeToContexts).toHaveBeenCalledTimes(1);
-      expect(getLinkDescriptionElement('context1')).toBeInTheDocument();
-      expect(getLinkDescriptionElement('context2')).toBeInTheDocument();
+      // There must be an accessible way to do this... @TODO
+      expect(screen.getByTestId('context-link-context1')).toBeInTheDocument();
+      expect(screen.getByTestId('context-link-context2')).toBeInTheDocument();
     });
   });
 
   it('Renders no active context when no context is selected', async () => {
     render(
       <DataSourceContextProvider dataSource={dataSource}>
-        <ContextLinks />
+        <ContextLinks handleNavLinkClick={handleNavLinkClick} />
       </DataSourceContextProvider>
     );
 
     await waitFor(() => {
-      expect(getLinkDescriptionElement('context1')).not.toHaveAttribute('data-active');
-      expect(getLinkDescriptionElement('context2')).not.toHaveAttribute('data-active');
+      expect(screen.getByTestId('context-link-context1')).not.toHaveAttribute('data-active');
+      expect(screen.getByTestId('context-link-context2')).not.toHaveAttribute('data-active');
     });
   });
 
@@ -80,13 +77,13 @@ describe('ContextLinks', () => {
 
     render(
       <DataSourceContextProvider dataSource={dataSource}>
-        <ContextLinks />
+        <ContextLinks handleNavLinkClick={handleNavLinkClick} />
       </DataSourceContextProvider>
     );
 
     await waitFor(() => {
-      expect(getLinkDescriptionElement('context1')).toHaveAttribute('data-active');
-      expect(getLinkDescriptionElement('context2')).not.toHaveAttribute('data-active');
+      expect(screen.getByTestId('context-link-context1')).toHaveAttribute('data-active');
+      expect(screen.getByTestId('context-link-context2')).not.toHaveAttribute('data-active');
     });
   });
 });
