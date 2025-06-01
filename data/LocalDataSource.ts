@@ -5,15 +5,19 @@ import {
   getTasksParams,
   UnsubscribeFunction,
 } from '@/data/DataSource';
-import { DocumentTypes } from '@/data/interfaces';
-import { Context } from '@/data/interfaces/Context';
-import { Task } from '@/data/interfaces/Task';
+import { DocumentTypes } from '@/data/documentTypes';
+import { Context } from '@/data/documentTypes/Context';
+import { createDefaultPreferences, Preferences } from '@/data/documentTypes/Preferences';
+import { Task } from '@/data/documentTypes/Task';
 import { Logger } from '@/helpers/logger';
 import { TaskFactory } from '@/test-utils/factories/TaskFactory';
 
 const DATABASE_NAME = 'jonnylist';
 const CURRENT_VERSION = 1;
 
+/**
+ * @TODO This whole thing needs error handling
+ */
 export class LocalDataSource implements DataSource {
   protected db: PouchDB.Database<DocumentTypes>;
   private contextChangesFeed?: PouchDB.Core.Changes<DocumentTypes>;
@@ -32,6 +36,35 @@ export class LocalDataSource implements DataSource {
       return;
     }
     this.db = new PouchDB(DATABASE_NAME);
+  }
+
+  /**
+   * Fetch the current preferences from the database.
+   * This will return a Preferences object with default values if no preferences are found.
+   */
+  async getPreferences(): Promise<Preferences> {
+    try {
+      return await this.db.get<Preferences>('preferences');
+    } catch (error) {
+      // This is a 404, @TODO: handle other errors
+      return createDefaultPreferences();
+    }
+  }
+
+  /**
+   * Set the preferences in the database.
+   * This will update or create the preferences document with the provided values.
+   *
+   * @param preferences
+   */
+  async setPreferences(preferences: Preferences): Promise<void> {
+    try {
+      Logger.info('Setting preferences');
+      await this.db.put<Preferences>(preferences);
+    } catch (error) {
+      Logger.error('Error setting preferences:', error);
+      throw error; // Re-throw to handle it in the calling code
+    }
   }
 
   /**

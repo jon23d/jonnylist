@@ -1,6 +1,6 @@
 import React from 'react';
 import { Chip, Group } from '@mantine/core';
-import { TaskStatus } from '@/data/interfaces/Task';
+import { TaskStatus } from '@/data/documentTypes/Task';
 
 export default function TaskStatusSelector({
   value,
@@ -11,7 +11,7 @@ export default function TaskStatusSelector({
 }) {
   return (
     <Chip.Group multiple value={value} onChange={(value) => onChange(value as TaskStatus[])}>
-      <Group gap="xs">
+      <Group gap="3px">
         <Chip value={TaskStatus.Ready} size="xs">
           Ready
         </Chip>

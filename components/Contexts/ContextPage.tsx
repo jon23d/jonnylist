@@ -7,7 +7,7 @@ import { ViewProps } from '@/components/Contexts/Views/viewProps';
 import ViewSelector, { ViewType } from '@/components/Contexts/Views/ViewSelector';
 import TaskStatusSelector from '@/components/Tasks/TaskStatusSelector';
 import { useDataSource } from '@/contexts/DataSourceContext';
-import { Task, TaskStatus } from '@/data/interfaces/Task';
+import { Task, TaskStatus } from '@/data/documentTypes/Task';
 import { Logger } from '@/helpers/logger';
 
 const views: Record<ViewType, (props: ViewProps) => React.ReactElement> = {
@@ -33,7 +33,18 @@ export default function ContextPage({ contextName }: { contextName: string }) {
       });
     };
     fetchTasks().then(setTasks);
-  }, [selectedTaskStatuses]);
+
+    // Record the last selected context in preferences
+    datasource
+      .getPreferences()
+      .then((preferences) => {
+        preferences.lastSelectedContext = contextName;
+        return datasource.setPreferences(preferences);
+      })
+      .catch((error) => {
+        Logger.error('Error setting last selected context:', error);
+      });
+  }, [selectedTaskStatuses, contextName]);
 
   const SelectedView = views[currentView];
 

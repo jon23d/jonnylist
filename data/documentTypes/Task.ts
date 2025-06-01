@@ -1,4 +1,4 @@
-import { Common } from '@/data/interfaces/Common';
+import { Common } from '@/data/documentTypes/Common';
 
 export enum TaskStatus {
   Ready = 'ready',

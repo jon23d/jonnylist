@@ -1,8 +1,8 @@
 import PouchDB from 'pouchdb';
 import { DataSourceContextProvider, useDataSource } from '@/contexts/DataSourceContext';
-import { DocumentTypes } from '@/data/interfaces';
 import { LocalDataSource } from '@/data/LocalDataSource';
 import { render } from '@/test-utils';
+import { DocumentTypes } from '../../data/documentTypes';
 
 describe('DataSourceContextProvider', () => {
   let dataSource: LocalDataSource;

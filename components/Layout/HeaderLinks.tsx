@@ -1,5 +1,6 @@
 import React from 'react';
 import { Anchor, Text } from '@mantine/core';
+import AddNewItemButton from '@/components/Common/NewItem/AddNewItemButton';
 import classes from './Layout.module.css';
 
 export default function HeaderLinks() {
@@ -10,6 +11,7 @@ export default function HeaderLinks() {
           JonnyList
         </Text>
       </div>
+      <AddNewItemButton />
       <div className={classes.withSeparators}>
         <Text size="xs" c="gray.6">
           <Anchor href="#">4 tasks due today</Anchor>

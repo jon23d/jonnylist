@@ -2,9 +2,9 @@ import PouchDB from 'pouchdb';
 import ContextPage from '@/components/Contexts/ContextPage';
 import { DataSourceContextProvider } from '@/contexts/DataSourceContext';
 import { DataSource } from '@/data/DataSource';
-import { DocumentTypes } from '@/data/interfaces';
 import { LocalDataSource } from '@/data/LocalDataSource';
 import { render, screen, userEvent, waitFor } from '@/test-utils';
+import { DocumentTypes } from '../../../data/documentTypes';
 
 jest.mock('@/components/Contexts/Views/Board/Board', () => () => <div>Board View</div>);
 jest.mock('@/components/Contexts/Views/List/List', () => () => <div>List View</div>);

@@ -1,8 +1,8 @@
 import { waitFor } from '@testing-library/dom';
 import PouchDB from 'pouchdb';
-import { DocumentTypes } from '@/data/interfaces';
 import { LocalDataSource } from '@/data/LocalDataSource';
 import { ContextFactory } from '@/test-utils/factories/ContextFactory';
+import { DocumentTypes } from '../documentTypes';
 
 describe('LocalDataSource', () => {
   let localDataSource: LocalDataSource;

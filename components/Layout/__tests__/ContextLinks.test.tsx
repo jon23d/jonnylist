@@ -2,9 +2,9 @@ import { useRouter } from 'next/router';
 import PouchDB from 'pouchdb';
 import ContextLinks from '@/components/Layout/ContextLinks';
 import { DataSourceContextProvider } from '@/contexts/DataSourceContext';
-import { DocumentTypes } from '@/data/interfaces';
 import { LocalDataSource } from '@/data/LocalDataSource';
 import { render, screen, waitFor } from '@/test-utils';
+import { DocumentTypes } from '../../../data/documentTypes';
 
 jest.mock('next/router', () => ({
   useRouter: jest.fn(),

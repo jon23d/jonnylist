@@ -3,5 +3,5 @@ export interface Common {
   _rev?: string; // Revision identifier for version control
   version: number; // Version number for tracking changes
 
-  type: 'task' | 'context';
+  type: 'task' | 'context' | 'preferences';
 }

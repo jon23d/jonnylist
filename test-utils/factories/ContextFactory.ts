@@ -1,4 +1,4 @@
-import { Context } from '@/data/interfaces/Context';
+import { Context } from '@/data/documentTypes/Context';
 import { Factory } from './Factory';
 
 export class ContextFactory implements Factory<Context> {
