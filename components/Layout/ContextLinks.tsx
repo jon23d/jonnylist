@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { IconManualGearboxFilled } from '@tabler/icons-react';
 import { NavLink } from '@mantine/core';
 import { useDataSource } from '@/contexts/DataSourceContext';
 
-export default function ContextLinks() {
+export default function ContextLinks({
+  handleNavLinkClick,
+}: {
+  handleNavLinkClick: (url: string) => void;
+}) {
   const dataSource = useDataSource();
   const router = useRouter();
   const query = router.query;
@@ -18,14 +22,26 @@ export default function ContextLinks() {
     };
   }, [dataSource]);
 
-  return contexts.map((context) => (
+  const links = contexts.map((context) => (
     <NavLink
       key={context}
-      href={`/contexts/view?name=${context}`}
+      onClick={() => handleNavLinkClick(`/contexts/view?name=${context}`)}
       label={context}
-      component={Link}
       active={query?.name === context && router.pathname === '/contexts/view'}
       pl={40}
+      data-testid={`context-link-${context}`}
     />
   ));
+
+  return (
+    <>
+      <NavLink
+        onClick={() => handleNavLinkClick('/contexts')}
+        label="Contexts"
+        active={router.pathname === '/contexts' && !query?.context}
+        leftSection={<IconManualGearboxFilled />}
+      />
+      {links}
+    </>
+  );
 }

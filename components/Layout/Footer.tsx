@@ -12,10 +12,12 @@ export default function Footer() {
       <Anchor href="https://www.linkedin.com/in/jon23d/" component={Link}>
         Jonathon Deason
       </Anchor>{' '}
-      is licensed under{' '}
-      <Anchor href="https://creativecommons.org/licenses/by-nc-sa/4.0/" component={Link}>
-        CC BY-NC-SA 4.0
-      </Anchor>
+      <Text span visibleFrom="xs">
+        is licensed under{' '}
+        <Anchor href="https://creativecommons.org/licenses/by-nc-sa/4.0/" component={Link}>
+          CC BY-NC-SA 4.0
+        </Anchor>
+      </Text>
     </Text>
   );
 }
