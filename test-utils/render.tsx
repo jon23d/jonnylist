@@ -1,6 +1,13 @@
 import React from 'react';
 import { render as testingLibraryRender } from '@testing-library/react';
-import { createTheme, MantineProvider, mergeThemeOverrides, SegmentedControl } from '@mantine/core';
+import {
+  createTheme,
+  MantineProvider,
+  Menu,
+  mergeThemeOverrides,
+  Modal,
+  SegmentedControl,
+} from '@mantine/core';
 import { theme } from '@/theme';
 
 const testTheme = mergeThemeOverrides(
@@ -10,6 +17,20 @@ const testTheme = mergeThemeOverrides(
       SegmentedControl: SegmentedControl.extend({
         defaultProps: {
           transitionDuration: 0,
+        },
+      }),
+      Menu: Menu.extend({
+        defaultProps: {
+          transitionProps: {
+            duration: 0,
+          },
+        },
+      }),
+      Modal: Modal.extend({
+        defaultProps: {
+          transitionProps: {
+            duration: 0,
+          },
         },
       }),
     },

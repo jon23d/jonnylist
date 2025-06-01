@@ -1,15 +1,15 @@
-import React from 'react';
+import { useState } from 'react';
 import { Button, Menu, Modal } from '@mantine/core';
 import { useHotkeys } from '@mantine/hooks';
 import NewListItemForm from '@/components/Common/NewItem/NewListItemForm';
 import NewMetricForm from '@/components/Common/NewItem/NewMetricForm';
-import NewTaskForm from './NewTaskForm';
+import NewTaskForm from '@/components/Common/NewItem/NewTaskForm';
 
 export default function AddNewItemButton() {
-  const [modalOpened, setModalOpened] = React.useState(false);
-  const [newItemComponent, setNewItemComponent] = React.useState(<></>);
-  const [newItemModalTitle, setNewItemModalTitle] = React.useState('');
-  const [newMenuOpened, setNewMenuOpened] = React.useState(false);
+  const [modalOpened, setModalOpened] = useState(false);
+  const [newItemComponent, setNewItemComponent] = useState(<></>);
+  const [newItemModalTitle, setNewItemModalTitle] = useState('');
+  const [newMenuOpened, setNewMenuOpened] = useState(false);
 
   useHotkeys([['a', () => setNewMenuOpened(true)]]);
 
