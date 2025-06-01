@@ -16,7 +16,7 @@ export default function AddNewItemButton() {
   const showForm = (which: string) => {
     switch (which) {
       case 'task':
-        setNewItemComponent(<NewTaskForm />);
+        setNewItemComponent(<NewTaskForm handleClose={() => setModalOpened(false)} />);
         setNewItemModalTitle('Add New Task');
         break;
       case 'item':

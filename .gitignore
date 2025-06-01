@@ -133,4 +133,6 @@ dist
 
 .idea
 
+# Test databases
 test_db_*
+jonnylist/

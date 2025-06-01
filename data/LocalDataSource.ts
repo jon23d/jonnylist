@@ -3,24 +3,32 @@ import {
   ContextSubscriber,
   DataSource,
   getTasksParams,
+  TaskSubscriber,
   UnsubscribeFunction,
 } from '@/data/DataSource';
 import { DocumentTypes } from '@/data/documentTypes';
 import { Context } from '@/data/documentTypes/Context';
 import { createDefaultPreferences, Preferences } from '@/data/documentTypes/Preferences';
-import { Task } from '@/data/documentTypes/Task';
+import { NewTask, Task } from '@/data/documentTypes/Task';
 import { Logger } from '@/helpers/logger';
-import { TaskFactory } from '@/test-utils/factories/TaskFactory';
 
 const DATABASE_NAME = 'jonnylist';
 const CURRENT_VERSION = 1;
 
+type TaskSubscriberWithFilterParams = {
+  params: getTasksParams;
+  callback: TaskSubscriber;
+};
+
 /**
  * @TODO This whole thing needs error handling
+ * @TODO Consider using pouchdb indices once the dust settles
  */
 export class LocalDataSource implements DataSource {
   protected db: PouchDB.Database<DocumentTypes>;
-  private contextChangesFeed?: PouchDB.Core.Changes<DocumentTypes>;
+  private taskChangesFeed?: PouchDB.Core.Changes<Task>;
+  private taskChangeSubscribers = new Set<TaskSubscriberWithFilterParams>();
+  private contextChangesFeed?: PouchDB.Core.Changes<Context>;
   private contextChangeSubscribers = new Set<ContextSubscriber>();
 
   /**
@@ -68,18 +76,94 @@ export class LocalDataSource implements DataSource {
   }
 
   /**
+   * Add a new task to the database.
+   * This will create a new document with the type 'task' and the provided values.
+   *
+   * @param newTask
+   */
+  async addTask(newTask: NewTask): Promise<void> {
+    Logger.info('Adding task');
+    const task: Task = {
+      _id: `task-${new Date().toISOString()}-${Math.random().toString(36).substring(2, 15)}`,
+      type: 'task',
+      context: newTask.context,
+      title: newTask.title,
+      description: newTask.description,
+      status: newTask.status,
+      priority: newTask.priority,
+      dueDate: newTask.dueDate,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      version: CURRENT_VERSION,
+    };
+
+    try {
+      await this.db.put(task);
+    } catch (error) {
+      Logger.error('Error adding task:', error);
+      throw error; // Re-throw to handle it in the calling code
+    }
+  }
+
+  /**
    * Do a one-time fetch of tasks based on the provided parameters.
    *
    * @param _params
    */
   async getTasks(_params: getTasksParams): Promise<Task[]> {
-    const taskFactory = new TaskFactory();
-    return [
-      taskFactory.create(),
-      taskFactory.create({
-        _id: '2',
-      }),
-    ];
+    Logger.info('Getting tasks');
+    const result = await this.db.allDocs<Task>({
+      include_docs: true,
+      startkey: 'task-',
+      endkey: 'task-\ufff0',
+    });
+
+    const allTasks = result.rows.map((row) => row.doc as Task);
+
+    // Filter tasks based on the provided parameters
+    return allTasks.filter((task) => {
+      if (_params.context && task.context !== _params.context) {
+        return false;
+      }
+      return !(_params.statuses && !_params.statuses.includes(task.status));
+    });
+  }
+
+  /**
+   * Subscribe to changes in tasks based on the provided parameters.
+   * This will set up a live changes feed that listens for updates to tasks matching the
+   * provided parameters and invokes the callback with the updated tasks whenever a change occurs.
+   *
+   * The return function should be used to unsubscribe from the changes feed when no longer needed
+   * or when the component using this is unmounted.
+   *
+   * @param _params
+   * @param callback
+   *
+   * @return A function to unsubscribe from the changes feed.
+   */
+  subscribeToTasks(
+    _params: getTasksParams,
+    callback: (tasks: Task[]) => void
+  ): UnsubscribeFunction {
+    // Register the callback so that we can notify it of changes
+    this.taskChangeSubscribers.add({ callback, params: _params });
+
+    // Set up the PouchDB changes feed if this is the first subscriber
+    if (this.taskChangeSubscribers.size === 1) {
+      this.initializeTaskChangesFeed();
+    }
+
+    // Provide the initial tasks to the callback
+    try {
+      this.getTasks(_params).then((tasks) => callback(tasks));
+    } catch (error) {
+      // TODO
+      Logger.error('Error fetching initial tasks for watcher:', error);
+    }
+
+    // Return an unsubscribe function
+    return () => this.removeTaskSubscriber({ callback, params: _params });
   }
 
   /**
@@ -89,7 +173,6 @@ export class LocalDataSource implements DataSource {
     const result = await this.db.allDocs<Context>({
       include_docs: true,
       startkey: 'context-',
-      // A high value Unicode character ensures we get all contexts
       endkey: 'context-\ufff0',
     });
 
@@ -145,6 +228,31 @@ export class LocalDataSource implements DataSource {
     return () => this.removeContextSubscriber(callback);
   }
 
+  private initializeTaskChangesFeed(): void {
+    Logger.info('Initializing PouchDB changes feed for tasks');
+    this.taskChangesFeed = this.db
+      .changes<Task>({
+        live: true,
+        since: 'now',
+      })
+      .on('change', async (change) => {
+        if (change.id.startsWith('task-')) {
+          try {
+            const updatedTasks = await this.getTasks({});
+            Logger.info('Updated tasks after change:', updatedTasks);
+            this.notifyTaskSubscribers(updatedTasks);
+          } catch (error) {
+            // TODO
+            Logger.error('Error fetching updated tasks after change:', error);
+          }
+        }
+      })
+      .on('error', (err) => {
+        // TODO
+        Logger.error('Error in PouchDB changes feed for tasks:', err);
+      });
+  }
+
   /**
    * Initialize the PouchDB changes feed to listen for changes to context documents.
    * This will set up a live feed that listens for any changes to documents with IDs starting
@@ -154,7 +262,7 @@ export class LocalDataSource implements DataSource {
   private initializeContextChangesFeed(): void {
     Logger.info('Initializing PouchDB changes feed for contexts');
     this.contextChangesFeed = this.db
-      .changes({
+      .changes<Context>({
         live: true,
         since: 'now',
       })
@@ -177,6 +285,26 @@ export class LocalDataSource implements DataSource {
       });
   }
 
+  private notifyTaskSubscribers(tasks: Task[]): void {
+    this.taskChangeSubscribers.forEach((taskSubscriber: TaskSubscriberWithFilterParams) => {
+      try {
+        // Filter tasks based on the subscriber's parameters
+        const tasksToNotify = tasks.filter((task) => {
+          if (taskSubscriber.params.context && task.context !== taskSubscriber.params.context) {
+            return false;
+          }
+          return !(
+            taskSubscriber.params.statuses && !taskSubscriber.params.statuses.includes(task.status)
+          );
+        });
+        taskSubscriber.callback(tasksToNotify);
+      } catch (error) {
+        // TODO
+        Logger.error('Error notifying task change subscriber:', error);
+      }
+    });
+  }
+
   /**
    * Notify all subscribers of context changes.
    *
@@ -192,6 +320,17 @@ export class LocalDataSource implements DataSource {
         Logger.error('Error notifying context change subscriber:', error);
       }
     });
+  }
+
+  private removeTaskSubscriber(subscriber: TaskSubscriberWithFilterParams): void {
+    Logger.info('Removing task change subscriber');
+    this.taskChangeSubscribers.delete(subscriber);
+
+    if (this.taskChangeSubscribers.size === 0 && this.taskChangesFeed) {
+      Logger.info('No more task subscribers, cancelling changes feed');
+      this.taskChangesFeed.cancel();
+      this.taskChangesFeed = undefined;
+    }
   }
 
   /**

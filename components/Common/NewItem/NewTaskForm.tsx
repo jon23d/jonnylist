@@ -1,25 +1,25 @@
 import { useEffect, useState } from 'react';
-import { Button, FocusTrap, NumberInput, Select, TextInput } from '@mantine/core';
+import { Button, NumberInput, Select, TextInput } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
 import { useDataSource } from '@/contexts/DataSourceContext';
 import { createDefaultPreferences } from '@/data/documentTypes/Preferences';
-import { Task, TaskStatus } from '@/data/documentTypes/Task';
+import { NewTask, TaskStatus, taskStatusSelectOptions } from '@/data/documentTypes/Task';
 import { Logger } from '@/helpers/logger';
 
-export default function NewTaskForm() {
+export default function NewTaskForm({ handleClose }: { handleClose: () => void }) {
   const dataSource = useDataSource();
   const [contexts, setContexts] = useState<string[]>([]);
 
-  const form = useForm<Partial<Task>>({
+  const form = useForm<NewTask>({
     mode: 'uncontrolled',
     initialValues: {
       context: '',
-      type: 'task',
       title: '',
       description: '',
       priority: 1,
       dueDate: undefined,
+      status: TaskStatus.Ready,
     },
   });
 
@@ -37,34 +37,25 @@ export default function NewTaskForm() {
       ]);
 
       setContexts(availableContexts);
-      Logger.info('Got contexts:', availableContexts);
-      Logger.info('Last selected context:', lastSelectedContext);
+
+      // @TODO WTF make this work
       form.setFieldValue('context', lastSelectedContext);
     };
     initializeForm();
   }, []);
 
-  const handleSave = async (values: Partial<Task>) => {
+  const handleSave = async (values: NewTask) => {
     try {
-      // Ensure the context is set
-      if (!values.context) {
-        throw new Error('Context is required');
-      }
-
       // Create a new task object
-      const _newTask: Partial<Task> = {
+      const newTask: NewTask = {
         ...values,
-        _id: `task-${Date.now()}`, // Generate a unique ID
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        status: TaskStatus.Ready,
       };
 
       // Save the task to the data source
-      //await dataSource.addTask(newTask);
+      await dataSource.addTask(newTask);
 
-      // Optionally, reset the form or close the modal
-      //form.reset();
+      form.reset();
+      handleClose();
     } catch (error) {
       Logger.error('Error saving task:', error);
     }
@@ -98,6 +89,12 @@ export default function NewTaskForm() {
         placeholder="Select a due date"
         {...form.getInputProps('dueDate')}
         clearable
+      />
+      <Select
+        label="Status"
+        placeholder="Select task status"
+        data={taskStatusSelectOptions}
+        {...form.getInputProps('status')}
       />
 
       <Button type="submit">Save</Button>

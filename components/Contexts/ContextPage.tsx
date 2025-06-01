@@ -25,14 +25,13 @@ export default function ContextPage({ contextName }: { contextName: string }) {
   const [tasks, setTasks] = useState<Task[]>([]);
 
   useEffect(() => {
-    const fetchTasks = async () => {
-      Logger.info(`Fetching tasks for context: ${contextName}`);
-      return await datasource.getTasks({
+    const unsubscribe = datasource.subscribeToTasks(
+      {
         statuses: selectedTaskStatuses,
         context: contextName,
-      });
-    };
-    fetchTasks().then(setTasks);
+      },
+      setTasks
+    );
 
     // Record the last selected context in preferences
     datasource
@@ -44,6 +43,10 @@ export default function ContextPage({ contextName }: { contextName: string }) {
       .catch((error) => {
         Logger.error('Error setting last selected context:', error);
       });
+
+    return () => {
+      unsubscribe();
+    };
   }, [selectedTaskStatuses, contextName]);
 
   const SelectedView = views[currentView];
