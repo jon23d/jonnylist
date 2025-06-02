@@ -1,8 +1,16 @@
 import { waitFor } from '@testing-library/dom';
-import PouchDB from 'pouchdb';
+import { Preferences } from '@/data/documentTypes/Preferences';
 import { LocalDataSource } from '@/data/LocalDataSource';
+import { createTestLocalDataSource } from '@/test-utils/db';
 import { ContextFactory } from '@/test-utils/factories/ContextFactory';
+import { PreferencesFactory } from '@/test-utils/factories/PreferencesFactory';
 import { DocumentTypes } from '../documentTypes';
+
+jest.mock('@/data/documentTypes/Preferences', () => ({
+  createDefaultPreferences: jest.fn(() => ({
+    lastSelectedContext: 'context1',
+  })),
+}));
 
 describe('LocalDataSource', () => {
   let localDataSource: LocalDataSource;
@@ -10,12 +18,9 @@ describe('LocalDataSource', () => {
   const contextFactory = new ContextFactory();
 
   beforeEach(() => {
-    // I could never get the pouchdb-memory plugin to work with the test suite,
-    // so we use a new database for each test. If we don't subsequent runs will fail
-    database = new PouchDB<DocumentTypes>(
-      `test_db_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
-    );
-    localDataSource = new LocalDataSource(database);
+    const testData = createTestLocalDataSource();
+    localDataSource = testData.dataSource;
+    database = testData.database;
   });
 
   afterEach(async () => {
@@ -27,7 +32,36 @@ describe('LocalDataSource', () => {
     expect(contexts).toEqual([]);
   });
 
-  it('addContext should add a context to the database', async () => {
+  test('getPreferences should return default preferences', async () => {
+    const preferences = await localDataSource.getPreferences();
+    expect(preferences).toEqual({
+      lastSelectedContext: 'context1',
+    });
+  });
+
+  test('getPreferences should return stored preferences', async () => {
+    await database.post<Preferences>(
+      new PreferencesFactory().create({
+        lastSelectedContext: 'context1',
+      })
+    );
+
+    const preferences = await localDataSource.getPreferences();
+    expect(preferences.lastSelectedContext).toBe('context1');
+  });
+
+  test('setPreferences should update preferences in the database', async () => {
+    const newPreferences = new PreferencesFactory().create({
+      lastSelectedContext: 'foo-context',
+    });
+
+    await localDataSource.setPreferences(newPreferences);
+
+    const preferences = await localDataSource.getPreferences();
+    expect(preferences.lastSelectedContext).toBe('foo-context');
+  });
+
+  test('addContext should add a context to the database', async () => {
     const contextName = 'test-context';
     await localDataSource.addContext(contextName);
 

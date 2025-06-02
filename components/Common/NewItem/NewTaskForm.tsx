@@ -44,19 +44,18 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
     initializeForm();
   }, []);
 
-  const handleSave = async (values: NewTask) => {
+  const handleSave = async () => {
     try {
-      // Create a new task object
       const newTask: NewTask = {
-        ...values,
+        ...form.getValues(),
       };
 
-      // Save the task to the data source
       await dataSource.addTask(newTask);
 
       form.reset();
       handleClose();
     } catch (error) {
+      // @TODO handle error properly
       Logger.error('Error saving task:', error);
     }
   };

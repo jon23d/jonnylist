@@ -108,9 +108,9 @@ export class LocalDataSource implements DataSource {
   /**
    * Do a one-time fetch of tasks based on the provided parameters.
    *
-   * @param _params
+   * @param params
    */
-  async getTasks(_params: getTasksParams): Promise<Task[]> {
+  async getTasks(params: getTasksParams): Promise<Task[]> {
     Logger.info('Getting tasks');
     const result = await this.db.allDocs<Task>({
       include_docs: true,
@@ -120,13 +120,7 @@ export class LocalDataSource implements DataSource {
 
     const allTasks = result.rows.map((row) => row.doc as Task);
 
-    // Filter tasks based on the provided parameters
-    return allTasks.filter((task) => {
-      if (_params.context && task.context !== _params.context) {
-        return false;
-      }
-      return !(_params.statuses && !_params.statuses.includes(task.status));
-    });
+    return this.filterTasksByParams(allTasks, params);
   }
 
   /**
@@ -137,17 +131,14 @@ export class LocalDataSource implements DataSource {
    * The return function should be used to unsubscribe from the changes feed when no longer needed
    * or when the component using this is unmounted.
    *
-   * @param _params
+   * @param params
    * @param callback
    *
    * @return A function to unsubscribe from the changes feed.
    */
-  subscribeToTasks(
-    _params: getTasksParams,
-    callback: (tasks: Task[]) => void
-  ): UnsubscribeFunction {
+  subscribeToTasks(params: getTasksParams, callback: (tasks: Task[]) => void): UnsubscribeFunction {
     // Register the callback so that we can notify it of changes
-    this.taskChangeSubscribers.add({ callback, params: _params });
+    this.taskChangeSubscribers.add({ callback, params });
 
     // Set up the PouchDB changes feed if this is the first subscriber
     if (this.taskChangeSubscribers.size === 1) {
@@ -156,14 +147,14 @@ export class LocalDataSource implements DataSource {
 
     // Provide the initial tasks to the callback
     try {
-      this.getTasks(_params).then((tasks) => callback(tasks));
+      this.getTasks(params).then((tasks) => callback(tasks));
     } catch (error) {
       // TODO
       Logger.error('Error fetching initial tasks for watcher:', error);
     }
 
     // Return an unsubscribe function
-    return () => this.removeTaskSubscriber({ callback, params: _params });
+    return () => this.removeTaskSubscriber({ callback, params });
   }
 
   /**
@@ -288,15 +279,7 @@ export class LocalDataSource implements DataSource {
   private notifyTaskSubscribers(tasks: Task[]): void {
     this.taskChangeSubscribers.forEach((taskSubscriber: TaskSubscriberWithFilterParams) => {
       try {
-        // Filter tasks based on the subscriber's parameters
-        const tasksToNotify = tasks.filter((task) => {
-          if (taskSubscriber.params.context && task.context !== taskSubscriber.params.context) {
-            return false;
-          }
-          return !(
-            taskSubscriber.params.statuses && !taskSubscriber.params.statuses.includes(task.status)
-          );
-        });
+        const tasksToNotify = this.filterTasksByParams(tasks, taskSubscriber.params);
         taskSubscriber.callback(tasksToNotify);
       } catch (error) {
         // TODO
@@ -348,5 +331,14 @@ export class LocalDataSource implements DataSource {
       this.contextChangesFeed.cancel();
       this.contextChangesFeed = undefined;
     }
+  }
+
+  private filterTasksByParams(tasks: Task[], params: getTasksParams): Task[] {
+    return tasks.filter((task) => {
+      if (params.context && task.context !== params.context) {
+        return false;
+      }
+      return !(params.statuses && !params.statuses.includes(task.status));
+    });
   }
 }
