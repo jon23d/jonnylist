@@ -9,7 +9,7 @@ export class PreferencesFactory implements Factory<Preferences> {
       _rev: data._rev,
       type: 'preferences',
 
-      lastSelectedContext: 'context1',
+      lastSelectedContext: data.lastSelectedContext || 'context1',
     };
   }
 }

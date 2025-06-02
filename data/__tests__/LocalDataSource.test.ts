@@ -4,7 +4,9 @@ import { LocalDataSource } from '@/data/LocalDataSource';
 import { createTestLocalDataSource } from '@/test-utils/db';
 import { ContextFactory } from '@/test-utils/factories/ContextFactory';
 import { PreferencesFactory } from '@/test-utils/factories/PreferencesFactory';
+import { TaskFactory } from '@/test-utils/factories/TaskFactory';
 import { DocumentTypes } from '../documentTypes';
+import { Task } from '../documentTypes/Task';
 
 jest.mock('@/data/documentTypes/Preferences', () => ({
   createDefaultPreferences: jest.fn(() => ({
@@ -50,7 +52,7 @@ describe('LocalDataSource', () => {
     expect(preferences.lastSelectedContext).toBe('context1');
   });
 
-  test('setPreferences should update preferences in the database', async () => {
+  test('setPreferences should create new preferences in the database', async () => {
     const newPreferences = new PreferencesFactory().create({
       lastSelectedContext: 'foo-context',
     });
@@ -59,6 +61,36 @@ describe('LocalDataSource', () => {
 
     const preferences = await localDataSource.getPreferences();
     expect(preferences.lastSelectedContext).toBe('foo-context');
+  });
+
+  test('setPreferences should update existing preferences', async () => {
+    const newPreferences = new PreferencesFactory().create({
+      lastSelectedContext: 'foo-context',
+    });
+
+    await localDataSource.setPreferences(newPreferences);
+
+    const preferences = await localDataSource.getPreferences();
+    expect(preferences.lastSelectedContext).toBe('foo-context');
+
+    preferences.lastSelectedContext = 'poo-context';
+    await localDataSource.setPreferences(preferences);
+
+    const updatedPreferences = await localDataSource.getPreferences();
+    expect(updatedPreferences.lastSelectedContext).toBe('poo-context');
+  });
+
+  test('addTask should add a task to the database', async () => {
+    const task = new TaskFactory().create();
+
+    await localDataSource.addTask(task);
+
+    const tasks = await database.allDocs({ include_docs: true });
+    expect(tasks.rows).toHaveLength(1);
+
+    const returnedTask = tasks.rows[0].doc as Task;
+
+    expect(returnedTask.context).toEqual(task.context);
   });
 
   test('addContext should add a context to the database', async () => {
