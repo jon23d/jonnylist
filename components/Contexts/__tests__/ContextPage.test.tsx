@@ -1,10 +1,12 @@
+import { ReactElement } from 'react';
 import PouchDB from 'pouchdb';
 import ContextPage from '@/components/Contexts/ContextPage';
 import { DataSourceContextProvider } from '@/contexts/DataSourceContext';
 import { DataSource } from '@/data/DataSource';
-import { DocumentTypes } from '@/data/interfaces';
-import { LocalDataSource } from '@/data/LocalDataSource';
+import { DocumentTypes } from '@/data/documentTypes';
 import { render, screen, userEvent, waitFor } from '@/test-utils';
+import { createTestLocalDataSource } from '@/test-utils/db';
+import { PreferencesFactory } from '@/test-utils/factories/PreferencesFactory';
 
 jest.mock('@/components/Contexts/Views/Board/Board', () => () => <div>Board View</div>);
 jest.mock('@/components/Contexts/Views/List/List', () => () => <div>List View</div>);
@@ -13,24 +15,33 @@ jest.mock('@/components/Contexts/Views/Calendar/Calendar', () => () => <div>Cale
 describe('ContextPage', () => {
   let database: PouchDB.Database<DocumentTypes>;
   let localDataSource: DataSource;
-  let getTasks: jest.SpyInstance;
+  let subscribeToTasks: jest.SpyInstance;
+  let getPreferences: jest.SpyInstance;
+  const unsubscribeFunction = jest.fn();
 
   beforeEach(() => {
-    // I could never get the pouchdb-memory plugin to work with the test suite,
-    // so we use a new database for each test. If we don't subsequent runs will fail
-    database = new PouchDB<DocumentTypes>(
-      `test_db_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+    const testData = createTestLocalDataSource();
+    localDataSource = testData.dataSource;
+    database = testData.database;
+
+    subscribeToTasks = jest
+      .spyOn(localDataSource, 'subscribeToTasks')
+      .mockReturnValue(unsubscribeFunction);
+
+    getPreferences = jest.spyOn(localDataSource, 'getPreferences').mockResolvedValue(
+      new PreferencesFactory().create({
+        lastSelectedContext: 'Test Context',
+      })
     );
-    localDataSource = new LocalDataSource(database);
-    getTasks = jest.spyOn(localDataSource, 'getTasks').mockResolvedValue([]);
   });
 
   afterEach(async () => {
-    getTasks.mockRestore();
+    subscribeToTasks.mockRestore();
+    getPreferences.mockRestore();
     await database.destroy();
   });
 
-  const renderWithDataSource = (component: React.ReactElement) => {
+  const renderWithDataSource = (component: ReactElement) => {
     return render(
       <DataSourceContextProvider dataSource={localDataSource}>
         {component}
@@ -38,21 +49,22 @@ describe('ContextPage', () => {
     );
   };
 
-  it('Calls get tasks with the default parameters', async () => {
+  it('Subscribes to tasks with the correct parameters', async () => {
     renderWithDataSource(<ContextPage contextName="Test Context" />);
 
     // The view selector needs to be loaded so that this test doesn't cause issues
     await screen.findByRole('radio', { name: 'List' });
 
-    await waitFor(() => {
-      expect(getTasks).toHaveBeenCalledWith({
+    expect(subscribeToTasks).toHaveBeenCalledWith(
+      {
         statuses: ['ready'],
         context: 'Test Context',
-      });
-    });
+      },
+      expect.any(Function)
+    );
   });
 
-  it('Updates the tasks when the selected task statuses change', async () => {
+  it('Re-subscribes to tasks when the status selector is invoked', async () => {
     renderWithDataSource(<ContextPage contextName="Test Context" />);
 
     // The view selector needs to be loaded so that this test doesn't cause issues
@@ -60,10 +72,14 @@ describe('ContextPage', () => {
 
     await userEvent.click(screen.getByRole('checkbox', { name: 'Started' }));
 
-    expect(getTasks).toHaveBeenCalledWith({
-      statuses: ['ready', 'started'],
-      context: 'Test Context',
-    });
+    expect(unsubscribeFunction).toHaveBeenCalled();
+    expect(subscribeToTasks).toHaveBeenCalledWith(
+      {
+        statuses: ['ready', 'started'],
+        context: 'Test Context',
+      },
+      expect.any(Function)
+    );
   });
 
   it('Loads the list view by default', async () => {
@@ -74,10 +90,6 @@ describe('ContextPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('List View')).toBeInTheDocument();
-      expect(getTasks).toHaveBeenCalledWith({
-        statuses: ['ready'],
-        context: 'Test Context',
-      });
     });
   });
 

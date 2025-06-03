@@ -1,4 +1,4 @@
-import { Task, TaskStatus } from '@/data/interfaces/Task';
+import { Task, TaskStatus } from '@/data/documentTypes/Task';
 import { Factory } from './Factory';
 
 export class TaskFactory implements Factory<Task> {

@@ -1,10 +1,10 @@
 import { useRouter } from 'next/router';
-import PouchDB from 'pouchdb';
 import ContextLinks from '@/components/Layout/ContextLinks';
 import { DataSourceContextProvider } from '@/contexts/DataSourceContext';
-import { DocumentTypes } from '@/data/interfaces';
+import { DocumentTypes } from '@/data/documentTypes';
 import { LocalDataSource } from '@/data/LocalDataSource';
 import { render, screen, waitFor } from '@/test-utils';
+import { createTestLocalDataSource } from '@/test-utils/db';
 
 jest.mock('next/router', () => ({
   useRouter: jest.fn(),
@@ -31,10 +31,9 @@ describe('ContextLinks', () => {
     jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue({});
 
-    db = new PouchDB<DocumentTypes>(
-      `test_db_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
-    );
-    dataSource = new LocalDataSource(db);
+    const testData = createTestLocalDataSource();
+    dataSource = testData.dataSource;
+    db = testData.database;
   });
 
   afterEach(async () => {

@@ -1,8 +1,18 @@
 import { waitFor } from '@testing-library/dom';
-import PouchDB from 'pouchdb';
-import { DocumentTypes } from '@/data/interfaces';
+import { Preferences } from '@/data/documentTypes/Preferences';
 import { LocalDataSource } from '@/data/LocalDataSource';
+import { createTestLocalDataSource } from '@/test-utils/db';
 import { ContextFactory } from '@/test-utils/factories/ContextFactory';
+import { PreferencesFactory } from '@/test-utils/factories/PreferencesFactory';
+import { TaskFactory } from '@/test-utils/factories/TaskFactory';
+import { DocumentTypes } from '../documentTypes';
+import { Task, TaskStatus } from '../documentTypes/Task';
+
+jest.mock('@/data/documentTypes/Preferences', () => ({
+  createDefaultPreferences: jest.fn(() => ({
+    lastSelectedContext: 'context1',
+  })),
+}));
 
 describe('LocalDataSource', () => {
   let localDataSource: LocalDataSource;
@@ -10,12 +20,9 @@ describe('LocalDataSource', () => {
   const contextFactory = new ContextFactory();
 
   beforeEach(() => {
-    // I could never get the pouchdb-memory plugin to work with the test suite,
-    // so we use a new database for each test. If we don't subsequent runs will fail
-    database = new PouchDB<DocumentTypes>(
-      `test_db_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
-    );
-    localDataSource = new LocalDataSource(database);
+    const testData = createTestLocalDataSource();
+    localDataSource = testData.dataSource;
+    database = testData.database;
   });
 
   afterEach(async () => {
@@ -27,7 +34,146 @@ describe('LocalDataSource', () => {
     expect(contexts).toEqual([]);
   });
 
-  it('addContext should add a context to the database', async () => {
+  test('getPreferences should return default preferences', async () => {
+    const preferences = await localDataSource.getPreferences();
+    expect(preferences).toEqual({
+      lastSelectedContext: 'context1',
+    });
+  });
+
+  test('getPreferences should return stored preferences', async () => {
+    await database.post<Preferences>(
+      new PreferencesFactory().create({
+        lastSelectedContext: 'context1',
+      })
+    );
+
+    const preferences = await localDataSource.getPreferences();
+    expect(preferences.lastSelectedContext).toBe('context1');
+  });
+
+  test('setPreferences should create new preferences in the database', async () => {
+    const newPreferences = new PreferencesFactory().create({
+      lastSelectedContext: 'foo-context',
+    });
+
+    await localDataSource.setPreferences(newPreferences);
+
+    const preferences = await localDataSource.getPreferences();
+    expect(preferences.lastSelectedContext).toBe('foo-context');
+  });
+
+  test('setPreferences should update existing preferences', async () => {
+    const newPreferences = new PreferencesFactory().create({
+      lastSelectedContext: 'foo-context',
+    });
+
+    await localDataSource.setPreferences(newPreferences);
+
+    const preferences = await localDataSource.getPreferences();
+    expect(preferences.lastSelectedContext).toBe('foo-context');
+
+    preferences.lastSelectedContext = 'poo-context';
+    await localDataSource.setPreferences(preferences);
+
+    const updatedPreferences = await localDataSource.getPreferences();
+    expect(updatedPreferences.lastSelectedContext).toBe('poo-context');
+  });
+
+  test('addTask should add a task to the database', async () => {
+    const task = new TaskFactory().create();
+
+    await localDataSource.addTask(task);
+
+    const tasks = await database.allDocs({ include_docs: true });
+    expect(tasks.rows).toHaveLength(1);
+
+    const returnedTask = tasks.rows[0].doc as Task;
+
+    expect(returnedTask.context).toEqual(task.context);
+    expect(returnedTask._id.startsWith('task-')).toBe(true);
+  });
+
+  test('getTasks should use a high unicode value for the endkey', async () => {
+    // @ts-ignore: Accessing protected member for testing purposes
+    localDataSource.db = {
+      allDocs: jest.fn().mockResolvedValue({
+        rows: [],
+      }),
+    } as unknown as PouchDB.Database<DocumentTypes>;
+
+    await localDataSource.getTasks({});
+
+    // @ts-ignore: Accessing protected member for testing purposes
+    expect(localDataSource.db.allDocs).toHaveBeenCalledWith({
+      startkey: 'task-',
+      endkey: 'task-\ufff0',
+      include_docs: true,
+    });
+  });
+
+  test('getTasks should return tasks filtered', async () => {
+    const task1 = new TaskFactory().create({ context: 'context1' });
+
+    await localDataSource.addTask(task1);
+
+    const filterMock = jest.spyOn(localDataSource, 'filterTasksByParams').mockReturnValue([]);
+
+    const tasks = await localDataSource.getTasks({
+      context: 'context1',
+      statuses: [],
+    });
+
+    expect(tasks).toHaveLength(0);
+    expect(filterMock).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'task',
+          context: 'context1',
+        }),
+      ]),
+      {
+        context: 'context1',
+        statuses: [],
+      }
+    );
+  });
+
+  test('subscribeToTasks should register a task change subscriber', async () => {
+    const subscriber = jest.fn();
+
+    localDataSource.subscribeToTasks({ context: 'context1' }, subscriber);
+
+    // The subscriber should be called with the tasks right away
+    await waitFor(() => {
+      expect(subscriber).toHaveBeenCalled();
+    });
+  });
+
+  test('subscribeToTasks should stop callback when unsubscribe is called', async () => {
+    const subscriber = jest.fn();
+    const subscriber2 = jest.fn();
+
+    const unsubscribe = localDataSource.subscribeToTasks({ context: 'context1' }, subscriber);
+    localDataSource.subscribeToTasks({ context: 'context1' }, subscriber2);
+
+    await waitFor(() => {
+      // The subscriber should be called with the tasks right away
+      expect(subscriber).toHaveBeenCalledWith([]);
+    });
+
+    unsubscribe();
+    subscriber.mockReset();
+
+    await localDataSource.addTask(new TaskFactory().create({ context: 'context1' }));
+
+    await waitFor(() => {
+      expect(subscriber).not.toHaveBeenCalled();
+      expect(subscriber2).toHaveBeenCalled();
+    });
+  });
+
+  test('addContext should add a context to the database', async () => {
     const contextName = 'test-context';
     await localDataSource.addContext(contextName);
 
@@ -109,5 +255,22 @@ describe('LocalDataSource', () => {
     await waitFor(() => {
       expect(subscriber).toHaveBeenCalledWith(['a new context']);
     });
+  });
+
+  test('filterTasksByParams should filter tasks by context and statuses', () => {
+    const tasks: Task[] = [
+      new TaskFactory().create({ context: 'context1', status: TaskStatus.Ready }),
+      new TaskFactory().create({ context: 'context1', status: TaskStatus.Started }),
+      new TaskFactory().create({ context: 'context2', status: TaskStatus.Waiting }),
+      new TaskFactory().create({ context: 'context2', status: TaskStatus.Done }),
+    ];
+
+    const filteredTasks = localDataSource.filterTasksByParams(tasks, {
+      context: 'context1',
+      statuses: [TaskStatus.Started, TaskStatus.Waiting],
+    });
+
+    expect(filteredTasks).toHaveLength(1);
+    expect(filteredTasks[0].status).toBe(TaskStatus.Started);
   });
 });

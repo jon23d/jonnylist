@@ -1,4 +1,4 @@
-import { Common } from '@/data/interfaces/Common';
+import { Common } from '@/data/documentTypes/Common';
 
 export interface Context extends Common {
   type: 'context';

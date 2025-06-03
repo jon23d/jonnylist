@@ -3305,6 +3305,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mantine/dates@npm:^8.0.2":
+  version: 8.0.2
+  resolution: "@mantine/dates@npm:8.0.2"
+  dependencies:
+    clsx: "npm:^2.1.1"
+  peerDependencies:
+    "@mantine/core": 8.0.2
+    "@mantine/hooks": 8.0.2
+    dayjs: ">=1.0.0"
+    react: ^18.x || ^19.x
+    react-dom: ^18.x || ^19.x
+  checksum: 10c0/b75a05e5bca0316e43a09e0fa591c70a787f4ae60c0b338fc9d51833fd780c2057e03426273894efd2a54d7827f58f8c032917918004690fca13f0d47d347f56
+  languageName: node
+  linkType: hard
+
 "@mantine/form@npm:^8.0.1":
   version: 8.0.1
   resolution: "@mantine/form@npm:8.0.1"
@@ -7035,6 +7050,13 @@ __metadata:
     es-errors: "npm:^1.3.0"
     is-data-view: "npm:^1.0.1"
   checksum: 10c0/fa7aa40078025b7810dcffc16df02c480573b7b53ef1205aa6a61533011005c1890e5ba17018c692ce7c900212b547262d33279fde801ad9843edc0863bf78c4
+  languageName: node
+  linkType: hard
+
+"dayjs@npm:^1.11.13":
+  version: 1.11.13
+  resolution: "dayjs@npm:1.11.13"
+  checksum: 10c0/a3caf6ac8363c7dade9d1ee797848ddcf25c1ace68d9fe8678ecf8ba0675825430de5d793672ec87b24a69bf04a1544b176547b2539982275d5542a7955f35b7
   languageName: node
   linkType: hard
 
@@ -11146,6 +11168,7 @@ __metadata:
     "@eslint/js": "npm:^9.23.0"
     "@ianvs/prettier-plugin-sort-imports": "npm:^4.4.1"
     "@mantine/core": "npm:8.0.1"
+    "@mantine/dates": "npm:^8.0.2"
     "@mantine/form": "npm:^8.0.1"
     "@mantine/hooks": "npm:8.0.1"
     "@next/bundle-analyzer": "npm:^15.2.3"
@@ -11162,6 +11185,7 @@ __metadata:
     "@types/pouchdb": "npm:^6.4.2"
     "@types/react": "npm:19.0.12"
     babel-loader: "npm:^10.0.0"
+    dayjs: "npm:^1.11.13"
     eslint: "npm:^9.23.0"
     eslint-config-mantine: "npm:^4.0.3"
     eslint-plugin-jsx-a11y: "npm:^6.10.2"
