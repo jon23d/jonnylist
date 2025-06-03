@@ -23,6 +23,7 @@ type TaskSubscriberWithFilterParams = {
 /**
  * @TODO This whole thing needs error handling
  * @TODO Consider using pouchdb indices once the dust settles
+ * @TODO It feels like the pouch stuff may belong in a separate class
  */
 export class LocalDataSource implements DataSource {
   protected db: PouchDB.Database<DocumentTypes>;
@@ -219,6 +220,15 @@ export class LocalDataSource implements DataSource {
     return () => this.removeContextSubscriber(callback);
   }
 
+  filterTasksByParams(tasks: Task[], params: getTasksParams): Task[] {
+    return tasks.filter((task) => {
+      if (params.context && task.context !== params.context) {
+        return false;
+      }
+      return !(params.statuses && !params.statuses.includes(task.status));
+    });
+  }
+
   private initializeTaskChangesFeed(): void {
     Logger.info('Initializing PouchDB changes feed for tasks');
     this.taskChangesFeed = this.db
@@ -331,14 +341,5 @@ export class LocalDataSource implements DataSource {
       this.contextChangesFeed.cancel();
       this.contextChangesFeed = undefined;
     }
-  }
-
-  private filterTasksByParams(tasks: Task[], params: getTasksParams): Task[] {
-    return tasks.filter((task) => {
-      if (params.context && task.context !== params.context) {
-        return false;
-      }
-      return !(params.statuses && !params.statuses.includes(task.status));
-    });
   }
 }

@@ -6,7 +6,7 @@ import { ContextFactory } from '@/test-utils/factories/ContextFactory';
 import { PreferencesFactory } from '@/test-utils/factories/PreferencesFactory';
 import { TaskFactory } from '@/test-utils/factories/TaskFactory';
 import { DocumentTypes } from '../documentTypes';
-import { Task } from '../documentTypes/Task';
+import { Task, TaskStatus } from '../documentTypes/Task';
 
 jest.mock('@/data/documentTypes/Preferences', () => ({
   createDefaultPreferences: jest.fn(() => ({
@@ -91,6 +91,86 @@ describe('LocalDataSource', () => {
     const returnedTask = tasks.rows[0].doc as Task;
 
     expect(returnedTask.context).toEqual(task.context);
+    expect(returnedTask._id.startsWith('task-')).toBe(true);
+  });
+
+  test('getTasks should use a high unicode value for the endkey', async () => {
+    // @ts-ignore: Accessing protected member for testing purposes
+    localDataSource.db = {
+      allDocs: jest.fn().mockResolvedValue({
+        rows: [],
+      }),
+    } as unknown as PouchDB.Database<DocumentTypes>;
+
+    await localDataSource.getTasks({});
+
+    // @ts-ignore: Accessing protected member for testing purposes
+    expect(localDataSource.db.allDocs).toHaveBeenCalledWith({
+      startkey: 'task-',
+      endkey: 'task-\ufff0',
+      include_docs: true,
+    });
+  });
+
+  test('getTasks should return tasks filtered', async () => {
+    const task1 = new TaskFactory().create({ context: 'context1' });
+
+    await localDataSource.addTask(task1);
+
+    const filterMock = jest.spyOn(localDataSource, 'filterTasksByParams').mockReturnValue([]);
+
+    const tasks = await localDataSource.getTasks({
+      context: 'context1',
+      statuses: [],
+    });
+
+    expect(tasks).toHaveLength(0);
+    expect(filterMock).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'task',
+          context: 'context1',
+        }),
+      ]),
+      {
+        context: 'context1',
+        statuses: [],
+      }
+    );
+  });
+
+  test('subscribeToTasks should register a task change subscriber', async () => {
+    const subscriber = jest.fn();
+
+    localDataSource.subscribeToTasks({ context: 'context1' }, subscriber);
+
+    // The subscriber should be called with the tasks right away
+    await waitFor(() => {
+      expect(subscriber).toHaveBeenCalled();
+    });
+  });
+
+  test('subscribeToTasks should stop callback when unsubscribe is called', async () => {
+    const subscriber = jest.fn();
+    const subscriber2 = jest.fn();
+
+    const unsubscribe = localDataSource.subscribeToTasks({ context: 'context1' }, subscriber);
+    localDataSource.subscribeToTasks({ context: 'context1' }, subscriber2);
+
+    await waitFor(() => {
+      // The subscriber should be called with the tasks right away
+      expect(subscriber).toHaveBeenCalledWith([]);
+    });
+
+    unsubscribe();
+    subscriber.mockReset();
+
+    await localDataSource.addTask(new TaskFactory().create({ context: 'context1' }));
+
+    await waitFor(() => {
+      expect(subscriber).not.toHaveBeenCalled();
+      expect(subscriber2).toHaveBeenCalled();
+    });
   });
 
   test('addContext should add a context to the database', async () => {
@@ -175,5 +255,22 @@ describe('LocalDataSource', () => {
     await waitFor(() => {
       expect(subscriber).toHaveBeenCalledWith(['a new context']);
     });
+  });
+
+  test('filterTasksByParams should filter tasks by context and statuses', () => {
+    const tasks: Task[] = [
+      new TaskFactory().create({ context: 'context1', status: TaskStatus.Ready }),
+      new TaskFactory().create({ context: 'context1', status: TaskStatus.Started }),
+      new TaskFactory().create({ context: 'context2', status: TaskStatus.Waiting }),
+      new TaskFactory().create({ context: 'context2', status: TaskStatus.Done }),
+    ];
+
+    const filteredTasks = localDataSource.filterTasksByParams(tasks, {
+      context: 'context1',
+      statuses: [TaskStatus.Started, TaskStatus.Waiting],
+    });
+
+    expect(filteredTasks).toHaveLength(1);
+    expect(filteredTasks[0].status).toBe(TaskStatus.Started);
   });
 });
