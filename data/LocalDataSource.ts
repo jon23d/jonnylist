@@ -239,7 +239,6 @@ export class LocalDataSource implements DataSource {
         if (change.id.startsWith('task-')) {
           try {
             const updatedTasks = await this.getTasks({});
-            Logger.info('Updated tasks after change:', updatedTasks);
             this.notifyTaskSubscribers(updatedTasks);
           } catch (error) {
             // TODO
@@ -271,7 +270,6 @@ export class LocalDataSource implements DataSource {
         if (change.id.startsWith('context-')) {
           try {
             const updatedContexts = await this.getContexts();
-            Logger.info('Updated contexts after change:', updatedContexts);
             this.notifyContextSubscribers(updatedContexts);
           } catch (error) {
             // TODO
@@ -286,6 +284,7 @@ export class LocalDataSource implements DataSource {
   }
 
   private notifyTaskSubscribers(tasks: Task[]): void {
+    Logger.info('Notifying task change subscribers');
     this.taskChangeSubscribers.forEach((taskSubscriber: TaskSubscriberWithFilterParams) => {
       try {
         const tasksToNotify = this.filterTasksByParams(tasks, taskSubscriber.params);
@@ -304,6 +303,7 @@ export class LocalDataSource implements DataSource {
    * @private
    */
   private notifyContextSubscribers(contexts: string[]): void {
+    Logger.info('Notifying context change subscribers');
     this.contextChangeSubscribers.forEach((callback) => {
       try {
         callback(contexts);
