@@ -18,7 +18,7 @@ export interface DataSource {
   getTasks: (params: getTasksParams) => Promise<Task[]>;
   subscribeToTasks: (
     params: getTasksParams,
-    callback: (tasks: Task[]) => void
+    callback: TaskSubscriber
   ) => UnsubscribeFunction;
   getContexts: () => Promise<string[]>;
   addContext: (context: string) => Promise<void>;
