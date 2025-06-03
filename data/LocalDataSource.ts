@@ -147,12 +147,11 @@ export class LocalDataSource implements DataSource {
     }
 
     // Provide the initial tasks to the callback
-    try {
-      this.getTasks(params).then((tasks) => callback(tasks));
-    } catch (error) {
-      // TODO
-      Logger.error('Error fetching initial tasks for watcher:', error);
-    }
+    this.getTasks(params)
+      .then((tasks) => callback(tasks))
+      .catch((error) => {
+        Logger.error('Error fetching initial tasks for watcher:', error);
+      });
 
     // Return an unsubscribe function
     return () => this.removeTaskSubscriber({ callback, params });
