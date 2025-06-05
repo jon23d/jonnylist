@@ -121,6 +121,15 @@ export class LocalDataSource implements DataSource {
 
     const allTasks = result.rows.map((row) => row.doc as Task);
 
+    // Convert dates to Date objects
+    allTasks.forEach((task) => {
+      if (task.dueDate) {
+        task.dueDate = new Date(task.dueDate);
+      }
+      task.createdAt = new Date(task.createdAt);
+      task.updatedAt = new Date(task.updatedAt);
+    });
+
     return this.filterTasksByParams(allTasks, params);
   }
 
