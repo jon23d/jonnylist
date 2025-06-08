@@ -82,7 +82,7 @@ export class LocalDataSource implements DataSource {
    *
    * @param newTask
    */
-  async addTask(newTask: NewTask): Promise<void> {
+  async addTask(newTask: NewTask): Promise<Task> {
     Logger.info('Adding task');
     const task: Task = {
       _id: `task-${new Date().toISOString()}-${Math.random().toString(36).substring(2, 15)}`,
@@ -100,10 +100,33 @@ export class LocalDataSource implements DataSource {
 
     try {
       await this.db.put(task);
+      return task;
     } catch (error) {
       Logger.error('Error adding task:', error);
       throw error; // Re-throw to handle it in the calling code
     }
+  }
+
+  async updateTask(task: Task): Promise<Task> {
+    Logger.info('Updating task');
+
+    // Update the updatedAt timestamp
+    task.updatedAt = new Date();
+
+    let response;
+
+    try {
+      response = await this.db.put(task);
+    } catch (error) {
+      Logger.error('Error updating task:', error);
+      throw error; // Re-throw to handle it in the calling code
+    }
+
+    if (response.ok) {
+      return task;
+    }
+
+    throw new Error('Failed to update task');
   }
 
   /**
