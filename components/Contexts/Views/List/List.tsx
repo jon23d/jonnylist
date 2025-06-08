@@ -99,50 +99,47 @@ export default function List({ tasks }: ViewProps) {
             <Table.Tr>
               <Table.Th w={20} />
               <Table.Th>Title</Table.Th>
-              <Table.Th>Status</Table.Th>
               <Table.Th>Description</Table.Th>
               <Table.Th>Due Date</Table.Th>
             </Table.Tr>
           </Table.Thead>
-          {ALL_STATUSES.map((status) =>
-            groupedTasks[status].length === 0 ? null : (
-              <React.Fragment key={status}>
-                <Table.Tbody>
-                  <Table.Tr>
-                    <Table.Th
-                      colSpan={5}
-                      style={{
-                        backgroundColor: 'var(--mantine-color-gray-1)',
-                        borderBottom: 'none',
-                        paddingTop: 'var(--mantine-spacing-xs)',
-                      }}
-                    >
-                      <Text fw={700} c="blue">
-                        {status} ({groupedTasks[status].length})
-                      </Text>
-                    </Table.Th>
-                  </Table.Tr>
-                </Table.Tbody>
+          {ALL_STATUSES.filter((status) => groupedTasks[status].length).map((status) => (
+            <React.Fragment key={status}>
+              <Table.Tbody>
+                <Table.Tr>
+                  <Table.Th
+                    colSpan={5}
+                    style={{
+                      backgroundColor: 'var(--mantine-color-gray-1)',
+                      borderBottom: 'none',
+                      paddingTop: 'var(--mantine-spacing-xs)',
+                    }}
+                  >
+                    <Text fw={700} c="blue">
+                      {status} ({groupedTasks[status].length})
+                    </Text>
+                  </Table.Th>
+                </Table.Tr>
+              </Table.Tbody>
 
-                <Droppable droppableId={status}>
-                  {(provided) => (
-                    <Table.Tbody {...provided.droppableProps} ref={provided.innerRef}>
-                      {groupedTasks[status].map((task, index) => (
-                        <ListRow
-                          key={task._id}
-                          task={task}
-                          index={index}
-                          columnWidths={columnWidths}
-                          handleClick={showEditDialog}
-                        />
-                      ))}
-                      {provided.placeholder}
-                    </Table.Tbody>
-                  )}
-                </Droppable>
-              </React.Fragment>
-            )
-          )}
+              <Droppable droppableId={status}>
+                {(provided) => (
+                  <Table.Tbody {...provided.droppableProps} ref={provided.innerRef}>
+                    {groupedTasks[status].map((task, index) => (
+                      <ListRow
+                        key={task._id}
+                        task={task}
+                        index={index}
+                        columnWidths={columnWidths}
+                        handleClick={showEditDialog}
+                      />
+                    ))}
+                    {provided.placeholder}
+                  </Table.Tbody>
+                )}
+              </Droppable>
+            </React.Fragment>
+          ))}
         </Table>
       </DragDropContext>
       <Modal opened={editorOpened} onClose={close} title="Edit Task" size="lg">

@@ -31,9 +31,8 @@ export default function ListRow({
             </div>
           </Table.Td>
           <Table.Td w={columnWidths[1]}>{task.title}</Table.Td>
-          <Table.Td w={columnWidths[2]}>{task.status}</Table.Td>
-          <Table.Td w={columnWidths[3]}>{task.description}</Table.Td>
-          <Table.Td w={columnWidths[4]}>
+          <Table.Td w={columnWidths[2]}>{task.description}</Table.Td>
+          <Table.Td w={columnWidths[3]}>
             {task.dueDate ? task.dueDate.toLocaleDateString() : 'No due date'}
           </Table.Td>
         </Table.Tr>
