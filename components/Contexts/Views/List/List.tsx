@@ -1,47 +1,57 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { DragDropContext, Droppable } from '@hello-pangea/dnd';
+import React, { useEffect, useMemo, useState } from 'react';
+import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { Modal, Table, Text } from '@mantine/core';
-import { useDisclosure, useListState } from '@mantine/hooks';
+import { useDisclosure, useListState, useResizeObserver } from '@mantine/hooks';
 import ListRow from '@/components/Contexts/Views/List/ListRow';
 import { ViewProps } from '@/components/Contexts/Views/viewProps';
 import TaskEditor from '@/components/Tasks/TaskEditor';
-import { Task } from '@/data/documentTypes/Task';
+import { useDataSource } from '@/contexts/DataSourceContext';
+import { Task, TaskStatus } from '@/data/documentTypes/Task';
+
+const ALL_STATUSES: TaskStatus[] = Object.values(TaskStatus);
 
 export default function List({ tasks }: ViewProps) {
+  const dataSource = useDataSource();
+
   const [tasksState, handlers] = useListState<Task>(tasks);
   // We are going to tell the rows what the column widths are so that they don't get weird
   // when re-ordering
   const [columnWidths, setColumnWidths] = useState<number[]>([]);
-  const theadRef = useRef<HTMLTableSectionElement>(null);
+  const [theadRef, theadRect] = useResizeObserver();
   const [editorOpened, { open, close }] = useDisclosure(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   // We need to support re-ordering of tasks in the list.
   useEffect(() => {
     handlers.setState(tasks);
-  }, [tasks]);
+  }, [tasks, handlers]);
 
   useEffect(() => {
-    const measureWidths = () => {
-      if (theadRef.current) {
-        const widths: number[] = [];
-        const thElements = Array.from(theadRef.current.querySelectorAll('th'));
-        thElements.forEach((el) => {
-          widths.push(el.offsetWidth);
-        });
+    if (theadRef.current && theadRect.width > 0) {
+      // Check theadRef.current and ensure it has a width
+      const widths: number[] = [];
+      const thElements = Array.from(theadRef.current.querySelectorAll('th'));
+      thElements.forEach((el) => {
+        widths.push((el as HTMLElement).offsetWidth);
+      });
 
-        if (widths.length > 0 && JSON.stringify(widths) !== JSON.stringify(columnWidths)) {
-          setColumnWidths(widths);
-        }
+      if (widths.length > 0 && JSON.stringify(widths) !== JSON.stringify(columnWidths)) {
+        setColumnWidths(widths);
       }
-    };
-    measureWidths();
+    }
+  }, [theadRect.width, tasks.length, columnWidths, theadRef]);
 
-    window.addEventListener('resize', measureWidths);
-    return () => {
-      window.removeEventListener('resize', measureWidths);
-    };
-  }, [tasks.length]);
+  const groupedTasks = useMemo(() => {
+    const groups: Record<string, Task[]> = {};
+    // Initialize groups with empty arrays for all defined statuses
+    ALL_STATUSES.forEach((status) => {
+      groups[status] = [];
+    });
+
+    // Populate groups with tasks from tasksState
+    tasksState.forEach((task) => groups[task.status as TaskStatus].push(task));
+    return groups;
+  }, [tasksState]);
 
   if (!tasks.length) {
     return (
@@ -50,6 +60,26 @@ export default function List({ tasks }: ViewProps) {
       </Text>
     );
   }
+
+  const handleDragEnd = async (result: DropResult) => {
+    if (!result.destination) {
+      return;
+    }
+
+    const sourceStatus = result.source.droppableId as TaskStatus;
+    const destinationStatus = result.destination.droppableId as TaskStatus;
+    if (sourceStatus === destinationStatus) {
+      return;
+    }
+
+    // Grab the task from tasksState
+    const taskIndex = tasksState.findIndex((task) => task._id === result.draggableId);
+    const task = tasksState[taskIndex];
+    task.status = destinationStatus;
+
+    // Update the task in the data source
+    await dataSource.updateTask(task);
+  };
 
   const showEditDialog = (task: Task) => {
     setSelectedTask(task);
@@ -63,37 +93,56 @@ export default function List({ tasks }: ViewProps) {
 
   return (
     <>
-      <DragDropContext
-        onDragEnd={({ destination, source }) =>
-          handlers.reorder({ from: source.index, to: destination?.index || 0 })
-        }
-      >
+      <DragDropContext onDragEnd={handleDragEnd}>
         <Table highlightOnHover tabIndex={0}>
           <Table.Thead ref={theadRef}>
             <Table.Tr>
-              <Table.Th w={40} />
+              <Table.Th w={20} />
               <Table.Th>Title</Table.Th>
               <Table.Th>Status</Table.Th>
               <Table.Th>Description</Table.Th>
               <Table.Th>Due Date</Table.Th>
             </Table.Tr>
           </Table.Thead>
-          <Droppable droppableId="dnd-list">
-            {(provided) => (
-              <Table.Tbody {...provided.droppableProps} ref={provided.innerRef}>
-                {tasksState.map((task, index) => (
-                  <ListRow
-                    key={task._id}
-                    task={task}
-                    index={index}
-                    columnWidths={columnWidths}
-                    handleClick={showEditDialog}
-                  />
-                ))}
-                {provided.placeholder}
-              </Table.Tbody>
-            )}
-          </Droppable>
+          {ALL_STATUSES.map((status) =>
+            groupedTasks[status].length === 0 ? null : (
+              <React.Fragment key={status}>
+                <Table.Tbody>
+                  <Table.Tr>
+                    <Table.Th
+                      colSpan={5}
+                      style={{
+                        backgroundColor: 'var(--mantine-color-gray-1)',
+                        borderBottom: 'none',
+                        paddingTop: 'var(--mantine-spacing-xs)',
+                      }}
+                    >
+                      <Text fw={700} c="blue">
+                        {status} ({groupedTasks[status].length})
+                      </Text>
+                    </Table.Th>
+                  </Table.Tr>
+                </Table.Tbody>
+
+                <Droppable droppableId={status}>
+                  {(provided) => (
+                    <Table.Tbody {...provided.droppableProps} ref={provided.innerRef}>
+                      {groupedTasks[status].map((task, index) => (
+                        <ListRow
+                          key={task._id}
+                          task={task}
+                          index={index}
+                          columnWidths={columnWidths}
+                          handleClick={showEditDialog}
+                        />
+                      ))}
+                      {provided.placeholder}
+                    </Table.Tbody>
+                  )}
+                </Droppable>
+              </React.Fragment>
+            )
+          )}
         </Table>
       </DragDropContext>
       <Modal opened={editorOpened} onClose={close} title="Edit Task" size="lg">
