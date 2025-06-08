@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Group } from '@mantine/core';
+import { Group, Title } from '@mantine/core';
 import Board from '@/components/Contexts/Views/Board/Board';
 import Calendar from '@/components/Contexts/Views/Calendar/Calendar';
 import List from '@/components/Contexts/Views/List/List';
@@ -53,11 +53,13 @@ export default function ContextPage({ contextName }: { contextName: string }) {
 
   return (
     <>
-      <Group justify="space-between">
+      <Group justify="space-between" mb={10}>
         <ViewSelector value={currentView} onChange={setCurrentView} />
         <TaskStatusSelector value={selectedTaskStatuses} onChange={setSelectedTaskStatuses} />
       </Group>
-      <h1>{contextName} Context</h1>
+      <Title order={1} mb={10}>
+        {contextName}
+      </Title>
       <SelectedView tasks={tasks} />
     </>
   );

@@ -14,7 +14,8 @@ export type ContextSubscriber = (contexts: string[]) => void;
 export interface DataSource {
   getPreferences: () => Promise<Preferences>;
   setPreferences: (preferences: Preferences) => Promise<void>;
-  addTask: (task: NewTask) => Promise<void>;
+  addTask: (task: NewTask) => Promise<Task>;
+  updateTask: (task: Task) => Promise<Task>;
   getTasks: (params: getTasksParams) => Promise<Task[]>;
   subscribeToTasks: (params: getTasksParams, callback: TaskSubscriber) => UnsubscribeFunction;
   getContexts: () => Promise<string[]>;

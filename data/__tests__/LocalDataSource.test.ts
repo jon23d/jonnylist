@@ -112,6 +112,21 @@ describe('LocalDataSource', () => {
     });
   });
 
+  test('getTasks should convert date fields to Date objects', async () => {
+    await localDataSource.addTask(
+      new TaskFactory().create({
+        dueDate: new Date('2023-01-01T00:00:00Z'),
+      })
+    );
+
+    const task = (await localDataSource.getTasks({}))[0];
+
+    expect(task.dueDate).toBeInstanceOf(Date);
+    expect(task.dueDate!.toISOString()).toBe('2023-01-01T00:00:00.000Z');
+    expect(task.createdAt).toBeInstanceOf(Date);
+    expect(task.updatedAt).toBeInstanceOf(Date);
+  });
+
   test('getTasks should return tasks filtered', async () => {
     const task1 = new TaskFactory().create({ context: 'context1' });
 
