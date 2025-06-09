@@ -1,4 +1,5 @@
 import { ReactElement } from 'react';
+import { DropResult } from '@hello-pangea/dnd';
 import List from '@/components/Contexts/Views/List/List';
 import { DataSourceContextProvider } from '@/contexts/DataSourceContext';
 import { DataSource } from '@/data/DataSource';
@@ -8,7 +9,41 @@ import { render, screen, waitFor } from '@/test-utils';
 import { createTestLocalDataSource } from '@/test-utils/db';
 import { TaskFactory } from '@/test-utils/factories/TaskFactory';
 
+const mockDataSource = {
+  updateTask: jest.fn(),
+};
+jest.mock('@/contexts/DataSourceContext', () => ({
+  ...jest.requireActual('@/contexts/DataSourceContext'),
+  useDataSource: () => mockDataSource,
+}));
+
 let onDragEndSpy: (result: DropResult) => void;
+
+// Testing the drag and drop functionality is not easy. We cannot directly test the drag and drop
+// behavior in jsdom, so instead we will intercept the onDragEnd function and pass in the resulting
+// DropResult object to simulate a drag and drop operation. This allows us to test the logic that
+// handles the re-ordering of tasks and updating their statuses without needing to actually drag and drop
+// @ts-ignore
+jest.mock('@hello-pangea/dnd', () => ({
+  ...jest.requireActual('@hello-pangea/dnd'),
+  DragDropContext: ({ children, onDragEnd }: any) => {
+    onDragEndSpy = onDragEnd;
+    return <div data-testid="mock-drag-drop-context">{children}</div>;
+  },
+  Droppable: ({ children, droppableId }: any) => (
+    <div data-testid={`mock-droppable-${droppableId}`}>
+      {children({ innerRef: jest.fn(), droppableProps: {}, placeholder: null })}
+    </div>
+  ),
+  Draggable: ({ children, draggableId, _ }: any) => (
+    <div data-testid={`mock-draggable-${draggableId}`} draggable="true">
+      {children(
+        { innerRef: jest.fn(), draggableProps: {}, dragHandleProps: {}, renderClone: jest.fn() },
+        { isDragging: false }
+      )}
+    </div>
+  ),
+}));
 
 describe('Task list view component', () => {
   let dataSource: DataSource;
@@ -49,9 +84,43 @@ describe('Task list view component', () => {
   });
 
   it('updates task status and re-groups tasks when dragged to a different status', async () => {
-    // This is pretty hard to test in this context. I think we will simply invoke handleDragEnd
-    // directly with a mock result.
-    // TODO Make this real
-    expect(1).toEqual(1);
+    const tasks = [
+      taskFactory.create({ _id: '1', status: TaskStatus.Ready }),
+      taskFactory.create({ _id: '2', status: TaskStatus.Ready, title: 'Task A' }),
+      taskFactory.create({ _id: '3', status: TaskStatus.Started, title: 'Task B' }),
+    ];
+
+    await Promise.all(tasks.map((task) => dataSource.addTask(task)));
+
+    renderComponent(<List tasks={tasks} />);
+
+    expect(screen.getByText(`${TaskStatus.Ready} (2)`)).toBeInTheDocument();
+    expect(screen.getByText(`${TaskStatus.Started} (1)`)).toBeInTheDocument();
+
+    // These were grabbed from the rendered component in the browser
+    const mockDropResult: DropResult = {
+      draggableId: 'task-2',
+      type: 'DEFAULT',
+      source: {
+        droppableId: TaskStatus.Ready,
+        index: 0,
+      },
+      destination: {
+        droppableId: TaskStatus.Started,
+        index: 0,
+      },
+      mode: 'FLUID',
+      combine: null,
+      reason: 'DROP',
+    };
+
+    await waitFor(async () => {
+      onDragEndSpy(mockDropResult);
+    });
+
+    expect(mockDataSource.updateTask).toHaveBeenCalledWith({
+      ...tasks[1],
+      status: TaskStatus.Started,
+    });
   });
 });
