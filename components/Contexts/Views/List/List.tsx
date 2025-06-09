@@ -103,7 +103,7 @@ export default function List({ tasks }: ViewProps) {
               <Table.Th>Due Date</Table.Th>
             </Table.Tr>
           </Table.Thead>
-          {ALL_STATUSES.filter((status) => groupedTasks[status].length).map((status) => (
+          {ALL_STATUSES.map((status) => (
             <React.Fragment key={status}>
               <Table.Tbody>
                 <Table.Tr>
@@ -125,15 +125,32 @@ export default function List({ tasks }: ViewProps) {
               <Droppable droppableId={status}>
                 {(provided) => (
                   <Table.Tbody {...provided.droppableProps} ref={provided.innerRef}>
-                    {groupedTasks[status].map((task, index) => (
-                      <ListRow
-                        key={task._id}
-                        task={task}
-                        index={index}
-                        columnWidths={columnWidths}
-                        handleClick={showEditDialog}
-                      />
-                    ))}
+                    {groupedTasks[status].length === 0 ? (
+                      <Table.Tr>
+                        <Table.Td
+                          colSpan={5}
+                          style={{
+                            fontStyle: 'italic',
+                            color: 'var(--mantine-color-gray-6)',
+                            textAlign: 'center',
+                            borderTop: 'none',
+                            paddingBottom: 'var(--mantine-spacing-xs)',
+                          }}
+                        >
+                          No tasks in this status. Drag here to add.
+                        </Table.Td>
+                      </Table.Tr>
+                    ) : (
+                      groupedTasks[status].map((task, index) => (
+                        <ListRow
+                          key={task._id}
+                          task={task}
+                          index={index}
+                          columnWidths={columnWidths}
+                          handleClick={showEditDialog}
+                        />
+                      ))
+                    )}
                     {provided.placeholder}
                   </Table.Tbody>
                 )}
