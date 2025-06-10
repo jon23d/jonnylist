@@ -59,9 +59,14 @@ export default function TaskEditor({ task, handleClose }: { task: Task; handleCl
         data={contexts.map((context) => ({ value: context, label: context }))}
         {...form.getInputProps('context')}
         key="context"
-        required
+        withAsterisk
       />
-      <TextInput label="Title" placeholder="Task title" {...form.getInputProps('title')} required />
+      <TextInput
+        label="Title"
+        placeholder="Task title"
+        {...form.getInputProps('title')}
+        withAsterisk
+      />
       <TextInput
         label="Description"
         placeholder="Task description"
