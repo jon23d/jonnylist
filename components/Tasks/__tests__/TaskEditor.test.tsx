@@ -86,4 +86,50 @@ describe('TaskEditor', () => {
     // Assert that getContexts was called when the component mounted
     expect(getContextsMock).toHaveBeenCalledTimes(1);
   });
+
+  it('Saves the task when the form is submitted', async () => {
+    const task = taskFactory.create();
+    renderWithDatasource(<TaskEditor task={task} handleClose={() => {}} />);
+
+    // Wait for contexts to be fetched
+    await waitFor(() => {
+      expect(screen.getByRole('textbox', { name: 'Context' })).toBeInTheDocument();
+    });
+
+    const titleInput = screen.getByRole('textbox', { name: 'Title' });
+    await userEvent.clear(titleInput);
+    await userEvent.type(titleInput, 'Updated Task Title');
+
+    const descriptionInput = screen.getByRole('textbox', { name: 'Description' });
+    await userEvent.clear(descriptionInput);
+    await userEvent.type(descriptionInput, 'Updated Task Description');
+
+    const priorityInput = screen.getByRole('textbox', { name: 'Priority' });
+    await userEvent.clear(priorityInput);
+    await userEvent.type(priorityInput, '3');
+
+    const dueDateInput = screen.getByRole('textbox', { name: 'Due Date' });
+    await userEvent.clear(dueDateInput);
+    await userEvent.type(dueDateInput, '2023-10-15');
+
+    const statusInput = screen.getByRole('textbox', { name: 'Status' });
+    await userEvent.click(statusInput);
+    await userEvent.click(screen.getByRole('option', { name: 'Started' }));
+
+    const saveButton = screen.getByRole('button', { name: /save/i });
+    await userEvent.click(saveButton);
+
+    // Assert that updateTask was called with the updated values
+    expect(updateTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        _id: task._id,
+        context: task.context,
+        title: 'Updated Task Title',
+        description: 'Updated Task Description',
+        priority: 3,
+        dueDate: '2023-10-15',
+        status: TaskStatus.Started,
+      })
+    );
+  });
 });
