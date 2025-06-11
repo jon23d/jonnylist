@@ -7,6 +7,7 @@ export enum TaskStatus {
   Done = 'done',
   Cancelled = 'cancelled',
 }
+export const ALL_TASK_STATUSES: TaskStatus[] = Object.values(TaskStatus);
 
 export const taskStatusSelectOptions = [
   { value: TaskStatus.Ready, label: 'Ready' },

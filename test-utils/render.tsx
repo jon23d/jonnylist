@@ -6,6 +6,7 @@ import {
   Menu,
   mergeThemeOverrides,
   Modal,
+  Popover,
   SegmentedControl,
 } from '@mantine/core';
 import { theme } from '@/theme';
@@ -31,6 +32,11 @@ const testTheme = mergeThemeOverrides(
           transitionProps: {
             duration: 0,
           },
+        },
+      }),
+      Popover: Popover.extend({
+        defaultProps: {
+          hideDetached: false,
         },
       }),
     },

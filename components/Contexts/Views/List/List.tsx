@@ -6,11 +6,9 @@ import ListRow from '@/components/Contexts/Views/List/ListRow';
 import { ViewProps } from '@/components/Contexts/Views/viewProps';
 import TaskEditor from '@/components/Tasks/TaskEditor';
 import { useDataSource } from '@/contexts/DataSourceContext';
-import { Task, TaskStatus } from '@/data/documentTypes/Task';
+import { ALL_TASK_STATUSES, Task, TaskStatus } from '@/data/documentTypes/Task';
 
-const ALL_STATUSES: TaskStatus[] = Object.values(TaskStatus);
-
-export default function List({ tasks }: ViewProps) {
+export default function List({ tasks, visibleStatuses }: ViewProps) {
   const dataSource = useDataSource();
 
   const [tasksState, handlers] = useListState<Task>(tasks);
@@ -26,6 +24,7 @@ export default function List({ tasks }: ViewProps) {
     handlers.setState(tasks);
   }, [tasks, handlers]);
 
+  // Deal with recording column widths
   useEffect(() => {
     if (theadRef.current && theadRect.width > 0) {
       // Check theadRef.current and ensure it has a width
@@ -44,14 +43,16 @@ export default function List({ tasks }: ViewProps) {
   const groupedTasks = useMemo(() => {
     const groups: Record<string, Task[]> = {};
     // Initialize groups with empty arrays for all defined statuses
-    ALL_STATUSES.forEach((status) => {
+    ALL_TASK_STATUSES.forEach((status) => {
       groups[status] = [];
     });
 
     // Populate groups with tasks from tasksState
-    tasksState.forEach((task) => groups[task.status as TaskStatus].push(task));
+    tasksState
+      .filter((task) => visibleStatuses.includes(task.status))
+      .forEach((task) => groups[task.status as TaskStatus].push(task));
     return groups;
-  }, [tasksState]);
+  }, [tasksState, visibleStatuses]);
 
   if (!tasks.length) {
     return (
@@ -61,6 +62,7 @@ export default function List({ tasks }: ViewProps) {
     );
   }
 
+  // After dragging a task to a new position, we may need to update its status
   const handleDragEnd = async (result: DropResult) => {
     if (!result.destination) {
       return;
@@ -75,10 +77,9 @@ export default function List({ tasks }: ViewProps) {
     // Grab the task from tasksState
     const taskIndex = tasksState.findIndex((task) => task._id === result.draggableId);
     const task = tasksState[taskIndex];
-    task.status = destinationStatus;
 
     // Update the task in the data source
-    await dataSource.updateTask(task);
+    await dataSource.updateTask({ ...task, status: destinationStatus });
   };
 
   const showEditDialog = (task: Task) => {
@@ -103,7 +104,7 @@ export default function List({ tasks }: ViewProps) {
               <Table.Th>Due Date</Table.Th>
             </Table.Tr>
           </Table.Thead>
-          {ALL_STATUSES.map((status) => (
+          {visibleStatuses.map((status) => (
             <React.Fragment key={status}>
               <Table.Tbody>
                 <Table.Tr>

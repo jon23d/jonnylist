@@ -60,7 +60,7 @@ export default function ContextPage({ contextName }: { contextName: string }) {
       <Title order={1} mb={10}>
         {contextName}
       </Title>
-      <SelectedView tasks={tasks} />
+      <SelectedView tasks={tasks} visibleStatuses={selectedTaskStatuses} />
     </>
   );
 }

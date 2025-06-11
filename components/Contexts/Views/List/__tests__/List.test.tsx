@@ -5,7 +5,7 @@ import { DataSourceContextProvider } from '@/contexts/DataSourceContext';
 import { DataSource } from '@/data/DataSource';
 import { DocumentTypes } from '@/data/documentTypes';
 import { TaskStatus } from '@/data/documentTypes/Task';
-import { render, screen, waitFor } from '@/test-utils';
+import { render, screen, waitFor, within } from '@/test-utils';
 import { createTestLocalDataSource } from '@/test-utils/db';
 import { TaskFactory } from '@/test-utils/factories/TaskFactory';
 
@@ -68,19 +68,42 @@ describe('Task list view component', () => {
     );
   };
 
-  it('Groups the tasks by status and renders them in separate sections', async () => {
+  it('Only renders tasks with visible statuses', async () => {
     const tasks = [
-      taskFactory.create({ _id: '1', status: TaskStatus.Ready }),
-      taskFactory.create({ _id: '2', status: TaskStatus.Ready }),
-      taskFactory.create({ _id: '3', status: TaskStatus.Started }),
+      taskFactory.create({ _id: '1', status: TaskStatus.Ready, title: 'Task 1' }),
+      taskFactory.create({ _id: '2', status: TaskStatus.Started, title: 'Task 2' }),
+      taskFactory.create({ _id: '3', status: TaskStatus.Done, title: 'Task 3' }),
     ];
-
     await Promise.all(tasks.map((task) => dataSource.addTask(task)));
 
-    renderComponent(<List tasks={tasks} />);
+    renderComponent(
+      <List tasks={tasks} visibleStatuses={[TaskStatus.Ready, TaskStatus.Started]} />
+    );
+
+    expect(screen.queryByText('ready (1)')).toBeInTheDocument();
+    expect(screen.queryByText('started (1)')).toBeInTheDocument();
+    expect(screen.queryByText('done (1)')).not.toBeInTheDocument();
+  });
+
+  it('Groups the tasks by status and renders them in separate sections', async () => {
+    const tasks = [
+      taskFactory.create({ _id: '1', status: TaskStatus.Ready, title: 'Task 1' }),
+      taskFactory.create({ _id: '2', status: TaskStatus.Ready, title: 'Task 2' }),
+      taskFactory.create({ _id: '3', status: TaskStatus.Started, title: 'Task 3' }),
+    ];
+    await Promise.all(tasks.map((task) => dataSource.addTask(task)));
+
+    renderComponent(
+      <List tasks={tasks} visibleStatuses={[TaskStatus.Ready, TaskStatus.Started]} />
+    );
+
+    const readySection = screen.getByTestId(`mock-droppable-${TaskStatus.Ready}`);
+    const startedSection = screen.getByTestId(`mock-droppable-${TaskStatus.Started}`);
 
     expect(screen.getByText('ready (2)')).toBeInTheDocument();
     expect(screen.getByText('started (1)')).toBeInTheDocument();
+    expect(within(readySection).getByText('Task 1')).toBeInTheDocument();
+    expect(within(startedSection).getByText('Task 3')).toBeInTheDocument();
   });
 
   it('updates task status and re-groups tasks when dragged to a different status', async () => {
@@ -92,7 +115,9 @@ describe('Task list view component', () => {
 
     await Promise.all(tasks.map((task) => dataSource.addTask(task)));
 
-    renderComponent(<List tasks={tasks} />);
+    renderComponent(
+      <List tasks={tasks} visibleStatuses={[TaskStatus.Ready, TaskStatus.Started]} />
+    );
 
     expect(screen.getByText(`${TaskStatus.Ready} (2)`)).toBeInTheDocument();
     expect(screen.getByText(`${TaskStatus.Started} (1)`)).toBeInTheDocument();
