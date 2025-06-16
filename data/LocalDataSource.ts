@@ -1,6 +1,7 @@
 import PouchDB from 'pouchdb';
 import {
   ContextSubscriber,
+  DATABASE_VERSION,
   DataSource,
   getTasksParams,
   TaskSubscriber,
@@ -13,7 +14,6 @@ import { NewTask, Task } from '@/data/documentTypes/Task';
 import { Logger } from '@/helpers/logger';
 
 const DATABASE_NAME = 'jonnylist';
-const CURRENT_VERSION = 1;
 
 type TaskSubscriberWithFilterParams = {
   params: getTasksParams;
@@ -22,7 +22,7 @@ type TaskSubscriberWithFilterParams = {
 
 /**
  * @TODO This whole thing needs error handling
- * @TODO Consider using pouchdb indices once the dust settles
+ * @TODO Absolutely use pouchdb indices once the dust settles
  * @TODO It feels like the pouch stuff may belong in a separate class
  */
 export class LocalDataSource implements DataSource {
@@ -31,6 +31,7 @@ export class LocalDataSource implements DataSource {
   private taskChangeSubscribers = new Set<TaskSubscriberWithFilterParams>();
   private contextChangesFeed?: PouchDB.Core.Changes<Context>;
   private contextChangeSubscribers = new Set<ContextSubscriber>();
+  public onMigrationStatusChange?: (isMigrating: boolean) => void;
 
   /**
    * Creates a new LocalDataSource instance.
@@ -95,7 +96,7 @@ export class LocalDataSource implements DataSource {
       dueDate: newTask.dueDate,
       createdAt: new Date(),
       updatedAt: new Date(),
-      version: CURRENT_VERSION,
+      version: DATABASE_VERSION,
     };
 
     try {
@@ -213,7 +214,7 @@ export class LocalDataSource implements DataSource {
       _id: `context-${context}`,
       type: 'context',
       name: context,
-      version: CURRENT_VERSION,
+      version: DATABASE_VERSION,
     };
     await this.db.put(doc);
   }
@@ -270,6 +271,9 @@ export class LocalDataSource implements DataSource {
       .on('change', async (change) => {
         if (change.id.startsWith('task-')) {
           try {
+            // This is probably pretty inefficient. We should only fetch
+            // The tasks that have actually changed
+            // TODO: Deal with this before it gets out of hand
             const updatedTasks = await this.getTasks({});
             this.notifyTaskSubscribers(updatedTasks);
           } catch (error) {
