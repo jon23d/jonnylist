@@ -83,7 +83,9 @@ describe('LocalDataSource', () => {
   });
 
   test('addTask should add a task to the database', async () => {
-    const task = new TaskFactory().create();
+    const task = new TaskFactory().create({
+      sortOrder: 100,
+    });
 
     await localDataSource.addTask(task);
 
@@ -94,6 +96,7 @@ describe('LocalDataSource', () => {
 
     expect(returnedTask.context).toEqual(task.context);
     expect(returnedTask._id.startsWith('task-')).toBe(true);
+    expect(returnedTask.sortOrder).toBe(100);
   });
 
   test('getTasks should use a high unicode value for the endkey', async () => {
@@ -154,6 +157,23 @@ describe('LocalDataSource', () => {
         statuses: [],
       }
     );
+  });
+
+  test('getTasks should return tasks sorted by sortOrder', async () => {
+    const task1 = new TaskFactory().create({ _id: 'task1', context: 'context1', sortOrder: 1 });
+    const task2 = new TaskFactory().create({ _id: 'task2', context: 'context1', sortOrder: 0 });
+    const task3 = new TaskFactory().create({ _id: 'task3', context: 'context1', sortOrder: 2 });
+
+    await localDataSource.addTask(task1);
+    await localDataSource.addTask(task2);
+    await localDataSource.addTask(task3);
+
+    const tasks = await localDataSource.getTasks({ context: 'context1' });
+
+    expect(tasks).toHaveLength(3);
+    expect(tasks[0].sortOrder).toBe(0);
+    expect(tasks[1].sortOrder).toBe(1);
+    expect(tasks[2].sortOrder).toBe(2);
   });
 
   test('subscribeToTasks should register a task change subscriber', async () => {

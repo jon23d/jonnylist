@@ -7,6 +7,7 @@ import { ViewProps } from '@/components/Contexts/Views/viewProps';
 import TaskEditor from '@/components/Tasks/TaskEditor';
 import { useDataSource } from '@/contexts/DataSourceContext';
 import { ALL_TASK_STATUSES, Task, TaskStatus } from '@/data/documentTypes/Task';
+import { Logger } from '@/helpers/logger';
 
 export default function List({ tasks, visibleStatuses }: ViewProps) {
   const dataSource = useDataSource();
@@ -41,6 +42,7 @@ export default function List({ tasks, visibleStatuses }: ViewProps) {
   }, [theadRect.width, tasks.length, columnWidths, theadRef]);
 
   const groupedTasks = useMemo(() => {
+    Logger.info('Tasks state:', tasksState);
     const groups: Record<string, Task[]> = {};
     // Initialize groups with empty arrays for all defined statuses
     ALL_TASK_STATUSES.forEach((status) => {

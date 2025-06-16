@@ -10,6 +10,7 @@ export class TaskFactory implements Factory<Task> {
 
       type: 'task',
       title: data.title || 'A task',
+      sortOrder: data.sortOrder || 0,
       description: data.description || 'This is a sample task description.',
       status: data.status || TaskStatus.Ready,
       context: data.context || 'Work',

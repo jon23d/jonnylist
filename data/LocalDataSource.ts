@@ -124,6 +124,7 @@ export class LocalDataSource implements DataSource {
       type: 'task',
       context: newTask.context,
       title: newTask.title,
+      sortOrder: newTask.sortOrder,
       description: newTask.description,
       status: newTask.status,
       priority: newTask.priority,
@@ -186,6 +187,11 @@ export class LocalDataSource implements DataSource {
       }
       task.createdAt = new Date(task.createdAt);
       task.updatedAt = new Date(task.updatedAt);
+    });
+
+    // Sort by Task.sortOrder asc
+    allTasks.sort((a, b) => {
+      return (a.sortOrder || 0) - (b.sortOrder || 0);
     });
 
     return this.filterTasksByParams(allTasks, params);
