@@ -47,7 +47,7 @@ describe('TaskEditor', () => {
     const task = taskFactory.create({
       status: TaskStatus.Ready,
       context: 'context1',
-      dueDate: new Date('2023-10-01'),
+      dueDate: new Date(2023, 8, 30),
     });
 
     renderWithDatasource(<TaskEditor task={task} handleClose={() => {}} />);

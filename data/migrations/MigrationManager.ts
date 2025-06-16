@@ -1,16 +1,10 @@
-import { Migration } from './Migration';
-import V1AddMigrationsDoc from './V1AddMigrationsDoc';
+import { VERSIONS } from './versions/Versions';
 
 export class MigrationManager {
-  private migrations: Migration[] = [
-    new V1AddMigrationsDoc(),
-    // Add new migrations here
-  ];
-
   constructor(private db: PouchDB.Database) {}
 
   async needsMigration(): Promise<boolean> {
-    for (const migration of this.migrations) {
+    for (const migration of VERSIONS) {
       if (await migration.needsMigration(this.db)) {
         return true;
       }
@@ -19,7 +13,7 @@ export class MigrationManager {
   }
 
   async runMigrations(): Promise<void> {
-    for (const migration of this.migrations) {
+    for (const migration of VERSIONS) {
       if (await migration.needsMigration(this.db)) {
         await migration.up(this.db);
       }

@@ -1,5 +1,5 @@
 import PouchDB from 'pouchdb';
-import { Migration } from './Migration';
+import { Migration } from '../Migration';
 
 class V1AddMigrationsDoc implements Migration {
   getVersion(): number {
