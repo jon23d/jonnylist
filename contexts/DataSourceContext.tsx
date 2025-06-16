@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { DataSource } from '@/data/DataSource';
 import { LocalDataSource } from '@/data/LocalDataSource';
+import { Logger } from '@/helpers/logger';
 
 export type DataSourceContextType = {
   dataSource: DataSource;
@@ -17,11 +18,23 @@ export const DataSourceContextProvider = ({
   children: React.ReactNode;
 }) => {
   const [isMigrating, setIsMigrating] = useState(false);
-  const [currentDataSource] = useState<DataSource>(dataSource || new LocalDataSource());
+  const [currentDataSource] = useState<DataSource>(() => dataSource || new LocalDataSource());
 
   useEffect(() => {
     currentDataSource.onMigrationStatusChange = setIsMigrating;
-  }, []);
+
+    // Run migrations when the application starts
+    currentDataSource.runMigrations().catch((error) => {
+      Logger.error('Failed to run migrations:', error);
+    });
+
+    // Cleanup function
+    return () => {
+      currentDataSource.cleanup().catch((error) => {
+        Logger.error('Failed to cleanup DataSource:', error);
+      });
+    };
+  }, [currentDataSource]);
 
   return (
     <DataSourceContext.Provider value={{ dataSource: currentDataSource, isMigrating }}>

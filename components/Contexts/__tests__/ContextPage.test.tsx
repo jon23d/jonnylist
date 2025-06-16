@@ -38,6 +38,7 @@ describe('ContextPage', () => {
   afterEach(async () => {
     subscribeToTasks.mockRestore();
     getPreferences.mockRestore();
+    await localDataSource.cleanup();
     await database.destroy();
   });
 

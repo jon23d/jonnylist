@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { IconSettingsFilled } from '@tabler/icons-react';
 import { AppShell, Burger, Group, NavLink, ScrollArea } from '@mantine/core';
@@ -14,6 +14,27 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [opened, { toggle }] = useDisclosure();
   const router = useRouter();
   const isMigrating = useIsMigrating();
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [migrationStartTime, setMigrationStartTime] = useState<number | null>(null);
+
+  useEffect(() => {
+    // We want to avoid flashing the overlay when the migration is complete, so
+    // we have a minimum time that the overlay is shown for.
+    if (isMigrating) {
+      setMigrationStartTime(Date.now());
+      setShowOverlay(true);
+    } else if (migrationStartTime) {
+      const elapsedTime = Date.now() - migrationStartTime;
+      const remainingTime = Math.max(0, 4000 - elapsedTime);
+
+      if (remainingTime > 0) {
+        const timer = setTimeout(() => setShowOverlay(false), remainingTime);
+        return () => clearTimeout(timer);
+      }
+
+      setShowOverlay(false);
+    }
+  }, [isMigrating]);
 
   const handleNavLinkClick = async (url: string) => {
     await router.push(url);
@@ -24,7 +45,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {isMigrating && <DataMigrationOverlay />}
+      {showOverlay && <DataMigrationOverlay />}
       <AppShell
         header={{ height: 30 }}
         navbar={{ width: 225, breakpoint: 'sm', collapsed: { mobile: !opened } }}

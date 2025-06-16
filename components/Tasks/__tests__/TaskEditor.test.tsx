@@ -33,6 +33,7 @@ describe('TaskEditor', () => {
   });
 
   afterEach(async () => {
+    await dataSource.cleanup();
     await db.destroy();
   });
 

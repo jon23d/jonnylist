@@ -12,6 +12,7 @@ import { Context } from '@/data/documentTypes/Context';
 import { createDefaultPreferences, Preferences } from '@/data/documentTypes/Preferences';
 import { NewTask, Task } from '@/data/documentTypes/Task';
 import { Logger } from '@/helpers/logger';
+import { MigrationManager } from './migrations/MigrationManager';
 
 const DATABASE_NAME = 'jonnylist';
 
@@ -31,6 +32,7 @@ export class LocalDataSource implements DataSource {
   private taskChangeSubscribers = new Set<TaskSubscriberWithFilterParams>();
   private contextChangesFeed?: PouchDB.Core.Changes<Context>;
   private contextChangeSubscribers = new Set<ContextSubscriber>();
+  private migrationManager: MigrationManager;
   public onMigrationStatusChange?: (isMigrating: boolean) => void;
 
   /**
@@ -39,13 +41,37 @@ export class LocalDataSource implements DataSource {
    * PouchDB instance.
    *
    * @param database Optional PouchDB database instance to use.
+   * @param migrationManager Optional MigrationManager instance to use for migrations.
    */
-  constructor(database?: PouchDB.Database<DocumentTypes>) {
+  constructor(database?: PouchDB.Database<DocumentTypes>, migrationManager?: MigrationManager) {
     if (database) {
       this.db = database;
+    } else {
+      this.db = new PouchDB(DATABASE_NAME);
+    }
+
+    if (migrationManager) {
+      this.migrationManager = migrationManager;
+    } else {
+      this.migrationManager = new MigrationManager(this.db);
+    }
+  }
+
+  async runMigrations(): Promise<void> {
+    if (!(await this.migrationManager.needsMigration())) {
       return;
     }
-    this.db = new PouchDB(DATABASE_NAME);
+
+    try {
+      this.onMigrationStatusChange?.(true);
+      await this.migrationManager.runMigrations();
+    } finally {
+      this.onMigrationStatusChange?.(false);
+    }
+  }
+
+  getVersion(): number {
+    return DATABASE_VERSION;
   }
 
   /**
@@ -56,8 +82,16 @@ export class LocalDataSource implements DataSource {
     try {
       return await this.db.get<Preferences>('preferences');
     } catch (error) {
-      // This is a 404, @TODO: handle other errors
-      return createDefaultPreferences();
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'status' in error &&
+        error.status === 404
+      ) {
+        return createDefaultPreferences();
+      }
+      Logger.error('Error fetching preferences:', error);
+      throw error;
     }
   }
 
@@ -259,6 +293,32 @@ export class LocalDataSource implements DataSource {
       }
       return !(params.statuses && !params.statuses.includes(task.status));
     });
+  }
+
+  /**
+   * Cleanup all active subscriptions and resources.
+   * This should be called when the LocalDataSource instance is no longer needed
+   * to prevent memory leaks and ensure proper cleanup of PouchDB change feeds.
+   */
+  async cleanup(): Promise<void> {
+    Logger.info('Cleaning up LocalDataSource');
+
+    // Cancel active change feeds
+    if (this.taskChangesFeed) {
+      this.taskChangesFeed.cancel();
+      this.taskChangesFeed = undefined;
+    }
+
+    if (this.contextChangesFeed) {
+      this.contextChangesFeed.cancel();
+      this.contextChangesFeed = undefined;
+    }
+
+    // Clear all subscribers
+    this.taskChangeSubscribers.clear();
+    this.contextChangeSubscribers.clear();
+
+    Logger.info('LocalDataSource cleanup completed');
   }
 
   private initializeTaskChangesFeed(): void {

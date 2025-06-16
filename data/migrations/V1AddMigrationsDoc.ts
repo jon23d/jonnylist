@@ -1,19 +1,24 @@
 import PouchDB from 'pouchdb';
+import { Migration } from './Migration';
 
-class V1AddMigrationsDoc {
-  async up(db: PouchDB.Database): Promise<void> {
-    // Check if the migrations document already exists
+class V1AddMigrationsDoc implements Migration {
+  getVersion(): number {
+    return 1;
+  }
+
+  async needsMigration(db: PouchDB.Database): Promise<boolean> {
     try {
-      await db.get('migrations'); // If it exists, we can skip this migration
-      return;
+      await db.get('migrations');
+      return false;
     } catch (err) {
-      if (err instanceof Error && err.name !== 'not_found') {
-        // If the error is not a "not found" error, rethrow it
-        throw err;
+      if (err instanceof Error && err.name === 'not_found') {
+        return true;
       }
-      // If it is a "not found" error, we proceed to create the migrations document
+      throw err;
     }
+  }
 
+  async up(db: PouchDB.Database): Promise<void> {
     const migrationsDoc = {
       _id: 'migrations',
       version: 1,
@@ -22,8 +27,6 @@ class V1AddMigrationsDoc {
 
     await db.put(migrationsDoc);
   }
-
-  async down(db: any): Promise<void> {
-    await db.collection('migrations').deleteOne({ _id: 'migrations' });
-  }
 }
+
+export default V1AddMigrationsDoc;

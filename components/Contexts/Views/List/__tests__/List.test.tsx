@@ -59,6 +59,7 @@ describe('Task list view component', () => {
   });
 
   afterEach(async () => {
+    await dataSource.cleanup();
     await db.destroy();
   });
 
