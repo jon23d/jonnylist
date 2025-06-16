@@ -7,6 +7,7 @@ import { PreferencesFactory } from '@/test-utils/factories/PreferencesFactory';
 import { TaskFactory } from '@/test-utils/factories/TaskFactory';
 import { DocumentTypes } from '../documentTypes';
 import { Task, TaskStatus } from '../documentTypes/Task';
+import { MigrationManager } from '../migrations/MigrationManager';
 
 jest.mock('@/data/documentTypes/Preferences', () => ({
   createDefaultPreferences: jest.fn(() => ({
@@ -26,6 +27,7 @@ describe('LocalDataSource', () => {
   });
 
   afterEach(async () => {
+    await localDataSource.cleanup();
     await database.destroy();
   });
 
@@ -205,6 +207,72 @@ describe('LocalDataSource', () => {
 
     const contexts = await localDataSource.getContexts();
     expect(contexts).toEqual(['context-1', 'context-2', 'context-3']);
+  });
+
+  describe('runMigrations', () => {
+    it('Should not call onMigrationStatusChange if no migrations are needed', async () => {
+      const needsMigration = jest.fn().mockResolvedValue(false);
+      const onMigrationStatusChange = jest.fn();
+
+      class MockMigrationManager extends MigrationManager {
+        needsMigration = needsMigration;
+        runMigrations = jest.fn().mockResolvedValue(false);
+      }
+      const datasource = new LocalDataSource(database, new MockMigrationManager(database));
+
+      datasource.onMigrationStatusChange = onMigrationStatusChange;
+
+      await localDataSource.runMigrations();
+
+      expect(onMigrationStatusChange).not.toHaveBeenCalled();
+    });
+
+    it('Should should call onMigrationStatusChange with true when migration starts', async () => {
+      const needsMigration = jest.fn().mockResolvedValue(true);
+      const onMigrationStatusChange = jest.fn();
+
+      class MockMigrationManager extends MigrationManager {
+        needsMigration = needsMigration;
+        runMigrations = jest.fn().mockResolvedValue(false);
+      }
+      const datasource = new LocalDataSource(database, new MockMigrationManager(database));
+      datasource.onMigrationStatusChange = onMigrationStatusChange;
+
+      await datasource.runMigrations();
+
+      expect(onMigrationStatusChange).toHaveBeenCalledWith(true);
+    });
+
+    it('Should run migrations when needed', async () => {
+      const needsMigration = jest.fn().mockResolvedValue(true);
+      const runMigrations = jest.fn();
+
+      class MockMigrationManager extends MigrationManager {
+        needsMigration = needsMigration;
+        runMigrations = runMigrations;
+      }
+      const datasource = new LocalDataSource(database, new MockMigrationManager(database));
+
+      await datasource.runMigrations();
+
+      expect(runMigrations).toHaveBeenCalled();
+    });
+
+    it('Should call onMigrationStatusChange with false when migration completes', async () => {
+      const needsMigration = jest.fn().mockResolvedValue(true);
+      const onMigrationStatusChange = jest.fn();
+
+      class MockMigrationManager extends MigrationManager {
+        needsMigration = needsMigration;
+        runMigrations = jest.fn().mockResolvedValue(false);
+      }
+      const datasource = new LocalDataSource(database, new MockMigrationManager(database));
+      datasource.onMigrationStatusChange = onMigrationStatusChange;
+
+      await datasource.runMigrations();
+
+      expect(onMigrationStatusChange).toHaveBeenCalledWith(false);
+    });
   });
 
   describe('subscribeToContexts', () => {

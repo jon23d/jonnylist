@@ -37,6 +37,7 @@ describe('ContextLinks', () => {
   });
 
   afterEach(async () => {
+    await dataSource.cleanup();
     await db.destroy();
   });
 

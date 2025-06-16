@@ -36,6 +36,7 @@ describe('NewTaskForm', () => {
   });
 
   afterEach(async () => {
+    await dataSource.cleanup();
     await db.destroy();
   });
 
