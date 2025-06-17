@@ -153,6 +153,7 @@ export class LocalDataSource implements DataSource {
 
     try {
       response = await this.db.put(task);
+      Logger.info('Updated task');
     } catch (error) {
       Logger.error('Error updating task:', error);
       throw error; // Re-throw to handle it in the calling code
@@ -189,7 +190,7 @@ export class LocalDataSource implements DataSource {
       task.updatedAt = new Date(task.updatedAt);
     });
 
-    // Sort by Task.sortOrder asc
+    // Sort by Task.sortOrders asc
     allTasks.sort((a, b) => {
       return (a.sortOrder || 0) - (b.sortOrder || 0);
     });
