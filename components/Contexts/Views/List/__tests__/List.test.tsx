@@ -149,4 +149,271 @@ describe('Task list view component', () => {
       status: TaskStatus.Started,
     });
   });
+
+  // In these tests, a means the sort order of the task after the drop index,
+  // and b means the sort order of the task before
+  it('Sets sort order to the first position to a - 1000', async () => {
+    const tasks = [
+      taskFactory.create({ _id: '1', status: TaskStatus.Ready, title: 'Task 1', sortOrder: 1000 }),
+      taskFactory.create({ _id: '2', status: TaskStatus.Ready, title: 'Task 2', sortOrder: 2000 }),
+    ];
+    await Promise.all(tasks.map((task) => dataSource.addTask(task)));
+
+    renderComponent(<List tasks={tasks} visibleStatuses={[TaskStatus.Ready]} />);
+
+    const mockDropResult: DropResult = {
+      draggableId: 'task-2',
+      type: 'DEFAULT',
+      source: {
+        // Drag from the second position to the first position
+        droppableId: TaskStatus.Ready,
+        index: 1,
+      },
+      destination: {
+        droppableId: TaskStatus.Ready,
+        index: 0,
+      },
+      mode: 'FLUID',
+      combine: null,
+      reason: 'DROP',
+    };
+
+    await waitFor(async () => {
+      onDragEndSpy(mockDropResult);
+    });
+
+    expect(mockDataSource.updateTask).toHaveBeenCalledWith({
+      ...tasks[1],
+      sortOrder: 0,
+    });
+  });
+
+  it('Sets sort order to the last position to b + 1000', async () => {
+    const tasks = [
+      taskFactory.create({ _id: '1', status: TaskStatus.Ready, title: 'Task 1', sortOrder: 1000 }),
+      taskFactory.create({ _id: '2', status: TaskStatus.Ready, title: 'Task 2', sortOrder: 2000 }),
+    ];
+    await Promise.all(tasks.map((task) => dataSource.addTask(task)));
+
+    renderComponent(<List tasks={tasks} visibleStatuses={[TaskStatus.Ready]} />);
+
+    const mockDropResult: DropResult = {
+      draggableId: 'task-1',
+      type: 'DEFAULT',
+      source: {
+        // Drag from the first position to the last position
+        droppableId: TaskStatus.Ready,
+        index: 0,
+      },
+      destination: {
+        droppableId: TaskStatus.Ready,
+        index: 1,
+      },
+      mode: 'FLUID',
+      combine: null,
+      reason: 'DROP',
+    };
+
+    await waitFor(async () => {
+      onDragEndSpy(mockDropResult);
+    });
+
+    expect(mockDataSource.updateTask).toHaveBeenCalledWith({
+      ...tasks[0],
+      sortOrder: 3000,
+    });
+  });
+
+  it('Sets sort order to the middle position to an average of a, b', async () => {
+    const tasks = [
+      taskFactory.create({ _id: '1', status: TaskStatus.Ready, title: 'Task 1', sortOrder: 1000 }),
+      taskFactory.create({ _id: '2', status: TaskStatus.Ready, title: 'Task 2', sortOrder: 3000 }),
+      taskFactory.create({ _id: '3', status: TaskStatus.Ready, title: 'Task 3', sortOrder: 5000 }),
+    ];
+    await Promise.all(tasks.map((task) => dataSource.addTask(task)));
+
+    renderComponent(<List tasks={tasks} visibleStatuses={[TaskStatus.Ready]} />);
+
+    const mockDropResult: DropResult = {
+      draggableId: 'task-1',
+      type: 'DEFAULT',
+      source: {
+        // Drag from the first position to the middle position
+        droppableId: TaskStatus.Ready,
+        index: 0,
+      },
+      destination: {
+        droppableId: TaskStatus.Ready,
+        index: 1,
+      },
+      mode: 'FLUID',
+      combine: null,
+      reason: 'DROP',
+    };
+
+    await waitFor(async () => {
+      onDragEndSpy(mockDropResult);
+    });
+
+    expect(mockDataSource.updateTask).toHaveBeenCalledWith({
+      ...tasks[0],
+      sortOrder: 4000,
+    });
+  });
+
+  it('Sets the sort order when alone to 5000', async () => {
+    const task = taskFactory.create({ _id: '1', status: TaskStatus.Ready, title: 'Task 1' });
+    await dataSource.addTask(task);
+
+    renderComponent(
+      <List tasks={[task]} visibleStatuses={[TaskStatus.Ready, TaskStatus.Started]} />
+    );
+
+    const mockDropResult: DropResult = {
+      draggableId: 'task-1',
+      type: 'DEFAULT',
+      source: {
+        droppableId: TaskStatus.Ready,
+        index: 0,
+      },
+      destination: {
+        droppableId: TaskStatus.Started,
+        index: 0,
+      },
+      mode: 'FLUID',
+      combine: null,
+      reason: 'DROP',
+    };
+
+    await waitFor(async () => {
+      onDragEndSpy(mockDropResult);
+    });
+
+    expect(mockDataSource.updateTask).toHaveBeenCalledWith({
+      ...task,
+      status: TaskStatus.Started,
+      sortOrder: 5000,
+    });
+  });
+
+  it('Sets sort order in a new status in first position to a - 1000', async () => {
+    const tasks = [
+      taskFactory.create({ _id: '1', status: TaskStatus.Ready, sortOrder: 1000 }),
+      taskFactory.create({ _id: '2', status: TaskStatus.Ready, sortOrder: 2000 }),
+      taskFactory.create({ _id: '2', status: TaskStatus.Waiting, sortOrder: 2000 }),
+    ];
+    await Promise.all(tasks.map((task) => dataSource.addTask(task)));
+
+    renderComponent(
+      <List tasks={tasks} visibleStatuses={[TaskStatus.Ready, TaskStatus.Waiting]} />
+    );
+
+    const mockDropResult: DropResult = {
+      draggableId: 'task-1',
+      type: 'DEFAULT',
+      source: {
+        // Drag from the first position to first position in other status
+        droppableId: TaskStatus.Ready,
+        index: 0,
+      },
+      destination: {
+        droppableId: TaskStatus.Waiting,
+        index: 0,
+      },
+      mode: 'FLUID',
+      combine: null,
+      reason: 'DROP',
+    };
+
+    await waitFor(async () => {
+      onDragEndSpy(mockDropResult);
+    });
+
+    expect(mockDataSource.updateTask).toHaveBeenCalledWith({
+      ...tasks[0],
+      status: TaskStatus.Waiting,
+      sortOrder: 1000,
+    });
+  });
+
+  it('Sets sort order in a new status in last position to b + 1000', async () => {
+    const tasks = [
+      taskFactory.create({ _id: '1', status: TaskStatus.Ready, sortOrder: 1000 }),
+      taskFactory.create({ _id: '2', status: TaskStatus.Ready, sortOrder: 2000 }),
+      taskFactory.create({ _id: '3', status: TaskStatus.Waiting, sortOrder: 2000 }),
+    ];
+    await Promise.all(tasks.map((task) => dataSource.addTask(task)));
+
+    renderComponent(
+      <List tasks={tasks} visibleStatuses={[TaskStatus.Ready, TaskStatus.Waiting]} />
+    );
+
+    const mockDropResult: DropResult = {
+      draggableId: 'task-2',
+      type: 'DEFAULT',
+      source: {
+        // Drag from the second position to the end of the other status
+        droppableId: TaskStatus.Ready,
+        index: 1,
+      },
+      destination: {
+        droppableId: TaskStatus.Waiting,
+        index: 1,
+      },
+      mode: 'FLUID',
+      combine: null,
+      reason: 'DROP',
+    };
+
+    await waitFor(async () => {
+      onDragEndSpy(mockDropResult);
+    });
+
+    expect(mockDataSource.updateTask).toHaveBeenCalledWith({
+      ...tasks[1],
+      status: TaskStatus.Waiting,
+      sortOrder: 3000,
+    });
+  });
+
+  it('Sets sort order in a new status in middle position to an average of a, b', async () => {
+    const tasks = [
+      taskFactory.create({ _id: '1', status: TaskStatus.Ready, sortOrder: 1000 }),
+      taskFactory.create({ _id: '2', status: TaskStatus.Ready, sortOrder: 3000 }),
+      taskFactory.create({ _id: '3', status: TaskStatus.Waiting, sortOrder: 5000 }),
+      taskFactory.create({ _id: '4', status: TaskStatus.Waiting, sortOrder: 7000 }),
+    ];
+    await Promise.all(tasks.map((task) => dataSource.addTask(task)));
+
+    renderComponent(
+      <List tasks={tasks} visibleStatuses={[TaskStatus.Ready, TaskStatus.Waiting]} />
+    );
+
+    const mockDropResult: DropResult = {
+      draggableId: 'task-1',
+      type: 'DEFAULT',
+      source: {
+        // Drag from the first position to the middle position in the other status
+        droppableId: TaskStatus.Ready,
+        index: 0,
+      },
+      destination: {
+        droppableId: TaskStatus.Waiting,
+        index: 1,
+      },
+      mode: 'FLUID',
+      combine: null,
+      reason: 'DROP',
+    };
+
+    await waitFor(async () => {
+      onDragEndSpy(mockDropResult);
+    });
+
+    expect(mockDataSource.updateTask).toHaveBeenCalledWith({
+      ...tasks[0],
+      status: TaskStatus.Waiting,
+      sortOrder: 6000,
+    });
+  });
 });

@@ -124,6 +124,7 @@ export class LocalDataSource implements DataSource {
       type: 'task',
       context: newTask.context,
       title: newTask.title,
+      sortOrder: newTask.sortOrder,
       description: newTask.description,
       status: newTask.status,
       priority: newTask.priority,
@@ -152,6 +153,7 @@ export class LocalDataSource implements DataSource {
 
     try {
       response = await this.db.put(task);
+      Logger.info('Updated task');
     } catch (error) {
       Logger.error('Error updating task:', error);
       throw error; // Re-throw to handle it in the calling code
@@ -186,6 +188,11 @@ export class LocalDataSource implements DataSource {
       }
       task.createdAt = new Date(task.createdAt);
       task.updatedAt = new Date(task.updatedAt);
+    });
+
+    // Sort by Task.sortOrders asc
+    allTasks.sort((a, b) => {
+      return (a.sortOrder || 0) - (b.sortOrder || 0);
     });
 
     return this.filterTasksByParams(allTasks, params);
