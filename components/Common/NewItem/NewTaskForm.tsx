@@ -10,6 +10,8 @@ import { Logger } from '@/helpers/logger';
 export default function NewTaskForm({ handleClose }: { handleClose: () => void }) {
   const dataSource = useDataSource();
   const [contexts, setContexts] = useState<string[]>([]);
+  // use to force an update of the contexts dropdown
+  const [contextKey, setContextKey] = useState<number>(0);
 
   const form = useForm<NewTask>({
     mode: 'uncontrolled',
@@ -39,8 +41,8 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
 
       setContexts(availableContexts);
 
-      // @TODO WTF make this work
       form.setFieldValue('context', lastSelectedContext);
+      setContextKey((prev) => prev + 1); // Increment key to force re-render of Select component
     };
     initializeForm();
   }, []);
@@ -66,9 +68,9 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
       <Select
         label="Context"
         placeholder="Select a context"
-        data={contexts.map((context) => ({ value: context, label: context }))}
+        data={contexts}
         {...form.getInputProps('context')}
-        key="context"
+        key={`context-${contextKey}`} // Force re-render when contexts change
         required
       />
       <TextInput label="Title" placeholder="Task title" {...form.getInputProps('title')} required />

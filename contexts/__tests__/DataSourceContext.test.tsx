@@ -37,7 +37,7 @@ describe('DataSourceContext', () => {
       </DataSourceContextProvider>
     );
 
-    expect(screen.getByTestId('version')).toHaveTextContent('1');
+    expect(screen.getByTestId('version')).toHaveTextContent('2');
   });
 
   it('shows migration status when migrations are running', async () => {

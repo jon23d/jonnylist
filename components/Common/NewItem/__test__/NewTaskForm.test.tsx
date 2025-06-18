@@ -1,3 +1,4 @@
+import { waitFor } from '@testing-library/react';
 import { DataSourceContextProvider } from '@/contexts/DataSourceContext';
 import { DataSource } from '@/data/DataSource';
 import { DocumentTypes } from '@/data/documentTypes';
@@ -121,5 +122,19 @@ describe('NewTaskForm', () => {
         status: 'done',
       })
     );
+  });
+
+  it('Uses the last selected context as the default value', async () => {
+    mockDataSource.getPreferences.mockResolvedValueOnce({ lastSelectedContext: 'Context1' });
+
+    render(
+      <DataSourceContextProvider dataSource={dataSource}>
+        <NewTaskForm handleClose={() => {}} />
+      </DataSourceContextProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('textbox', { name: 'Context' })).toHaveDisplayValue('Context1');
+    });
   });
 });
