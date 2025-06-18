@@ -11,7 +11,7 @@ export type UnsubscribeFunction = () => void;
 export type TaskSubscriber = (tasks: Task[]) => void;
 export type ContextSubscriber = (contexts: string[]) => void;
 
-export const DATABASE_VERSION = 1;
+export const DATABASE_VERSION = 2;
 
 export interface DataSource {
   cleanup: () => Promise<void>;
