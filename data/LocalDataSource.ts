@@ -234,12 +234,19 @@ export class LocalDataSource implements DataSource {
   /**
    * Fetch all context names from the database.
    */
-  async getContexts(): Promise<string[]> {
+  async getContexts(includeDeleted?: boolean): Promise<string[]> {
+    const _includeDeleted = includeDeleted ?? false;
+
     const result = await this.db.allDocs<Context>({
       include_docs: true,
       startkey: 'context-',
       endkey: 'context-\ufff0',
     });
+
+    // Filter out archived contexts if not requested
+    if (!_includeDeleted) {
+      result.rows = result.rows.filter((row) => !row.doc?.deletedAt);
+    }
 
     return result.rows.map((row) => row.doc!.name);
   }

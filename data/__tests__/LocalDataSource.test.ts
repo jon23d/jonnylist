@@ -229,6 +229,32 @@ describe('LocalDataSource', () => {
     expect(contexts).toEqual(['context-1', 'context-2', 'context-3']);
   });
 
+  test('getContexts should not filter when includeDeleted is true', async () => {
+    const archivedContext = contextFactory.create({
+      name: 'deleted-context',
+      deletedAt: new Date(),
+    });
+    const activeContext = contextFactory.create({ name: 'active-context' });
+
+    await database.bulkDocs([archivedContext, activeContext]);
+
+    const contexts = await localDataSource.getContexts(true);
+    expect(contexts).toEqual(expect.arrayContaining(['deleted-context', 'active-context']));
+  });
+
+  test('getContexts should filter archived contexts when includeDeleted is false', async () => {
+    const archivedContext = contextFactory.create({
+      name: 'deleted-context',
+      deletedAt: new Date(),
+    });
+    const activeContext = contextFactory.create({ name: 'active-context' });
+
+    await database.bulkDocs([archivedContext, activeContext]);
+
+    const contexts = await localDataSource.getContexts();
+    expect(contexts).toEqual(['active-context']);
+  });
+
   describe('runMigrations', () => {
     it('Should not call onMigrationStatusChange if no migrations are needed', async () => {
       const needsMigration = jest.fn().mockResolvedValue(false);
