@@ -26,6 +26,7 @@ export interface DataSource {
 
   addTask: (task: NewTask) => Promise<Task>;
   updateTask: (task: Task) => Promise<Task>;
+  updateTasks: (tasks: Task[]) => Promise<Task[]>;
 
   getTasks: (params: getTasksParams) => Promise<Task[]>;
   subscribeToTasks: (params: getTasksParams, callback: TaskSubscriber) => UnsubscribeFunction;

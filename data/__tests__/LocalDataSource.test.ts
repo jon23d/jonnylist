@@ -19,6 +19,7 @@ describe('LocalDataSource', () => {
   let localDataSource: LocalDataSource;
   let database: PouchDB.Database<DocumentTypes>;
   const contextFactory = new ContextFactory();
+  const taskFactory = new TaskFactory();
 
   beforeEach(() => {
     const testData = createTestLocalDataSource();
@@ -83,7 +84,7 @@ describe('LocalDataSource', () => {
   });
 
   test('addTask should add a task to the database', async () => {
-    const task = new TaskFactory().create({
+    const task = taskFactory.create({
       sortOrder: 100,
     });
 
@@ -97,6 +98,61 @@ describe('LocalDataSource', () => {
     expect(returnedTask.context).toEqual(task.context);
     expect(returnedTask._id.startsWith('task-')).toBe(true);
     expect(returnedTask.sortOrder).toBe(100);
+  });
+
+  test('addTask should append the _rev to the task', async () => {
+    const task = taskFactory.create({
+      context: 'context1',
+      sortOrder: 100,
+    });
+
+    const addedTask = await localDataSource.addTask(task);
+
+    expect(addedTask._rev).toBeDefined();
+    expect(addedTask._id.startsWith('task-')).toBe(true);
+
+    const tasks = await localDataSource.getTasks({ context: 'context1' });
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0]._rev).toBe(addedTask._rev);
+  });
+
+  test('updateTask should update an existing task in the database', async () => {
+    const newTask = taskFactory.create({
+      context: 'context1',
+      sortOrder: 100,
+    });
+
+    const task = await localDataSource.addTask(newTask);
+    const timeAfterUpdate = new Date();
+
+    task.sortOrder = 200;
+    const updatedTask = await localDataSource.updateTask(task);
+
+    expect(updatedTask.sortOrder).toBe(200);
+
+    const tasks = await localDataSource.getTasks({ context: 'context1' });
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].sortOrder).toBe(200);
+    expect(tasks[0].updatedAt.getTime()).toBeGreaterThanOrEqual(timeAfterUpdate.getTime());
+  });
+
+  test('updateTasks should update multiple tasks in the database', async () => {
+    const task1 = await localDataSource.addTask(taskFactory.create({ sortOrder: 1 }));
+    const task2 = await localDataSource.addTask(taskFactory.create({ sortOrder: 2 }));
+
+    const rev1 = task1._rev;
+    const rev2 = task2._rev;
+
+    task1.sortOrder = 3;
+    task2.sortOrder = 4;
+
+    const updatedTasks = await localDataSource.updateTasks([task1, task2]);
+
+    expect(updatedTasks).toHaveLength(2);
+    expect(updatedTasks[0].sortOrder).toBe(3);
+    expect(updatedTasks[1].sortOrder).toBe(4);
+    expect(updatedTasks[0]._rev).not.toBe(rev1);
+    expect(updatedTasks[1]._rev).not.toBe(rev2);
   });
 
   test('getTasks should use a high unicode value for the endkey', async () => {
@@ -119,7 +175,7 @@ describe('LocalDataSource', () => {
 
   test('getTasks should convert date fields to Date objects', async () => {
     await localDataSource.addTask(
-      new TaskFactory().create({
+      taskFactory.create({
         dueDate: new Date('2023-01-01T00:00:00Z'),
       })
     );
@@ -133,7 +189,7 @@ describe('LocalDataSource', () => {
   });
 
   test('getTasks should return tasks filtered', async () => {
-    const task1 = new TaskFactory().create({ context: 'context1' });
+    const task1 = taskFactory.create({ context: 'context1' });
 
     await localDataSource.addTask(task1);
 
@@ -160,9 +216,9 @@ describe('LocalDataSource', () => {
   });
 
   test('getTasks should return tasks sorted by sortOrder', async () => {
-    const task1 = new TaskFactory().create({ _id: 'task1', context: 'context1', sortOrder: 1 });
-    const task2 = new TaskFactory().create({ _id: 'task2', context: 'context1', sortOrder: 0 });
-    const task3 = new TaskFactory().create({ _id: 'task3', context: 'context1', sortOrder: 2 });
+    const task1 = taskFactory.create({ _id: 'task1', context: 'context1', sortOrder: 1 });
+    const task2 = taskFactory.create({ _id: 'task2', context: 'context1', sortOrder: 0 });
+    const task3 = taskFactory.create({ _id: 'task3', context: 'context1', sortOrder: 2 });
 
     await localDataSource.addTask(task1);
     await localDataSource.addTask(task2);
@@ -202,7 +258,7 @@ describe('LocalDataSource', () => {
     unsubscribe();
     subscriber.mockReset();
 
-    await localDataSource.addTask(new TaskFactory().create({ context: 'context1' }));
+    await localDataSource.addTask(taskFactory.create({ context: 'context1' }));
 
     await waitFor(() => {
       expect(subscriber).not.toHaveBeenCalled();
@@ -388,10 +444,10 @@ describe('LocalDataSource', () => {
 
   test('filterTasksByParams should filter tasks by context and statuses', () => {
     const tasks: Task[] = [
-      new TaskFactory().create({ context: 'context1', status: TaskStatus.Ready }),
-      new TaskFactory().create({ context: 'context1', status: TaskStatus.Started }),
-      new TaskFactory().create({ context: 'context2', status: TaskStatus.Waiting }),
-      new TaskFactory().create({ context: 'context2', status: TaskStatus.Done }),
+      taskFactory.create({ context: 'context1', status: TaskStatus.Ready }),
+      taskFactory.create({ context: 'context1', status: TaskStatus.Started }),
+      taskFactory.create({ context: 'context2', status: TaskStatus.Waiting }),
+      taskFactory.create({ context: 'context2', status: TaskStatus.Done }),
     ];
 
     const filteredTasks = localDataSource.filterTasksByParams(tasks, {
@@ -401,5 +457,22 @@ describe('LocalDataSource', () => {
 
     expect(filteredTasks).toHaveLength(1);
     expect(filteredTasks[0].status).toBe(TaskStatus.Started);
+  });
+
+  test('filterTasksByParams should filter by multiple statuses', () => {
+    const tasks: Task[] = [
+      taskFactory.create({ status: TaskStatus.Ready }),
+      taskFactory.create({ status: TaskStatus.Started }),
+      taskFactory.create({ status: TaskStatus.Waiting }),
+      taskFactory.create({ status: TaskStatus.Done }),
+    ];
+
+    const filteredTasks = localDataSource.filterTasksByParams(tasks, {
+      statuses: [TaskStatus.Ready, TaskStatus.Started],
+    });
+
+    expect(filteredTasks).toHaveLength(2);
+    expect(filteredTasks[0].status).toBe(TaskStatus.Ready);
+    expect(filteredTasks[1].status).toBe(TaskStatus.Started);
   });
 });

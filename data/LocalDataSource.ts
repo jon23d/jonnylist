@@ -11,7 +11,7 @@ import { DocumentTypes } from '@/data/documentTypes';
 import { Context } from '@/data/documentTypes/Context';
 import { createDefaultPreferences, Preferences } from '@/data/documentTypes/Preferences';
 import { NewTask, Task } from '@/data/documentTypes/Task';
-import { Logger } from '@/helpers/logger';
+import { Logger } from '@/helpers/Logger';
 import { MigrationManager } from './migrations/MigrationManager';
 
 const DATABASE_NAME = 'jonnylist';
@@ -135,8 +135,8 @@ export class LocalDataSource implements DataSource {
     };
 
     try {
-      await this.db.put(task);
-      return task;
+      const response = await this.db.put(task);
+      return { _rev: response.rev, ...task }; // Return the task with the revision ID
     } catch (error) {
       Logger.error('Error adding task:', error);
       throw error; // Re-throw to handle it in the calling code
@@ -164,6 +164,36 @@ export class LocalDataSource implements DataSource {
     }
 
     throw new Error('Failed to update task');
+  }
+
+  async updateTasks(tasks: Task[]): Promise<Task[]> {
+    Logger.info('Updating multiple tasks');
+    const updatedTasks: Task[] = tasks.map((task) => {
+      return { ...task, updatedAt: new Date() };
+    });
+
+    const taskMap = new Map<string, Task>();
+    updatedTasks.forEach((task) => {
+      taskMap.set(task._id, task);
+    });
+
+    try {
+      const response = await this.db.bulkDocs(updatedTasks);
+      Logger.info('Updated tasks successfully');
+
+      // Update the _rev field for each task in the map
+      for (const result of response) {
+        // TODO: We are making a lot of assumptions here. They are probably pretty safe, but
+        // let's consider better error handling
+        const taskInMap = taskMap.get(result.id!);
+        taskInMap!._rev = result.rev;
+      }
+
+      return updatedTasks;
+    } catch (error) {
+      Logger.error('Error updating tasks:', error);
+      throw error; // Re-throw to handle it in the calling code
+    }
   }
 
   /**

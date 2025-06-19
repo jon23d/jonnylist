@@ -5,7 +5,7 @@ import { useForm } from '@mantine/form';
 import { useDataSource } from '@/contexts/DataSourceContext';
 import { createDefaultPreferences } from '@/data/documentTypes/Preferences';
 import { NewTask, TaskStatus, taskStatusSelectOptions } from '@/data/documentTypes/Task';
-import { Logger } from '@/helpers/logger';
+import { Logger } from '@/helpers/Logger';
 
 export default function NewTaskForm({ handleClose }: { handleClose: () => void }) {
   const dataSource = useDataSource();
