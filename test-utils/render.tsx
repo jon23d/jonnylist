@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactElement } from 'react';
 import { render as testingLibraryRender } from '@testing-library/react';
 import {
   createTheme,
@@ -9,6 +9,8 @@ import {
   Popover,
   SegmentedControl,
 } from '@mantine/core';
+import { DataSourceContextProvider } from '@/contexts/DataSourceContext';
+import { DataSource } from '@/data/DataSource';
 import { theme } from '@/theme';
 
 const testTheme = mergeThemeOverrides(
@@ -51,4 +53,10 @@ export function render(ui: React.ReactNode) {
       </MantineProvider>
     ),
   });
+}
+
+export function renderWithDatasource(component: ReactElement, dataSource: DataSource) {
+  return render(
+    <DataSourceContextProvider dataSource={dataSource}>{component}</DataSourceContextProvider>
+  );
 }

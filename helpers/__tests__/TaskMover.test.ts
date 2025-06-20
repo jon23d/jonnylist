@@ -59,7 +59,5 @@ describe('TaskMover', () => {
         expect.arrayContaining([TaskStatus.Done, TaskStatus.Cancelled])
       );
     });
-
-    it('Does not move tasks with status of done or cancelled', async () => {});
   });
 });
