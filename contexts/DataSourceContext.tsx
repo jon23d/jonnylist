@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { DataSource } from '@/data/DataSource';
 import { LocalDataSource } from '@/data/LocalDataSource';
-import { Logger } from '@/helpers/logger';
+import { Logger } from '@/helpers/Logger';
 
 export type DataSourceContextType = {
   dataSource: DataSource;

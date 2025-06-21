@@ -1,7 +1,7 @@
 import HeaderLinks from '@/components/Layout/HeaderLinks';
 import { render, screen } from '@/test-utils';
 
-jest.mock('@/components/Common/NewItem/AddNewItemButton', () => ({
+jest.mock('@/components/Layout/NewItem/AddNewItemButton', () => ({
   __esModule: true,
   default: () => <div>Add new item</div>,
 }));

@@ -8,7 +8,7 @@ import ViewSelector, { ViewType } from '@/components/Contexts/Views/ViewSelector
 import TaskStatusSelector from '@/components/Tasks/TaskStatusSelector';
 import { useDataSource } from '@/contexts/DataSourceContext';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
-import { Logger } from '@/helpers/logger';
+import { Logger } from '@/helpers/Logger';
 
 const views: Record<ViewType, (props: ViewProps) => React.ReactElement> = {
   List,

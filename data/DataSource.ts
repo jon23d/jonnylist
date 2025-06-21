@@ -11,7 +11,7 @@ export type UnsubscribeFunction = () => void;
 export type TaskSubscriber = (tasks: Task[]) => void;
 export type ContextSubscriber = (contexts: string[]) => void;
 
-export const DATABASE_VERSION = 2;
+export const DATABASE_VERSION = 3;
 
 export interface DataSource {
   cleanup: () => Promise<void>;
@@ -26,11 +26,14 @@ export interface DataSource {
 
   addTask: (task: NewTask) => Promise<Task>;
   updateTask: (task: Task) => Promise<Task>;
+  updateTasks: (tasks: Task[]) => Promise<Task[]>;
 
   getTasks: (params: getTasksParams) => Promise<Task[]>;
   subscribeToTasks: (params: getTasksParams, callback: TaskSubscriber) => UnsubscribeFunction;
 
-  getContexts: () => Promise<string[]>;
+  getContexts: (includeArchived?: boolean) => Promise<string[]>;
   addContext: (context: string) => Promise<void>;
+  archiveContext: (sourceContext: string, destinationContext: string) => Promise<void>;
+
   subscribeToContexts: (callback: ContextSubscriber) => UnsubscribeFunction;
 }

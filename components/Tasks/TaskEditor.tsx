@@ -4,7 +4,7 @@ import { DateInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
 import { useDataSource } from '@/contexts/DataSourceContext';
 import { Task, taskStatusSelectOptions } from '@/data/documentTypes/Task';
-import { Logger } from '@/helpers/logger';
+import { Logger } from '@/helpers/Logger';
 
 export default function TaskEditor({ task, handleClose }: { task: Task; handleClose: () => void }) {
   const dataSource = useDataSource();

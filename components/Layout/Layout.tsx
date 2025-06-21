@@ -3,15 +3,18 @@ import { useRouter } from 'next/router';
 import { IconSettingsFilled } from '@tabler/icons-react';
 import { AppShell, Burger, Group, NavLink, ScrollArea } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import BulkOperationOverlay from '@/components/Common/BulkOperationOverlay';
 import ContextLinks from '@/components/Layout/ContextLinks';
 import DataMigrationOverlay from '@/components/Layout/DataMigrationOverlay';
 import Footer from '@/components/Layout/Footer';
 import HeaderLinks from '@/components/Layout/HeaderLinks';
 import ListLinks from '@/components/Layout/ListLinks';
+import { useBulkOperationOverlay } from '@/contexts/BulkOperationOverlayContext';
 import { useIsMigrating } from '@/contexts/DataSourceContext';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [opened, { toggle }] = useDisclosure();
+  const { opened: bulkOverlayOpened, config: bulkOverlayConfig } = useBulkOperationOverlay();
   const router = useRouter();
   const isMigrating = useIsMigrating();
   const [showOverlay, setShowOverlay] = useState(false);
@@ -77,6 +80,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <Footer />
         </AppShell.Footer>
       </AppShell>
+      {bulkOverlayOpened && (
+        <BulkOperationOverlay
+          title={bulkOverlayConfig.title}
+          description={bulkOverlayConfig.description}
+        />
+      )}
     </>
   );
 }

@@ -9,6 +9,7 @@ export class ContextFactory implements Factory<Context> {
       _rev: data._rev,
       type: 'context',
       name: data.name || 'default',
+      deletedAt: data.deletedAt || null,
     };
   }
 }
