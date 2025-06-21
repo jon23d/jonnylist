@@ -1,6 +1,6 @@
 import React from 'react';
 import { Anchor, Text } from '@mantine/core';
-import AddNewItemButton from '@/components/Common/NewItem/AddNewItemButton';
+import AddNewItemButton from '@/components/Layout/NewItem/AddNewItemButton';
 import classes from './Layout.module.css';
 
 export default function HeaderLinks() {

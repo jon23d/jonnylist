@@ -475,4 +475,54 @@ describe('LocalDataSource', () => {
     expect(filteredTasks[0].status).toBe(TaskStatus.Ready);
     expect(filteredTasks[1].status).toBe(TaskStatus.Started);
   });
+
+  describe('archiveContext', () => {
+    it('Moves tasks with status of ready, waiting, and started to a new context', async () => {
+      await Promise.all([
+        localDataSource.addContext('old-context'),
+        localDataSource.addContext('new-context'),
+        localDataSource.addTask(
+          taskFactory.create({ status: TaskStatus.Ready, context: 'old-context' })
+        ),
+        localDataSource.addTask(
+          taskFactory.create({ status: TaskStatus.Waiting, context: 'old-context' })
+        ),
+        localDataSource.addTask(
+          taskFactory.create({ status: TaskStatus.Started, context: 'old-context' })
+        ),
+        localDataSource.addTask(
+          taskFactory.create({ status: TaskStatus.Done, context: 'old-context' })
+        ),
+        localDataSource.addTask(
+          taskFactory.create({ status: TaskStatus.Cancelled, context: 'old-context' })
+        ),
+      ]);
+
+      await localDataSource.archiveContext('old-context', 'new-context');
+
+      const newContextTasks = await localDataSource.getTasks({
+        context: 'new-context',
+      });
+      const oldContextTasks = await localDataSource.getTasks({
+        context: 'old-context',
+      });
+
+      expect(newContextTasks.map((t) => t.status)).toEqual(
+        expect.arrayContaining([TaskStatus.Ready, TaskStatus.Waiting, TaskStatus.Started])
+      );
+      expect(oldContextTasks.map((t) => t.status)).toEqual(
+        expect.arrayContaining([TaskStatus.Done, TaskStatus.Cancelled])
+      );
+    });
+
+    it('Archives the source context', async () => {
+      await localDataSource.addContext('old-context');
+      await localDataSource.addContext('new-context');
+
+      await localDataSource.archiveContext('old-context', 'new-context');
+
+      const contexts = await localDataSource.getContexts();
+      expect(contexts).toEqual(['new-context']);
+    });
+  });
 });

@@ -3,7 +3,7 @@ import { IconSettings } from '@tabler/icons-react';
 import { Flex, Modal, Paper, Table, Title, Tooltip } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 
-const LazyModal = lazy(() => import('./Settings'));
+const LazyModal = lazy(() => import('./Settings/Settings'));
 
 export default function ContextSummaryCard({ contextName }: { contextName: string }) {
   const [opened, { open, close }] = useDisclosure(false);
@@ -50,7 +50,7 @@ export default function ContextSummaryCard({ contextName }: { contextName: strin
 
       <Modal opened={opened} onClose={close} title={`${contextName} Settings`}>
         <Suspense fallback={<div>Loading...</div>}>
-          <LazyModal contextName={contextName} />
+          <LazyModal contextName={contextName} onClose={close} />
         </Suspense>
       </Modal>
     </>

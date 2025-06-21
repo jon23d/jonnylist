@@ -10,7 +10,7 @@ import {
 import { DocumentTypes } from '@/data/documentTypes';
 import { Context } from '@/data/documentTypes/Context';
 import { createDefaultPreferences, Preferences } from '@/data/documentTypes/Preferences';
-import { NewTask, Task } from '@/data/documentTypes/Task';
+import { NewTask, Task, TaskStatus } from '@/data/documentTypes/Task';
 import { Logger } from '@/helpers/Logger';
 import { MigrationManager } from './migrations/MigrationManager';
 
@@ -226,6 +226,32 @@ export class LocalDataSource implements DataSource {
     });
 
     return this.filterTasksByParams(allTasks, params);
+  }
+
+  async archiveContext(sourceContext: string, destinationContext: string): Promise<void> {
+    Logger.info(`Archiving context: ${sourceContext} to ${destinationContext}`);
+
+    // Fetch all tasks in the source context
+    const tasks = await this.getTasks({
+      context: sourceContext,
+      statuses: [TaskStatus.Ready, TaskStatus.Waiting, TaskStatus.Started],
+    });
+
+    if (tasks.length !== 0) {
+      const updatedTasks = tasks.map((task) => ({
+        ...task,
+        context: destinationContext,
+      }));
+
+      await this.updateTasks(updatedTasks);
+    }
+
+    // Mark the source context as deleted
+    const sourceContextDoc = await this.db.get<Context>(`context-${sourceContext}`);
+    sourceContextDoc.deletedAt = new Date();
+    await this.db.put(sourceContextDoc);
+
+    Logger.info(`Successfully archived context: ${sourceContext}`);
   }
 
   /**

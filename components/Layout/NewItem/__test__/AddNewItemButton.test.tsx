@@ -1,17 +1,17 @@
 import { render, screen, userEvent } from '@/test-utils';
 import AddNewItemButton from '../AddNewItemButton';
 
-jest.mock('@/components/Common/NewItem/NewTaskForm', () => ({
+jest.mock('@/components/Layout/NewItem/NewTaskForm', () => ({
   __esModule: true,
   default: () => <div>new task form mock</div>,
 }));
 
-jest.mock('@/components/Common/NewItem/NewListItemForm', () => ({
+jest.mock('@/components/Layout/NewItem/NewListItemForm', () => ({
   __esModule: true,
   default: () => <div>new list item form mock</div>,
 }));
 
-jest.mock('@/components/Common/NewItem/NewMetricForm', () => ({
+jest.mock('@/components/Layout/NewItem/NewMetricForm', () => ({
   __esModule: true,
   default: () => <div>new metric form mock</div>,
 }));

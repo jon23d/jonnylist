@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Button, Menu, Modal } from '@mantine/core';
 import { useHotkeys } from '@mantine/hooks';
-import NewListItemForm from '@/components/Common/NewItem/NewListItemForm';
-import NewMetricForm from '@/components/Common/NewItem/NewMetricForm';
-import NewTaskForm from '@/components/Common/NewItem/NewTaskForm';
+import NewListItemForm from '@/components/Layout/NewItem/NewListItemForm';
+import NewMetricForm from '@/components/Layout/NewItem/NewMetricForm';
+import NewTaskForm from '@/components/Layout/NewItem/NewTaskForm';
 
 export default function AddNewItemButton() {
   const [modalOpened, setModalOpened] = useState(false);

@@ -33,5 +33,7 @@ export interface DataSource {
 
   getContexts: (includeArchived?: boolean) => Promise<string[]>;
   addContext: (context: string) => Promise<void>;
+  archiveContext: (sourceContext: string, destinationContext: string) => Promise<void>;
+
   subscribeToContexts: (callback: ContextSubscriber) => UnsubscribeFunction;
 }
