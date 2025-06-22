@@ -1,9 +1,7 @@
 import React from 'react';
 import Settings from '@/components/Contexts/Settings/Settings';
-import { DocumentTypes } from '@/data/documentTypes';
-import { LocalDataSource } from '@/data/LocalDataSource';
-import { renderWithDatasource, screen, waitFor } from '@/test-utils';
-import { createTestLocalDataSource } from '@/test-utils/db';
+import { renderWithDataSource, screen, waitFor } from '@/test-utils';
+import { setupTestDatabase } from '@/test-utils/db';
 
 // Mock the child components
 jest.mock('@/components/Contexts/Settings/ArchivalForm', () => {
@@ -56,25 +54,14 @@ jest.mock('@/components/Contexts/Settings/RenameForm', () => {
 const onClose = jest.fn();
 
 describe('Settings', () => {
-  let dataSource: LocalDataSource;
-  let db: PouchDB.Database<DocumentTypes>;
-
-  beforeEach(() => {
-    const testData = createTestLocalDataSource();
-    dataSource = testData.dataSource;
-    db = testData.database;
-  });
-
-  afterEach(async () => {
-    await dataSource.cleanup();
-    await db.destroy();
-  });
+  const { getDataSource } = setupTestDatabase();
 
   it('renders both RenameForm and ArchivalForm', async () => {
+    const dataSource = getDataSource();
     const contextNames = ['context1', 'context2', 'context3'];
     await Promise.all(contextNames.map((name) => dataSource.addContext(name)));
 
-    renderWithDatasource(<Settings contextName="context1" onClose={onClose} />, dataSource);
+    renderWithDataSource(<Settings contextName="context1" onClose={onClose} />, dataSource);
 
     expect(screen.getByText('Rename context')).toBeInTheDocument();
     expect(screen.getByTestId('rename-form')).toBeInTheDocument();
@@ -84,19 +71,21 @@ describe('Settings', () => {
   });
 
   it('passes correct props to RenameForm', async () => {
+    const dataSource = getDataSource();
     const contextNames = ['test-context'];
     await Promise.all(contextNames.map((name) => dataSource.addContext(name)));
 
-    renderWithDatasource(<Settings contextName="test-context" onClose={onClose} />, dataSource);
+    renderWithDataSource(<Settings contextName="test-context" onClose={onClose} />, dataSource);
 
     expect(screen.getByTestId('context-name')).toHaveTextContent('test-context');
   });
 
   it('fetches contexts and filters out current context for ArchivalForm', async () => {
+    const dataSource = getDataSource();
     const contextNames = ['context1', 'context2', 'context3'];
     await Promise.all(contextNames.map((name) => dataSource.addContext(name)));
 
-    renderWithDatasource(<Settings contextName="context2" onClose={onClose} />, dataSource);
+    renderWithDataSource(<Settings contextName="context2" onClose={onClose} />, dataSource);
 
     // Should pass the current context as sourceContext
     expect(screen.getByTestId('source-context')).toHaveTextContent('context2');

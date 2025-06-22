@@ -1,11 +1,7 @@
-import { ReactElement } from 'react';
-import PouchDB from 'pouchdb';
 import ContextPage from '@/components/Contexts/ContextPage';
-import { DataSourceContextProvider } from '@/contexts/DataSourceContext';
 import { DataSource } from '@/data/DataSource';
-import { DocumentTypes } from '@/data/documentTypes';
-import { render, screen, userEvent, waitFor } from '@/test-utils';
-import { createTestLocalDataSource } from '@/test-utils/db';
+import { renderWithDataSource, screen, userEvent, waitFor } from '@/test-utils';
+import { setupTestDatabase } from '@/test-utils/db';
 import { PreferencesFactory } from '@/test-utils/factories/PreferencesFactory';
 
 jest.mock('@/components/Contexts/Views/Board/Board', () => () => <div>Board View</div>);
@@ -13,22 +9,20 @@ jest.mock('@/components/Contexts/Views/List/List', () => () => <div>List View</d
 jest.mock('@/components/Contexts/Views/Calendar/Calendar', () => () => <div>Calendar View</div>);
 
 describe('ContextPage', () => {
-  let database: PouchDB.Database<DocumentTypes>;
-  let localDataSource: DataSource;
+  const { getDataSource } = setupTestDatabase();
+  let dataSource: DataSource;
   let subscribeToTasks: jest.SpyInstance;
   let getPreferences: jest.SpyInstance;
   const unsubscribeFunction = jest.fn();
 
   beforeEach(() => {
-    const testData = createTestLocalDataSource();
-    localDataSource = testData.dataSource;
-    database = testData.database;
+    dataSource = getDataSource();
 
     subscribeToTasks = jest
-      .spyOn(localDataSource, 'subscribeToTasks')
+      .spyOn(dataSource, 'subscribeToTasks')
       .mockReturnValue(unsubscribeFunction);
 
-    getPreferences = jest.spyOn(localDataSource, 'getPreferences').mockResolvedValue(
+    getPreferences = jest.spyOn(dataSource, 'getPreferences').mockResolvedValue(
       new PreferencesFactory().create({
         lastSelectedContext: 'Test Context',
       })
@@ -38,20 +32,10 @@ describe('ContextPage', () => {
   afterEach(async () => {
     subscribeToTasks.mockRestore();
     getPreferences.mockRestore();
-    await localDataSource.cleanup();
-    await database.destroy();
   });
 
-  const renderWithDataSource = (component: ReactElement) => {
-    return render(
-      <DataSourceContextProvider dataSource={localDataSource}>
-        {component}
-      </DataSourceContextProvider>
-    );
-  };
-
   it('Subscribes to tasks with the correct parameters', async () => {
-    renderWithDataSource(<ContextPage contextName="Test Context" />);
+    renderWithDataSource(<ContextPage contextName="Test Context" />, dataSource);
 
     // The view selector needs to be loaded so that this test doesn't cause issues
     await screen.findByRole('radio', { name: 'List' });
@@ -66,7 +50,7 @@ describe('ContextPage', () => {
   });
 
   it('Re-subscribes to tasks when the status selector is invoked', async () => {
-    renderWithDataSource(<ContextPage contextName="Test Context" />);
+    renderWithDataSource(<ContextPage contextName="Test Context" />, dataSource);
 
     // The view selector needs to be loaded so that this test doesn't cause issues
     await screen.findByRole('radio', { name: 'List' });
@@ -84,7 +68,7 @@ describe('ContextPage', () => {
   });
 
   it('Loads the list view by default', async () => {
-    renderWithDataSource(<ContextPage contextName="Test Context" />);
+    renderWithDataSource(<ContextPage contextName="Test Context" />, dataSource);
 
     // The view selector needs to be loaded so that this test doesn't cause issues
     await screen.findByRole('radio', { name: 'List' });
@@ -95,7 +79,7 @@ describe('ContextPage', () => {
   });
 
   it('Navigates to the list view after loading another', async () => {
-    renderWithDataSource(<ContextPage contextName="Test Context" />);
+    renderWithDataSource(<ContextPage contextName="Test Context" />, dataSource);
 
     await userEvent.click(screen.getByRole('radio', { name: 'Board' }));
     expect(screen.getByText('Board View')).toBeInTheDocument();
@@ -105,7 +89,7 @@ describe('ContextPage', () => {
   });
 
   it('Loads the board view', async () => {
-    renderWithDataSource(<ContextPage contextName="Test Context" />);
+    renderWithDataSource(<ContextPage contextName="Test Context" />, dataSource);
 
     await userEvent.click(screen.getByRole('radio', { name: 'Board' }));
 
@@ -113,7 +97,7 @@ describe('ContextPage', () => {
   });
 
   it('Loads the calendar view', async () => {
-    renderWithDataSource(<ContextPage contextName="Test Context" />);
+    renderWithDataSource(<ContextPage contextName="Test Context" />, dataSource);
 
     await userEvent.click(screen.getByRole('radio', { name: 'Board' }));
 

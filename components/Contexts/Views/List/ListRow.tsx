@@ -32,9 +32,7 @@ export default function ListRow({
           </Table.Td>
           <Table.Td w={columnWidths[1]}>{task.title}</Table.Td>
           <Table.Td w={columnWidths[2]}>{task.description}</Table.Td>
-          <Table.Td w={columnWidths[3]}>
-            {task.dueDate ? task.dueDate.toLocaleDateString() : 'No due date'}
-          </Table.Td>
+          <Table.Td w={columnWidths[3]}>{task.dueDate ? task.dueDate : 'No due date'}</Table.Td>
         </Table.Tr>
       )}
     </Draggable>

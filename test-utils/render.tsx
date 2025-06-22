@@ -42,6 +42,9 @@ const testTheme = mergeThemeOverrides(
       Popover: Popover.extend({
         defaultProps: {
           hideDetached: false,
+          transitionProps: {
+            duration: 0,
+          },
         },
       }),
       Notifications: Notifications.extend({
@@ -68,7 +71,7 @@ export function render(ui: React.ReactNode) {
   });
 }
 
-export function renderWithDatasource(component: ReactElement, dataSource: DataSource) {
+export function renderWithDataSource(component: ReactElement, dataSource: DataSource) {
   return render(
     <DataSourceContextProvider dataSource={dataSource}>{component}</DataSourceContextProvider>
   );

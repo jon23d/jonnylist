@@ -1,11 +1,7 @@
-import { ReactElement } from 'react';
 import TaskEditor from '@/components/Tasks/TaskEditor';
-import { DataSourceContextProvider } from '@/contexts/DataSourceContext';
-import { DataSource } from '@/data/DataSource';
-import { DocumentTypes } from '@/data/documentTypes';
 import { TaskStatus } from '@/data/documentTypes/Task';
-import { render, screen, userEvent, waitFor } from '@/test-utils';
-import { createTestLocalDataSource } from '@/test-utils/db';
+import { renderWithDataSource, screen, userEvent, waitFor } from '@/test-utils';
+import { setupTestDatabase } from '@/test-utils/db';
 import { TaskFactory } from '@/test-utils/factories/TaskFactory';
 
 const updateTaskMock = jest.fn();
@@ -21,36 +17,22 @@ jest.mock('@/contexts/DataSourceContext', () => ({
 
 describe('TaskEditor', () => {
   const taskFactory = new TaskFactory();
-  let db: PouchDB.Database<DocumentTypes>;
-  let dataSource: DataSource;
+  const { getDataSource } = setupTestDatabase();
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    const testData = createTestLocalDataSource();
-    db = testData.database;
-    dataSource = testData.dataSource;
   });
-
-  afterEach(async () => {
-    await dataSource.cleanup();
-    await db.destroy();
-  });
-
-  const renderWithDatasource = (component: ReactElement) => {
-    return render(
-      <DataSourceContextProvider dataSource={dataSource}>{component}</DataSourceContextProvider>
-    );
-  };
 
   it('Renders the public fields of a task in a form', async () => {
+    const dataSource = getDataSource();
+
     const task = taskFactory.create({
       status: TaskStatus.Ready,
       context: 'context1',
-      dueDate: new Date(2023, 8, 30),
+      dueDate: '2023-08-30',
     });
 
-    renderWithDatasource(<TaskEditor task={task} handleClose={() => {}} />);
+    renderWithDataSource(<TaskEditor task={task} handleClose={() => {}} />, dataSource);
 
     // We must wait for the contexts to be fetched before we can check the form
     await waitFor(() => {
@@ -73,7 +55,7 @@ describe('TaskEditor', () => {
 
     const dueDateInput = screen.getByRole('textbox', { name: 'Due Date' });
     expect(dueDateInput).toBeInTheDocument();
-    expect(dueDateInput).toHaveValue('September 30, 2023');
+    expect(dueDateInput).toHaveValue('August 30, 2023');
 
     const statusInput = screen.getByRole('textbox', { name: 'Status' });
     expect(statusInput).toBeInTheDocument();
@@ -81,8 +63,9 @@ describe('TaskEditor', () => {
   });
 
   it('fetches contexts and populates the Context select input', async () => {
+    const dataSource = getDataSource();
     const task = taskFactory.create(); // Context value doesn't matter for this test
-    renderWithDatasource(<TaskEditor task={task} handleClose={() => {}} />);
+    renderWithDataSource(<TaskEditor task={task} handleClose={() => {}} />, dataSource);
 
     // Assert that getContexts was called when the component mounted
     expect(getContextsMock).toHaveBeenCalledTimes(1);
@@ -90,7 +73,8 @@ describe('TaskEditor', () => {
 
   it('Saves the task when the form is submitted', async () => {
     const task = taskFactory.create();
-    renderWithDatasource(<TaskEditor task={task} handleClose={() => {}} />);
+    const dataSource = getDataSource();
+    renderWithDataSource(<TaskEditor task={task} handleClose={() => {}} />, dataSource);
 
     // Wait for contexts to be fetched
     await waitFor(() => {

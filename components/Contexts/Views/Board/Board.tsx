@@ -10,7 +10,7 @@ export default function Board(viewProps: ViewProps) {
           <h2>{task.title}</h2>
           <p>{task.description}</p>
           <p>Status: {task.status}</p>
-          <p>Due Date: {task.dueDate ? task.dueDate.toLocaleDateString() : 'No due date'}</p>
+          <p>Due Date: {task.dueDate ?? 'No due date'}</p>
         </div>
       ))}
     </div>
