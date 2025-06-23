@@ -5,10 +5,18 @@ This application uses [PouchDB](https://www.pouchdb.com) for nosql local storage
 
 ## Local Database
 
-The local database is made accessible through a class that implements the [DataSource](../data/DataSource.ts) interface.
-Locally, we use the [LocalDataSource](../data/LocalDataSource.ts) class, which is a wrapper around PouchDB. PouchDb's feeds will provide
-implicit local synchronization, meaning that any changes made to the local database will be immediately available
-to any tab accessing the application.
+The local database is made accessible through a class that implements the [ataSource](../data/DataSource.ts) class, which
+is a wrapper around PouchDB. PouchDb's feeds will provide implicit local synchronization, meaning that any changes made
+to the local database will be immediately available  to any tab accessing the application.
+
+## Remote Sync
+
+By providing configuration options, the application can be set up to synchronize with a remote CouchDB server. The
+required options are:
+
+* Server URL: The URL of the CouchDB server to synchronize with.
+* Database Name: The name of the database to synchronize with on the CouchDB server.
+* Access Token: A JWT that will be accepted by the CouchDB server for authentication. It requires that the sub claim contains a username which has access to the configured database
 
 ## Migrations
 

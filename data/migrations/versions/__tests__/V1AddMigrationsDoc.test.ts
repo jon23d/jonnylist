@@ -1,25 +1,15 @@
-import { DataSource } from '@/data/DataSource';
 import V1AddMigrationsDoc from '@/data/migrations/versions/V1AddMigrationsDoc';
-import { createTestLocalDataSource } from '@/test-utils/db';
+import { setupTestDatabase } from '@/test-utils/db';
 
 describe('V1AddMigrations', () => {
-  let dataSource: DataSource;
-  let db: PouchDB.Database;
-
+  const { getDb } = setupTestDatabase();
   beforeEach(() => {
     jest.clearAllMocks();
-
-    const testData = createTestLocalDataSource();
-    dataSource = testData.dataSource;
-    db = testData.database;
-  });
-
-  afterEach(async () => {
-    await dataSource.cleanup();
-    await db.destroy();
   });
 
   test('needsMigration should return true if no migrations doc exists', async () => {
+    const db = getDb();
+
     const migration = new V1AddMigrationsDoc();
 
     const needsMigration = await migration.needsMigration(db);
@@ -28,11 +18,13 @@ describe('V1AddMigrations', () => {
   });
 
   test('needsMigration should return false if migrations doc exists', async () => {
+    const db = getDb();
+
     const migration = new V1AddMigrationsDoc();
     await db.put({
       _id: 'migrations',
       version: 1,
-      migrations: [],
+      migrations: [''],
     });
 
     const needsMigration = await migration.needsMigration(db);
@@ -41,6 +33,7 @@ describe('V1AddMigrations', () => {
   });
 
   test('up should create migrations doc with version 1', async () => {
+    const db = getDb();
     const migration = new V1AddMigrationsDoc();
 
     await migration.up(db);

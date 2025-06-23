@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { DataSource } from '@/data/DataSource';
-import { LocalDataSource } from '@/data/LocalDataSource';
 import { Logger } from '@/helpers/Logger';
 
 export type DataSourceContextType = {
@@ -18,7 +17,7 @@ export const DataSourceContextProvider = ({
   children: React.ReactNode;
 }) => {
   const [isMigrating, setIsMigrating] = useState(false);
-  const [currentDataSource] = useState<DataSource>(() => dataSource || new LocalDataSource());
+  const [currentDataSource] = useState<DataSource>(() => dataSource || new DataSource());
 
   useEffect(() => {
     currentDataSource.onMigrationStatusChange = setIsMigrating;

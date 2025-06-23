@@ -1,10 +1,7 @@
 import { useRouter } from 'next/router';
 import ContextLinks from '@/components/Layout/ContextLinks';
-import { DataSourceContextProvider } from '@/contexts/DataSourceContext';
-import { DocumentTypes } from '@/data/documentTypes';
-import { LocalDataSource } from '@/data/LocalDataSource';
-import { render, screen, waitFor } from '@/test-utils';
-import { createTestLocalDataSource } from '@/test-utils/db';
+import { renderWithDataSource, screen, waitFor } from '@/test-utils';
+import { setupTestDatabase } from '@/test-utils/db';
 
 jest.mock('next/router', () => ({
   useRouter: jest.fn(),
@@ -23,30 +20,17 @@ jest.mock('@/contexts/DataSourceContext', () => ({
 }));
 
 describe('ContextLinks', () => {
-  let dataSource: LocalDataSource;
-  let db: PouchDB.Database<DocumentTypes>;
+  const { getDataSource } = setupTestDatabase();
   const handleNavLinkClick = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue({});
-
-    const testData = createTestLocalDataSource();
-    dataSource = testData.dataSource;
-    db = testData.database;
-  });
-
-  afterEach(async () => {
-    await dataSource.cleanup();
-    await db.destroy();
   });
 
   it('Gets contexts from data source', async () => {
-    render(
-      <DataSourceContextProvider dataSource={dataSource}>
-        <ContextLinks handleNavLinkClick={handleNavLinkClick} />
-      </DataSourceContextProvider>
-    );
+    const dataSource = getDataSource();
+    renderWithDataSource(<ContextLinks handleNavLinkClick={handleNavLinkClick} />, dataSource);
 
     await waitFor(() => {
       expect(mockSubscribeToContexts).toHaveBeenCalledTimes(1);
@@ -57,11 +41,8 @@ describe('ContextLinks', () => {
   });
 
   it('Renders no active context when no context is selected', async () => {
-    render(
-      <DataSourceContextProvider dataSource={dataSource}>
-        <ContextLinks handleNavLinkClick={handleNavLinkClick} />
-      </DataSourceContextProvider>
-    );
+    const dataSource = getDataSource();
+    renderWithDataSource(<ContextLinks handleNavLinkClick={handleNavLinkClick} />, dataSource);
 
     await waitFor(() => {
       expect(screen.getByTestId('context-link-context1')).not.toHaveAttribute('data-active');
@@ -70,16 +51,14 @@ describe('ContextLinks', () => {
   });
 
   it('Marks the active context', async () => {
+    const dataSource = getDataSource();
+
     (useRouter as jest.Mock).mockReturnValue({
       query: { name: 'context1' },
       pathname: '/contexts/view',
     });
 
-    render(
-      <DataSourceContextProvider dataSource={dataSource}>
-        <ContextLinks handleNavLinkClick={handleNavLinkClick} />
-      </DataSourceContextProvider>
-    );
+    renderWithDataSource(<ContextLinks handleNavLinkClick={handleNavLinkClick} />, dataSource);
 
     await waitFor(() => {
       expect(screen.getByTestId('context-link-context1')).toHaveAttribute('data-active');

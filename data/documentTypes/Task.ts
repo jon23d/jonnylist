@@ -25,7 +25,7 @@ export interface Task extends Common {
   description?: string;
   status: TaskStatus;
   priority: number; // Higher number means higher priority
-  dueDate?: Date;
+  dueDate?: string;
 
   createdAt: Date;
   updatedAt: Date;
@@ -38,5 +38,5 @@ export interface NewTask {
   sortOrder: number;
   status: TaskStatus;
   priority: number;
-  dueDate?: Date;
+  dueDate?: string;
 }

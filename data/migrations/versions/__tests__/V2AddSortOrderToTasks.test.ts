@@ -1,26 +1,15 @@
-import { DataSource } from '@/data/DataSource';
 import { Task } from '@/data/documentTypes/Task';
 import V2AddSortOrderToTasks from '@/data/migrations/versions/V2AddSortOrderToTasks';
-import { createTestLocalDataSource } from '@/test-utils/db';
+import { setupTestDatabase } from '@/test-utils/db';
+import { TaskFactory } from '@/test-utils/factories/TaskFactory';
 
 describe('V2AddSortOrderToTasks', () => {
-  let dataSource: DataSource;
-  let db: PouchDB.Database;
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-
-    const testData = createTestLocalDataSource();
-    dataSource = testData.dataSource;
-    db = testData.database;
-  });
-
-  afterEach(async () => {
-    await dataSource.cleanup();
-    await db.destroy();
-  });
+  const { getDb } = setupTestDatabase();
+  const taskFactory = new TaskFactory();
 
   test('needsMigration should return false if version is >= 2', async () => {
+    const db = getDb();
+
     const migration = new V2AddSortOrderToTasks();
     await db.put({
       _id: 'migrations',
@@ -34,6 +23,8 @@ describe('V2AddSortOrderToTasks', () => {
   });
 
   test('needsMigration should return true if version is <= 1', async () => {
+    const db = getDb();
+
     const migration = new V2AddSortOrderToTasks();
     await db.put({
       _id: 'migrations',
@@ -47,6 +38,8 @@ describe('V2AddSortOrderToTasks', () => {
   });
 
   test('It should add sortOrder to all tasks', async () => {
+    const db = getDb();
+
     const migration = new V2AddSortOrderToTasks();
     await db.put({
       _id: 'migrations',
@@ -56,9 +49,9 @@ describe('V2AddSortOrderToTasks', () => {
 
     // Create some tasks without sortOrder
     const tasks = [
-      { _id: 'task1', title: 'Task 1' },
-      { _id: 'task2', title: 'Task 2' },
-      { _id: 'task3', title: 'Task 3' },
+      taskFactory.create({ _id: 'task1', title: 'Task 1' }),
+      taskFactory.create({ _id: 'task2', title: 'Task 2' }),
+      taskFactory.create({ _id: 'task3', title: 'Task 3' }),
     ];
     await db.bulkDocs(tasks);
 
@@ -77,6 +70,7 @@ describe('V2AddSortOrderToTasks', () => {
   });
 
   test('It should update the migrations doc version', async () => {
+    const db = getDb();
     const migration = new V2AddSortOrderToTasks();
     await db.put({
       _id: 'migrations',

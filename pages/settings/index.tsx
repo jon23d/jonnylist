@@ -1,10 +1,15 @@
-import { Button } from '@mantine/core';
+import { Fieldset, Title } from '@mantine/core';
+import SyncServerForm from '@/components/Settings/SyncServerForm';
 
 export default function Page() {
   return (
     <>
-      <h1>Actions</h1>
-      <Button>Load seed data</Button>
+      <Title order={2} mb="md">
+        Settings
+      </Title>
+      <Fieldset legend="Sync Server" mb="md">
+        <SyncServerForm />
+      </Fieldset>
     </>
   );
 }

@@ -1,12 +1,8 @@
-import { ReactElement } from 'react';
 import { DropResult } from '@hello-pangea/dnd';
 import List from '@/components/Contexts/Views/List/List';
-import { DataSourceContextProvider } from '@/contexts/DataSourceContext';
-import { DataSource } from '@/data/DataSource';
-import { DocumentTypes } from '@/data/documentTypes';
 import { TaskStatus } from '@/data/documentTypes/Task';
-import { render, screen, waitFor, within } from '@/test-utils';
-import { createTestLocalDataSource } from '@/test-utils/db';
+import { renderWithDataSource, screen, waitFor, within } from '@/test-utils';
+import { setupTestDatabase } from '@/test-utils/db';
 import { TaskFactory } from '@/test-utils/factories/TaskFactory';
 
 const mockDataSource = {
@@ -46,30 +42,12 @@ jest.mock('@hello-pangea/dnd', () => ({
 }));
 
 describe('Task list view component', () => {
-  let dataSource: DataSource;
-  let db: PouchDB.Database<DocumentTypes>;
+  const { getDataSource } = setupTestDatabase();
   const taskFactory = new TaskFactory();
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-
-    const testData = createTestLocalDataSource();
-    dataSource = testData.dataSource;
-    db = testData.database;
-  });
-
-  afterEach(async () => {
-    await dataSource.cleanup();
-    await db.destroy();
-  });
-
-  const renderComponent = (component: ReactElement) => {
-    return render(
-      <DataSourceContextProvider dataSource={dataSource}>{component}</DataSourceContextProvider>
-    );
-  };
-
   it('Only renders tasks with visible statuses', async () => {
+    const dataSource = getDataSource();
+
     const tasks = [
       taskFactory.create({ _id: '1', status: TaskStatus.Ready, title: 'Task 1' }),
       taskFactory.create({ _id: '2', status: TaskStatus.Started, title: 'Task 2' }),
@@ -77,8 +55,9 @@ describe('Task list view component', () => {
     ];
     await Promise.all(tasks.map((task) => dataSource.addTask(task)));
 
-    renderComponent(
-      <List tasks={tasks} visibleStatuses={[TaskStatus.Ready, TaskStatus.Started]} />
+    renderWithDataSource(
+      <List tasks={tasks} visibleStatuses={[TaskStatus.Ready, TaskStatus.Started]} />,
+      dataSource
     );
 
     expect(screen.queryByText('ready (1)')).toBeInTheDocument();
@@ -87,6 +66,8 @@ describe('Task list view component', () => {
   });
 
   it('Groups the tasks by status and renders them in separate sections', async () => {
+    const dataSource = getDataSource();
+
     const tasks = [
       taskFactory.create({ _id: '1', status: TaskStatus.Ready, title: 'Task 1' }),
       taskFactory.create({ _id: '2', status: TaskStatus.Ready, title: 'Task 2' }),
@@ -94,8 +75,9 @@ describe('Task list view component', () => {
     ];
     await Promise.all(tasks.map((task) => dataSource.addTask(task)));
 
-    renderComponent(
-      <List tasks={tasks} visibleStatuses={[TaskStatus.Ready, TaskStatus.Started]} />
+    renderWithDataSource(
+      <List tasks={tasks} visibleStatuses={[TaskStatus.Ready, TaskStatus.Started]} />,
+      dataSource
     );
 
     const readySection = screen.getByTestId(`mock-droppable-${TaskStatus.Ready}`);
@@ -108,6 +90,8 @@ describe('Task list view component', () => {
   });
 
   it('updates task status and re-groups tasks when dragged to a different status', async () => {
+    const dataSource = getDataSource();
+
     const tasks = [
       taskFactory.create({ _id: '1', status: TaskStatus.Ready }),
       taskFactory.create({ _id: '2', status: TaskStatus.Ready, title: 'Task A' }),
@@ -116,8 +100,9 @@ describe('Task list view component', () => {
 
     await Promise.all(tasks.map((task) => dataSource.addTask(task)));
 
-    renderComponent(
-      <List tasks={tasks} visibleStatuses={[TaskStatus.Ready, TaskStatus.Started]} />
+    renderWithDataSource(
+      <List tasks={tasks} visibleStatuses={[TaskStatus.Ready, TaskStatus.Started]} />,
+      dataSource
     );
 
     expect(screen.getByText(`${TaskStatus.Ready} (2)`)).toBeInTheDocument();
@@ -153,13 +138,14 @@ describe('Task list view component', () => {
   // In these tests, a means the sort order of the task after the drop index,
   // and b means the sort order of the task before
   it('Sets sort order to the first position to a - 1000', async () => {
+    const dataSource = getDataSource();
     const tasks = [
       taskFactory.create({ _id: '1', status: TaskStatus.Ready, title: 'Task 1', sortOrder: 1000 }),
       taskFactory.create({ _id: '2', status: TaskStatus.Ready, title: 'Task 2', sortOrder: 2000 }),
     ];
     await Promise.all(tasks.map((task) => dataSource.addTask(task)));
 
-    renderComponent(<List tasks={tasks} visibleStatuses={[TaskStatus.Ready]} />);
+    renderWithDataSource(<List tasks={tasks} visibleStatuses={[TaskStatus.Ready]} />, dataSource);
 
     const mockDropResult: DropResult = {
       draggableId: 'task-2',
@@ -189,13 +175,14 @@ describe('Task list view component', () => {
   });
 
   it('Sets sort order to the last position to b + 1000', async () => {
+    const dataSource = getDataSource();
     const tasks = [
       taskFactory.create({ _id: '1', status: TaskStatus.Ready, title: 'Task 1', sortOrder: 1000 }),
       taskFactory.create({ _id: '2', status: TaskStatus.Ready, title: 'Task 2', sortOrder: 2000 }),
     ];
     await Promise.all(tasks.map((task) => dataSource.addTask(task)));
 
-    renderComponent(<List tasks={tasks} visibleStatuses={[TaskStatus.Ready]} />);
+    renderWithDataSource(<List tasks={tasks} visibleStatuses={[TaskStatus.Ready]} />, dataSource);
 
     const mockDropResult: DropResult = {
       draggableId: 'task-1',
@@ -225,6 +212,7 @@ describe('Task list view component', () => {
   });
 
   it('Sets sort order to the middle position to an average of a, b', async () => {
+    const dataSource = getDataSource();
     const tasks = [
       taskFactory.create({ _id: '1', status: TaskStatus.Ready, title: 'Task 1', sortOrder: 1000 }),
       taskFactory.create({ _id: '2', status: TaskStatus.Ready, title: 'Task 2', sortOrder: 3000 }),
@@ -232,7 +220,7 @@ describe('Task list view component', () => {
     ];
     await Promise.all(tasks.map((task) => dataSource.addTask(task)));
 
-    renderComponent(<List tasks={tasks} visibleStatuses={[TaskStatus.Ready]} />);
+    renderWithDataSource(<List tasks={tasks} visibleStatuses={[TaskStatus.Ready]} />, dataSource);
 
     const mockDropResult: DropResult = {
       draggableId: 'task-1',
@@ -262,11 +250,13 @@ describe('Task list view component', () => {
   });
 
   it('Sets the sort order when alone to 5000', async () => {
+    const dataSource = getDataSource();
     const task = taskFactory.create({ _id: '1', status: TaskStatus.Ready, title: 'Task 1' });
     await dataSource.addTask(task);
 
-    renderComponent(
-      <List tasks={[task]} visibleStatuses={[TaskStatus.Ready, TaskStatus.Started]} />
+    renderWithDataSource(
+      <List tasks={[task]} visibleStatuses={[TaskStatus.Ready, TaskStatus.Started]} />,
+      dataSource
     );
 
     const mockDropResult: DropResult = {
@@ -297,6 +287,7 @@ describe('Task list view component', () => {
   });
 
   it('Sets sort order in a new status in first position to a - 1000', async () => {
+    const dataSource = getDataSource();
     const tasks = [
       taskFactory.create({ _id: '1', status: TaskStatus.Ready, sortOrder: 1000 }),
       taskFactory.create({ _id: '2', status: TaskStatus.Ready, sortOrder: 2000 }),
@@ -304,8 +295,9 @@ describe('Task list view component', () => {
     ];
     await Promise.all(tasks.map((task) => dataSource.addTask(task)));
 
-    renderComponent(
-      <List tasks={tasks} visibleStatuses={[TaskStatus.Ready, TaskStatus.Waiting]} />
+    renderWithDataSource(
+      <List tasks={tasks} visibleStatuses={[TaskStatus.Ready, TaskStatus.Waiting]} />,
+      dataSource
     );
 
     const mockDropResult: DropResult = {
@@ -337,6 +329,7 @@ describe('Task list view component', () => {
   });
 
   it('Sets sort order in a new status in last position to b + 1000', async () => {
+    const dataSource = getDataSource();
     const tasks = [
       taskFactory.create({ _id: '1', status: TaskStatus.Ready, sortOrder: 1000 }),
       taskFactory.create({ _id: '2', status: TaskStatus.Ready, sortOrder: 2000 }),
@@ -344,8 +337,9 @@ describe('Task list view component', () => {
     ];
     await Promise.all(tasks.map((task) => dataSource.addTask(task)));
 
-    renderComponent(
-      <List tasks={tasks} visibleStatuses={[TaskStatus.Ready, TaskStatus.Waiting]} />
+    renderWithDataSource(
+      <List tasks={tasks} visibleStatuses={[TaskStatus.Ready, TaskStatus.Waiting]} />,
+      dataSource
     );
 
     const mockDropResult: DropResult = {
@@ -377,6 +371,7 @@ describe('Task list view component', () => {
   });
 
   it('Sets sort order in a new status in middle position to an average of a, b', async () => {
+    const dataSource = getDataSource();
     const tasks = [
       taskFactory.create({ _id: '1', status: TaskStatus.Ready, sortOrder: 1000 }),
       taskFactory.create({ _id: '2', status: TaskStatus.Ready, sortOrder: 3000 }),
@@ -385,8 +380,9 @@ describe('Task list view component', () => {
     ];
     await Promise.all(tasks.map((task) => dataSource.addTask(task)));
 
-    renderComponent(
-      <List tasks={tasks} visibleStatuses={[TaskStatus.Ready, TaskStatus.Waiting]} />
+    renderWithDataSource(
+      <List tasks={tasks} visibleStatuses={[TaskStatus.Ready, TaskStatus.Waiting]} />,
+      dataSource
     );
 
     const mockDropResult: DropResult = {

@@ -3,13 +3,17 @@ import { Button, NumberInput, Select, TextInput } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
 import { useDataSource } from '@/contexts/DataSourceContext';
-import { createDefaultPreferences } from '@/data/documentTypes/Preferences';
 import { NewTask, TaskStatus, taskStatusSelectOptions } from '@/data/documentTypes/Task';
 import { Logger } from '@/helpers/Logger';
 
-export default function NewTaskForm({ handleClose }: { handleClose: () => void }) {
+export default function NewTaskForm({
+  contexts,
+  handleClose,
+}: {
+  contexts: string[];
+  handleClose: () => void;
+}) {
   const dataSource = useDataSource();
-  const [contexts, setContexts] = useState<string[]>([]);
   // use to force an update of the contexts dropdown
   const [contextKey, setContextKey] = useState<number>(0);
 
@@ -28,20 +32,8 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
 
   useEffect(() => {
     const initializeForm = async () => {
-      const [availableContexts, { lastSelectedContext }] = await Promise.all([
-        dataSource.getContexts().catch((err) => {
-          Logger.error('Error fetching contexts:', err);
-          return [] as string[];
-        }),
-        dataSource.getPreferences().catch((err) => {
-          Logger.error('Error fetching preferences:', err);
-          return createDefaultPreferences();
-        }),
-      ]);
-
-      setContexts(availableContexts);
-
-      form.setFieldValue('context', lastSelectedContext);
+      const preferences = await dataSource.getPreferences();
+      form.setFieldValue('context', preferences.lastSelectedContext);
       setContextKey((prev) => prev + 1); // Increment key to force re-render of Select component
     };
     initializeForm();

@@ -1,10 +1,8 @@
 import React from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout/Layout';
-import { DataSourceContextProvider } from '@/contexts/DataSourceContext';
-import { DataSource } from '@/data/DataSource';
-import { act, render, screen, waitFor } from '@/test-utils';
-import { createTestLocalDataSource } from '@/test-utils/db';
+import { act, renderWithDataSource, screen, waitFor } from '@/test-utils';
+import { setupTestDatabase } from '@/test-utils/db';
 
 // Mock Next.js router
 jest.mock('next/router', () => ({
@@ -46,34 +44,20 @@ jest.mock('@/components/Layout/ListLinks', () => {
   };
 });
 
-const TestWrapper = ({
-  children,
-  dataSource,
-}: {
-  children: React.ReactNode;
-  dataSource: DataSource;
-}) => <DataSourceContextProvider dataSource={dataSource}>{children}</DataSourceContextProvider>;
-
 describe('Layout', () => {
-  let dataSource: DataSource;
-  let database: PouchDB.Database;
+  const { getDataSource } = setupTestDatabase();
 
   beforeEach(() => {
-    const testSetup = createTestLocalDataSource();
-    dataSource = testSetup.dataSource;
-    database = testSetup.database;
-
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
     jest.clearAllMocks();
   });
 
   afterEach(async () => {
-    await dataSource.cleanup();
-    await database.destroy();
     jest.clearAllTimers();
   });
 
   it('Shows the data migration overlay for at least 4 seconds when migrating', async () => {
+    const dataSource = getDataSource();
     jest.useFakeTimers();
 
     let migrationCallback: ((status: boolean) => void) | undefined;
@@ -93,12 +77,11 @@ describe('Layout', () => {
       }
     });
 
-    render(
-      <TestWrapper dataSource={dataSource}>
-        <Layout>
-          <div data-testid="page-content">Page Content</div>
-        </Layout>
-      </TestWrapper>
+    renderWithDataSource(
+      <Layout>
+        <div data-testid="page-content">Page Content</div>
+      </Layout>,
+      dataSource
     );
 
     // Wait for migration to start
@@ -136,6 +119,7 @@ describe('Layout', () => {
   });
 
   it('Hides the data migration overlay when migration is complete', async () => {
+    const dataSource = getDataSource();
     jest.useFakeTimers();
 
     let migrationCallback: ((status: boolean) => void) | undefined;
@@ -155,12 +139,11 @@ describe('Layout', () => {
       }
     });
 
-    render(
-      <TestWrapper dataSource={dataSource}>
-        <Layout>
-          <div data-testid="page-content">Page Content</div>
-        </Layout>
-      </TestWrapper>
+    renderWithDataSource(
+      <Layout>
+        <div data-testid="page-content">Page Content</div>
+      </Layout>,
+      dataSource
     );
 
     // Wait for migration to start
@@ -182,17 +165,17 @@ describe('Layout', () => {
   });
 
   it('Does not show the data migration overlay when not migrating', async () => {
+    const dataSource = getDataSource();
     // Mock runMigrations to not trigger any migration
     jest.spyOn(dataSource, 'runMigrations').mockImplementation(async () => {
       // No migration status change - migration is not needed
     });
 
-    render(
-      <TestWrapper dataSource={dataSource}>
-        <Layout>
-          <div data-testid="page-content">Page Content</div>
-        </Layout>
-      </TestWrapper>
+    renderWithDataSource(
+      <Layout>
+        <div data-testid="page-content">Page Content</div>
+      </Layout>,
+      dataSource
     );
 
     // Wait a moment for any effects to run
@@ -210,6 +193,7 @@ describe('Layout', () => {
   });
 
   it('handles migration status changes correctly', async () => {
+    const dataSource = getDataSource();
     jest.useFakeTimers();
 
     let migrationCallback: ((status: boolean) => void) | undefined;
@@ -218,12 +202,11 @@ describe('Layout', () => {
       migrationCallback = dataSource.onMigrationStatusChange;
     });
 
-    render(
-      <TestWrapper dataSource={dataSource}>
-        <Layout>
-          <div data-testid="page-content">Page Content</div>
-        </Layout>
-      </TestWrapper>
+    renderWithDataSource(
+      <Layout>
+        <div data-testid="page-content">Page Content</div>
+      </Layout>,
+      dataSource
     );
 
     // Initially no overlay

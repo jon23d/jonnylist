@@ -1,22 +1,37 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, Menu, Modal } from '@mantine/core';
 import { useHotkeys } from '@mantine/hooks';
 import NewListItemForm from '@/components/Layout/NewItem/NewListItemForm';
 import NewMetricForm from '@/components/Layout/NewItem/NewMetricForm';
 import NewTaskForm from '@/components/Layout/NewItem/NewTaskForm';
+import { useDataSource } from '@/contexts/DataSourceContext';
 
 export default function AddNewItemButton() {
   const [modalOpened, setModalOpened] = useState(false);
   const [newItemComponent, setNewItemComponent] = useState(<></>);
   const [newItemModalTitle, setNewItemModalTitle] = useState('');
   const [newMenuOpened, setNewMenuOpened] = useState(false);
+  const dataSource = useDataSource();
+  const [contexts, setContexts] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchContexts = async () => {
+      const contexts = await dataSource.getContexts();
+      setContexts(contexts);
+    };
+    fetchContexts();
+  }, [dataSource]);
 
   useHotkeys([['a', () => setNewMenuOpened(true)]]);
+
+  useEffect(() => {}, []);
 
   const showForm = (which: string) => {
     switch (which) {
       case 'task':
-        setNewItemComponent(<NewTaskForm handleClose={() => setModalOpened(false)} />);
+        setNewItemComponent(
+          <NewTaskForm handleClose={() => setModalOpened(false)} contexts={contexts} />
+        );
         setNewItemModalTitle('Add New Task');
         break;
       case 'item':

@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import { DataSource } from '@/data/DataSource';
-import { createTestLocalDataSource } from '@/test-utils/db';
-import { DataSourceContextProvider, useDataSource, useIsMigrating } from '../DataSourceContext';
+import { renderWithDataSource } from '@/test-utils';
+import { setupTestDatabase } from '@/test-utils/db';
+import { useDataSource, useIsMigrating } from '../DataSourceContext';
 
 const TestComponent = () => {
   const dataSource = useDataSource();
@@ -16,21 +16,10 @@ const TestComponent = () => {
 };
 
 describe('DataSourceContext', () => {
-  let dataSource: DataSource;
-  let database: PouchDB.Database;
-
-  beforeEach(() => {
-    const testSetup = createTestLocalDataSource();
-    dataSource = testSetup.dataSource;
-    database = testSetup.database;
-  });
-
-  afterEach(async () => {
-    await dataSource.cleanup();
-    await database.destroy();
-  });
+  const { getDataSource } = setupTestDatabase();
 
   it('shows migration status when migrations are running', async () => {
+    const dataSource = getDataSource();
     // Mock the runMigrations method to simulate a migration
     jest.spyOn(dataSource, 'runMigrations').mockImplementation(async () => {
       if (dataSource.onMigrationStatusChange) {
@@ -44,11 +33,7 @@ describe('DataSourceContext', () => {
       }
     });
 
-    render(
-      <DataSourceContextProvider dataSource={dataSource}>
-        <TestComponent />
-      </DataSourceContextProvider>
-    );
+    renderWithDataSource(<TestComponent />, dataSource);
 
     // Wait for the useEffect to run and migrations to start
     await waitFor(() => {
@@ -62,16 +47,14 @@ describe('DataSourceContext', () => {
   });
 
   it('does not show migration status when no migrations are needed', async () => {
+    const dataSource = getDataSource();
+
     // Mock needsMigration to return false
     jest.spyOn(dataSource, 'runMigrations').mockImplementation(async () => {
       // Do nothing - no migrations needed
     });
 
-    render(
-      <DataSourceContextProvider dataSource={dataSource}>
-        <TestComponent />
-      </DataSourceContextProvider>
-    );
+    renderWithDataSource(<TestComponent />, dataSource);
 
     // Should remain false throughout
     await waitFor(() => {
@@ -105,13 +88,10 @@ describe('DataSourceContext', () => {
   });
 
   it('uses provided dataSource instead of creating new one', () => {
+    const dataSource = getDataSource();
     const getVersionSpy = jest.spyOn(dataSource, 'getVersion').mockReturnValue(999);
 
-    render(
-      <DataSourceContextProvider dataSource={dataSource}>
-        <TestComponent />
-      </DataSourceContextProvider>
-    );
+    renderWithDataSource(<TestComponent />, dataSource);
 
     expect(screen.getByTestId('version')).toHaveTextContent('999');
 
