@@ -2,7 +2,7 @@ import PouchDB from 'pouchdb';
 import { DataSource } from '@/data/DataSource';
 import { DocumentTypes } from '@/data/documentTypes';
 
-export function createTestDataSource(): {
+function createTestDataSource(): {
   dataSource: DataSource;
   database: PouchDB.Database<DocumentTypes>;
 } {

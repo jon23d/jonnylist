@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  couchdb:
+    build: .
+    ports:
+      - "5984:5984"
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=a-password
+      - COUCHDB_BIND_ADDRESS=0.0.0.0 # Allow connections from any IP
+      - COUCHDB_SECRET=a-unique-secret-for-couchdb
+    volumes:
+      - couchdb-data:/opt/couchdb/data
+    restart: unless-stopped
+
+volumes:
+  couchdb-data:
