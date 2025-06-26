@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { DataSource } from '@/data/DataSource';
 import { Logger } from '@/helpers/Logger';
+import { Notifications } from '@/helpers/Notifications';
 
 export type DataSourceContextType = {
   dataSource: DataSource;
@@ -25,6 +26,15 @@ export const DataSourceContextProvider = ({
     // Run migrations when the application starts
     currentDataSource.runMigrations().catch((error) => {
       Logger.error('Failed to run migrations:', error);
+    });
+
+    // Initialize syncing if the data source supports it
+    currentDataSource.initializeSync().catch((error) => {
+      Logger.error('Failed to initialize syncing:', error);
+      Notifications.showError({
+        title: 'Sync Initialization Error',
+        message: 'Failed to initialize data source syncing. Please check your configuration.',
+      });
     });
 
     // Cleanup function
