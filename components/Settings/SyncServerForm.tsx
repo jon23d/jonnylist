@@ -95,8 +95,8 @@ export default function SyncServerForm() {
     const localSettings = await dataSource.getLocalSettings();
     const updatedSettings = {
       ...localSettings,
-      syncServerUrl: undefined,
-      syncServerAccessToken: undefined,
+      syncServerUrl: '',
+      syncServerAccessToken: '',
     };
     await dataSource.setLocalSettings(updatedSettings);
     form.setValues(
