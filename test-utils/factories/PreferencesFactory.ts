@@ -5,7 +5,6 @@ export class PreferencesFactory implements Factory<Preferences> {
   create(data: Partial<Preferences> = {}): Preferences {
     return {
       _id: 'preferences',
-      version: data.version || 1,
       _rev: data._rev,
       type: 'preferences',
 

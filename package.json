@@ -18,7 +18,7 @@
     "test": "npm run prettier:check && npm run lint && npm run typecheck && npm run jest",
     "storybook": "storybook dev -p 6006",
     "storybook:build": "storybook build",
-    "generate-jwt": "node ./scripts/generateJwt.js"
+    "generateJwt": "node ./scripts/generateJwt.js"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",

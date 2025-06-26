@@ -1,12 +1,14 @@
 import PouchDB from 'pouchdb';
 import { DocumentTypes } from '@/data/documentTypes';
 import { Context } from '@/data/documentTypes/Context';
+import { LocalSettings } from '@/data/documentTypes/LocalSettings';
 import { createDefaultPreferences, Preferences } from '@/data/documentTypes/Preferences';
 import { NewTask, Task, TaskStatus } from '@/data/documentTypes/Task';
 import { Logger } from '@/helpers/Logger';
 import { MigrationManager } from './migrations/MigrationManager';
 
 const DATABASE_NAME = 'jonnylist';
+
 export const DATABASE_VERSION = 3;
 
 type TaskSubscriberWithFilterParams = {
@@ -50,6 +52,48 @@ export class DataSource {
       this.db = database;
     } else {
       this.db = new PouchDB(DATABASE_NAME);
+
+      this.getLocalSettings().then(
+        (settings) => {
+          if (!settings.syncServerUrl || !settings.syncServerAccessToken) {
+            Logger.info('No sync server settings found, skipping sync setup');
+            return;
+          }
+
+          Logger.info('Sync server settings found, setting up sync');
+
+          const syncDb = new PouchDB(settings.syncServerUrl, {
+            headers: {
+              Authorization: `Bearer ${settings.syncServerAccessToken}`,
+            },
+          } as PouchDB.Configuration.DatabaseConfiguration & { headers?: Record<string, string> });
+
+          Logger.info('Setting up sync');
+          this.db
+            .sync(syncDb, {
+              live: true,
+              retry: true,
+            })
+            .on('change', (info) => {
+              Logger.info('Sync change:', info);
+            })
+            .on('paused', () => {
+              Logger.info('Sync paused (up to date)');
+            })
+            .on('active', () => {
+              Logger.info('Sync resumed');
+            })
+            .on('denied', (err) => {
+              Logger.error('Sync denied:', err);
+            })
+            .on('error', (err) => {
+              Logger.error('Error replicating to remote database:', err);
+            });
+        },
+        (error) => {
+          Logger.error('Error fetching local settings for sync setup:', error);
+        }
+      );
     }
 
     if (migrationManager) {
@@ -113,6 +157,33 @@ export class DataSource {
     }
   }
 
+  async getLocalSettings(): Promise<LocalSettings> {
+    try {
+      Logger.info('Getting local settings');
+      return await this.db.get<LocalSettings>('_local/settings');
+    } catch (error) {
+      if (this.isPouchNotFoundError(error)) {
+        // If the document does not exist, return default settings
+        Logger.info('Local settings not found, returning default settings');
+        return {
+          _id: '_local/settings',
+        };
+      }
+      Logger.error('Error getting local settings:', error);
+      throw error;
+    }
+  }
+
+  async setLocalSettings(settings: LocalSettings): Promise<void> {
+    try {
+      Logger.info('Setting local settings');
+      await this.db.put<LocalSettings>(settings);
+    } catch (error) {
+      Logger.error('Error setting local settings:', error);
+      throw error; // Re-throw to handle it in the calling code
+    }
+  }
+
   /**
    * Add a new task to the database.
    * This will create a new document with the type 'task' and the provided values.
@@ -133,7 +204,6 @@ export class DataSource {
       dueDate: newTask.dueDate,
       createdAt: new Date(),
       updatedAt: new Date(),
-      version: DATABASE_VERSION,
     };
 
     try {
@@ -321,7 +391,6 @@ export class DataSource {
       _id: `context-${context}`,
       type: 'context',
       name: context,
-      version: DATABASE_VERSION,
     };
     await this.db.put(doc);
   }
@@ -509,5 +578,9 @@ export class DataSource {
       this.contextChangesFeed.cancel();
       this.contextChangesFeed = undefined;
     }
+  }
+
+  private isPouchNotFoundError(err: any): err is PouchDB.Core.Error {
+    return err && (err.status === 404 || err.name === 'not_found');
   }
 }

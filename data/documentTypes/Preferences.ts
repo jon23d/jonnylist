@@ -7,7 +7,6 @@ export interface Preferences extends Common {
 export function createDefaultPreferences(): Preferences {
   return {
     _id: 'preferences',
-    version: 1,
     type: 'preferences',
     lastSelectedContext: '',
   };

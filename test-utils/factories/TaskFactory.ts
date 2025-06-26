@@ -5,7 +5,6 @@ export class TaskFactory implements Factory<Task> {
   create(data: Partial<Task> = {}): Task {
     return {
       _id: `task-${data._id?.replace('task-', '') || 'default'}`,
-      version: data.version || 1,
       _rev: data._rev,
 
       type: 'task',

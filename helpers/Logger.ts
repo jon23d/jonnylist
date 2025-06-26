@@ -1,6 +1,10 @@
 /* eslint-disable no-console */
 
 export class Logger {
+  static debug(message: string, ...optionalParams: any[]) {
+    console.debug(`[${new Date().toISOString()}] ${message}`, ...optionalParams);
+  }
+
   static info(message: string, ...optionalParams: any[]) {
     console.info(`[${new Date().toISOString()}] ${message}`, ...optionalParams);
   }
