@@ -7,8 +7,6 @@ import { NewTask, Task, TaskStatus } from '@/data/documentTypes/Task';
 import { Logger } from '@/helpers/Logger';
 import { MigrationManager } from './migrations/MigrationManager';
 
-const DATABASE_NAME = 'jonnylist';
-
 export const DATABASE_VERSION = 3;
 
 type TaskSubscriberWithFilterParams = {
@@ -48,12 +46,8 @@ export class DataSource {
    * @param database Optional PouchDB database instance to use.
    * @param migrationManager Optional MigrationManager instance to use for migrations.
    */
-  constructor(database?: PouchDB.Database<DocumentTypes>, migrationManager?: MigrationManager) {
-    if (database) {
-      this.db = database;
-    } else {
-      this.db = new PouchDB(DATABASE_NAME);
-    }
+  constructor(database: PouchDB.Database<DocumentTypes>, migrationManager?: MigrationManager) {
+    this.db = database;
 
     if (migrationManager) {
       this.migrationManager = migrationManager;
@@ -76,26 +70,8 @@ export class DataSource {
       return;
     }
 
-    Logger.info('Sync server settings found, setting up sync', {
-      url: settings.syncServerUrl,
-      accessToken: settings.syncServerAccessToken,
-    });
-
-    const syncDb = new PouchDB(settings.syncServerUrl, {
-      headers: {
-        Authorization: `Bearer ${settings.syncServerAccessToken}`,
-      },
-    } as PouchDB.Configuration.DatabaseConfiguration & { headers?: Record<string, string> });
-
-    // Test the connection to the sync database
-    try {
-      await syncDb.info();
-    } catch (error) {
-      Logger.error('Error connecting to sync database:', error);
-      throw new Error(
-        'Failed to connect to sync database. Please check your sync server URL and access token.'
-      );
-    }
+    const syncDb = this.createSyncDb(settings);
+    await this.verifySyncConnection(syncDb);
 
     try {
       this.syncHandler = this.db
@@ -127,6 +103,15 @@ export class DataSource {
       this.cancelSync();
       throw error; // Re-throw to handle it in the calling code
     }
+  }
+
+  createSyncDb(settings: LocalSettings): PouchDB.Database {
+    Logger.info('Creating sync database');
+    return new PouchDB(settings.syncServerUrl, {
+      headers: {
+        Authorization: `Bearer ${settings.syncServerAccessToken}`,
+      },
+    } as PouchDB.Configuration.DatabaseConfiguration & { headers?: Record<string, string> });
   }
 
   /**
@@ -554,6 +539,17 @@ export class DataSource {
     this.contextChangeSubscribers.clear();
 
     Logger.info('LocalDataSource cleanup completed');
+  }
+
+  private async verifySyncConnection(syncDb: PouchDB.Database): Promise<void> {
+    try {
+      await syncDb.info();
+    } catch (error) {
+      Logger.error('Error connecting to sync database:', error);
+      throw new Error(
+        'Failed to connect to sync database. Please check your sync server URL and access token.'
+      );
+    }
   }
 
   /**

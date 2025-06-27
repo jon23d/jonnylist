@@ -172,6 +172,12 @@ describe('SyncServerForm', () => {
     await dataSource.setLocalSettings(localSettings);
 
     renderWithDataSource(<SyncServerForm />, dataSource);
+    const serverUrlInput = screen.getByRole('textbox', { name: /server url/i });
+
+    await waitFor(() => {
+      expect(serverUrlInput).toHaveValue('https://example.com');
+    });
+
     const logoutButton = screen.getByRole('button', { name: /log out/i });
 
     await userEvent.click(logoutButton);

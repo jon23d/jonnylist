@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import PouchDB from 'pouchdb';
 import { DataSource } from '@/data/DataSource';
+import { DocumentTypes } from '@/data/documentTypes';
 import { Logger } from '@/helpers/Logger';
 import { Notifications } from '@/helpers/Notifications';
 
@@ -18,7 +20,10 @@ export const DataSourceContextProvider = ({
   children: React.ReactNode;
 }) => {
   const [isMigrating, setIsMigrating] = useState(false);
-  const [currentDataSource] = useState<DataSource>(() => dataSource || new DataSource());
+  const [currentDataSource] = useState<DataSource>(
+    // Use the provided dataSource if it exists, otherwise create a new one
+    () => dataSource || new DataSource(new PouchDB<DocumentTypes>('jonnylist'))
+  );
 
   useEffect(() => {
     currentDataSource.onMigrationStatusChange = setIsMigrating;
