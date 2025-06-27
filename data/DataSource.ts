@@ -1,12 +1,12 @@
 import PouchDB from 'pouchdb';
 import { DocumentTypes } from '@/data/documentTypes';
 import { Context } from '@/data/documentTypes/Context';
+import { LocalSettings } from '@/data/documentTypes/LocalSettings';
 import { createDefaultPreferences, Preferences } from '@/data/documentTypes/Preferences';
 import { NewTask, Task, TaskStatus } from '@/data/documentTypes/Task';
 import { Logger } from '@/helpers/Logger';
 import { MigrationManager } from './migrations/MigrationManager';
 
-const DATABASE_NAME = 'jonnylist';
 export const DATABASE_VERSION = 3;
 
 type TaskSubscriberWithFilterParams = {
@@ -35,6 +35,7 @@ export class DataSource {
   private contextChangesFeed?: PouchDB.Core.Changes<Context>;
   private contextChangeSubscribers = new Set<ContextSubscriber>();
   private migrationManager: MigrationManager;
+  private syncHandler: PouchDB.Replication.Sync<{}> | null = null;
   public onMigrationStatusChange?: (isMigrating: boolean) => void;
 
   /**
@@ -45,12 +46,8 @@ export class DataSource {
    * @param database Optional PouchDB database instance to use.
    * @param migrationManager Optional MigrationManager instance to use for migrations.
    */
-  constructor(database?: PouchDB.Database<DocumentTypes>, migrationManager?: MigrationManager) {
-    if (database) {
-      this.db = database;
-    } else {
-      this.db = new PouchDB(DATABASE_NAME);
-    }
+  constructor(database: PouchDB.Database<DocumentTypes>, migrationManager?: MigrationManager) {
+    this.db = database;
 
     if (migrationManager) {
       this.migrationManager = migrationManager;
@@ -59,6 +56,80 @@ export class DataSource {
     }
   }
 
+  /**
+   * Initialize the sync process with the remote server.
+   *
+   * TODO: This doesn't have nearly enough error handling.
+   */
+  async initializeSync() {
+    Logger.info('Initializing sync');
+    const settings = await this.getLocalSettings();
+
+    if (!settings.syncServerUrl || !settings.syncServerAccessToken) {
+      Logger.info('No sync server settings found, skipping sync setup');
+      return;
+    }
+
+    const syncDb = this.createSyncDb(settings);
+    await this.verifySyncConnection(syncDb);
+
+    try {
+      this.syncHandler = this.db
+        .sync(syncDb, {
+          live: true,
+          retry: true,
+        })
+        .on('change', (info) => {
+          Logger.info('Sync change:', info);
+        })
+        .on('paused', () => {
+          Logger.info('Sync paused (up to date)');
+        })
+        .on('active', () => {
+          Logger.info('Sync resumed');
+        })
+        .on('denied', (err) => {
+          Logger.error('Sync denied:', err);
+        })
+        .on('complete', (info) => {
+          Logger.info('Sync complete:', info);
+        })
+        .on('error', (err) => {
+          Logger.error('Error replicating to remote database:', err);
+          this.cancelSync();
+        });
+    } catch (error) {
+      Logger.error('Error initializing sync:', error);
+      this.cancelSync();
+      throw error; // Re-throw to handle it in the calling code
+    }
+  }
+
+  createSyncDb(settings: LocalSettings): PouchDB.Database {
+    Logger.info('Creating sync database');
+    return new PouchDB(settings.syncServerUrl, {
+      headers: {
+        Authorization: `Bearer ${settings.syncServerAccessToken}`,
+      },
+    } as PouchDB.Configuration.DatabaseConfiguration & { headers?: Record<string, string> });
+  }
+
+  /**
+   * Cancels the current sync operation if it is active.
+   */
+  cancelSync() {
+    Logger.info('Cancelling sync');
+    if (this.syncHandler) {
+      this.syncHandler.cancel();
+      this.syncHandler = null;
+    } else {
+      Logger.info('No active sync to cancel');
+    }
+  }
+
+  /**
+   * Run any pending migrations.
+   */
   async runMigrations(): Promise<void> {
     if (!(await this.migrationManager.needsMigration())) {
       return;
@@ -72,6 +143,9 @@ export class DataSource {
     }
   }
 
+  /**
+   * Get the schema version of the database.
+   */
   getVersion(): number {
     return DATABASE_VERSION;
   }
@@ -114,6 +188,42 @@ export class DataSource {
   }
 
   /**
+   * Get the local settings from the database. These settings are not synced to the server
+   *
+   */
+  async getLocalSettings(): Promise<LocalSettings> {
+    try {
+      Logger.info('Getting local settings');
+      return await this.db.get<LocalSettings>('_local/settings');
+    } catch (error) {
+      if (this.isPouchNotFoundError(error)) {
+        // If the document does not exist, return default settings
+        Logger.info('Local settings not found, returning default settings');
+        return {
+          _id: '_local/settings',
+        };
+      }
+      Logger.error('Error getting local settings:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Set the local settings in the database. These will never be synced to the server.
+   *
+   * @param settings
+   */
+  async setLocalSettings(settings: LocalSettings): Promise<void> {
+    try {
+      Logger.info('Setting local settings');
+      await this.db.put<LocalSettings>(settings);
+    } catch (error) {
+      Logger.error('Error setting local settings:', error);
+      throw error; // Re-throw to handle it in the calling code
+    }
+  }
+
+  /**
    * Add a new task to the database.
    * This will create a new document with the type 'task' and the provided values.
    *
@@ -133,7 +243,6 @@ export class DataSource {
       dueDate: newTask.dueDate,
       createdAt: new Date(),
       updatedAt: new Date(),
-      version: DATABASE_VERSION,
     };
 
     try {
@@ -145,6 +254,11 @@ export class DataSource {
     }
   }
 
+  /**
+   * Update an existing task in the database.
+   *
+   * @param task
+   */
   async updateTask(task: Task): Promise<Task> {
     Logger.info('Updating task');
 
@@ -168,6 +282,11 @@ export class DataSource {
     throw new Error('Failed to update task');
   }
 
+  /**
+   * Bulki update multiple tasks
+   *
+   * @param tasks
+   */
   async updateTasks(tasks: Task[]): Promise<Task[]> {
     Logger.info('Updating multiple tasks');
     const updatedTasks: Task[] = tasks.map((task) => {
@@ -214,6 +333,7 @@ export class DataSource {
     const allTasks = result.rows.map((row) => row.doc as Task);
 
     // Convert dates to Date objects
+    // TODO: Think more about how we handle dates
     allTasks.forEach((task) => {
       if (task.dueDate) {
         const date = new Date(task.dueDate);
@@ -231,8 +351,35 @@ export class DataSource {
     return this.filterTasksByParams(allTasks, params);
   }
 
+  /**
+   * Archive a context by moving all tasks from the source context to the destination context
+   *
+   * @param sourceContext
+   * @param destinationContext
+   */
   async archiveContext(sourceContext: string, destinationContext: string): Promise<void> {
     Logger.info(`Archiving context: ${sourceContext} to ${destinationContext}`);
+
+    // We are going to move open tasks from the source context to the destination context
+    await this.moveOpenTasksInContext(sourceContext, destinationContext);
+
+    // Mark the source context as deleted
+    const sourceContextDoc = await this.db.get<Context>(`context-${sourceContext}`);
+    sourceContextDoc.deletedAt = new Date();
+    await this.db.put(sourceContextDoc);
+
+    Logger.info(`Archived context: ${sourceContext}`);
+  }
+
+  /**
+   * Move all open tasks from the source context to the destination context.
+   * This will update the context field of all tasks in the source context to the destination context.
+   *
+   * @param sourceContext
+   * @param destinationContext
+   */
+  async moveOpenTasksInContext(sourceContext: string, destinationContext: string): Promise<void> {
+    Logger.info(`Moving tasks from context: ${sourceContext} to ${destinationContext}`);
 
     // Fetch all tasks in the source context
     const tasks = await this.getTasks({
@@ -249,12 +396,7 @@ export class DataSource {
       await this.updateTasks(updatedTasks);
     }
 
-    // Mark the source context as deleted
-    const sourceContextDoc = await this.db.get<Context>(`context-${sourceContext}`);
-    sourceContextDoc.deletedAt = new Date();
-    await this.db.put(sourceContextDoc);
-
-    Logger.info(`Successfully archived context: ${sourceContext}`);
+    Logger.info(`Moved tasks from context: ${sourceContext} to ${destinationContext}`);
   }
 
   /**
@@ -321,7 +463,6 @@ export class DataSource {
       _id: `context-${context}`,
       type: 'context',
       name: context,
-      version: DATABASE_VERSION,
     };
     await this.db.put(doc);
   }
@@ -359,6 +500,12 @@ export class DataSource {
     return () => this.removeContextSubscriber(callback);
   }
 
+  /**
+   * Filter tasks based on the provided getTaskParams object.
+   *
+   * @param tasks
+   * @param params
+   */
   filterTasksByParams(tasks: Task[], params: getTasksParams): Task[] {
     return tasks.filter((task) => {
       if (params.context && task.context !== params.context) {
@@ -394,6 +541,22 @@ export class DataSource {
     Logger.info('LocalDataSource cleanup completed');
   }
 
+  private async verifySyncConnection(syncDb: PouchDB.Database): Promise<void> {
+    try {
+      await syncDb.info();
+    } catch (error) {
+      Logger.error('Error connecting to sync database:', error);
+      throw new Error(
+        'Failed to connect to sync database. Please check your sync server URL and access token.'
+      );
+    }
+  }
+
+  /**
+   * Initialize the PouchDB changes feed to listen for changes to task documents.
+   *
+   * @private
+   */
   private initializeTaskChangesFeed(): void {
     Logger.info('Initializing PouchDB changes feed for tasks');
     this.taskChangesFeed = this.db
@@ -452,6 +615,12 @@ export class DataSource {
       });
   }
 
+  /**
+   * Notify all subscribers of task changes.
+   *
+   * @param tasks
+   * @private
+   */
   private notifyTaskSubscribers(tasks: Task[]): void {
     Logger.info('Notifying task change subscribers');
     this.taskChangeSubscribers.forEach((taskSubscriber: TaskSubscriberWithFilterParams) => {
@@ -483,6 +652,12 @@ export class DataSource {
     });
   }
 
+  /**
+   * Remove a task subscriber and cancel the changes feed if there are no more subscribers.
+   *
+   * @param subscriber
+   * @private
+   */
   private removeTaskSubscriber(subscriber: TaskSubscriberWithFilterParams): void {
     Logger.info('Removing task change subscriber');
     this.taskChangeSubscribers.delete(subscriber);
@@ -509,5 +684,10 @@ export class DataSource {
       this.contextChangesFeed.cancel();
       this.contextChangesFeed = undefined;
     }
+  }
+
+  // Is the error a PouchDB not found error?
+  private isPouchNotFoundError(err: any): err is PouchDB.Core.Error {
+    return err && (err.status === 404 || err.name === 'not_found');
   }
 }

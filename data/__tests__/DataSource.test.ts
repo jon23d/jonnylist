@@ -1,8 +1,9 @@
 import { waitFor } from '@testing-library/dom';
 import { DataSource } from '@/data/DataSource';
 import { Preferences } from '@/data/documentTypes/Preferences';
-import { setupTestDatabase } from '@/test-utils/db';
+import { createTestDataSource, setupTestDatabase } from '@/test-utils/db';
 import { ContextFactory } from '@/test-utils/factories/ContextFactory';
+import { LocalSettingsFactory } from '@/test-utils/factories/LocalSettingsFactory';
 import { PreferencesFactory } from '@/test-utils/factories/PreferencesFactory';
 import { TaskFactory } from '@/test-utils/factories/TaskFactory';
 import { DocumentTypes } from '../documentTypes';
@@ -24,6 +25,77 @@ describe('DataSource', () => {
     const dataSource = getDataSource();
     const contexts = await dataSource.getContexts();
     expect(contexts).toEqual([]);
+  });
+
+  describe('initializeSync', () => {
+    it('Should only create a sync db if sync settings are present', async () => {
+      const dataSource = getDataSource();
+
+      const newDb = jest.spyOn(dataSource, 'createSyncDb');
+
+      await dataSource.initializeSync();
+
+      expect(newDb).not.toHaveBeenCalled();
+    });
+
+    it('Creates a sync db if sync settings are present', async () => {
+      // this is a little more complicated than normal because we need to deal with creating a sync db
+      const dataSource = getDataSource();
+      await dataSource.setLocalSettings(
+        new LocalSettingsFactory().create({
+          syncServerUrl: 'https://local.local/db',
+          syncServerAccessToken: 'a token',
+        })
+      );
+
+      // This is the sync db that will be created
+      const { database: syncDb } = createTestDataSource();
+      const createSyncDbSpy = jest.spyOn(dataSource, 'createSyncDb').mockReturnValue(syncDb);
+
+      await dataSource.initializeSync();
+
+      expect(createSyncDbSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          syncServerUrl: 'https://local.local/db',
+          syncServerAccessToken: 'a token',
+        })
+      );
+
+      dataSource.cancelSync();
+      syncDb.destroy();
+    });
+
+    it('Syncs the database with the sync server', async () => {
+      // this is a little more complicated than normal because we need to deal with creating a sync db
+      const dataSource = getDataSource();
+      await dataSource.setLocalSettings(
+        new LocalSettingsFactory().create({
+          syncServerUrl: 'https://local.local/db',
+          syncServerAccessToken: 'a token',
+        })
+      );
+
+      // This is the sync db that will be created
+      const { database: syncDb } = createTestDataSource();
+      jest.spyOn(dataSource, 'createSyncDb').mockReturnValue(syncDb);
+
+      await dataSource.initializeSync();
+
+      const newTask = new TaskFactory().create();
+      await dataSource.addTask(newTask);
+
+      await waitFor(async () => {
+        const tasks = await syncDb.allDocs<Task>({
+          include_docs: true,
+          startkey: 'task-',
+          endkey: 'task-\ufff0',
+        });
+        expect(tasks.rows).toHaveLength(1);
+      });
+
+      dataSource.cancelSync();
+      syncDb.destroy();
+    });
   });
 
   test('getPreferences should return default preferences', async () => {

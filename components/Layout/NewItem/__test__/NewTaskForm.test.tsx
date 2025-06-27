@@ -83,7 +83,6 @@ describe('NewTaskForm', () => {
     const dataSource = getDataSource();
     await dataSource.setPreferences({
       _id: 'preferences',
-      version: 1,
       type: 'preferences',
       lastSelectedContext: 'Context2',
     });

@@ -38,11 +38,6 @@ if (!user) {
   process.exit(1);
 }
 
-if (!databaseName) {
-  console.error('Error: Database name is required. Use -d <database_name>');
-  process.exit(1);
-}
-
 if (!base64Secret) {
   console.error('Error: Secret is required. Use -s <base64_secret>');
   process.exit(1);
@@ -53,13 +48,11 @@ const secret = Buffer.from(base64Secret, 'base64');
 const payload = {
   sub: user,
   exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 365, // 1 year
-  db: databaseName,
 };
 const token = jwt.sign(payload, secret, { algorithm: 'HS256' });
 
 if (verbose) {
   console.log('Created jwt for user:', user);
-  console.log('Database:', databaseName);
   console.log('Used secret:', base64Secret);
   console.log('Generated JWT:', token);
 } else {

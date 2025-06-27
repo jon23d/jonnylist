@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import PouchDB from 'pouchdb';
 import { DataSource } from '@/data/DataSource';
+import { DocumentTypes } from '@/data/documentTypes';
 import { Logger } from '@/helpers/Logger';
+import { Notifications } from '@/helpers/Notifications';
 
 export type DataSourceContextType = {
   dataSource: DataSource;
@@ -17,7 +20,10 @@ export const DataSourceContextProvider = ({
   children: React.ReactNode;
 }) => {
   const [isMigrating, setIsMigrating] = useState(false);
-  const [currentDataSource] = useState<DataSource>(() => dataSource || new DataSource());
+  const [currentDataSource] = useState<DataSource>(
+    // Use the provided dataSource if it exists, otherwise create a new one
+    () => dataSource || new DataSource(new PouchDB<DocumentTypes>('jonnylist'))
+  );
 
   useEffect(() => {
     currentDataSource.onMigrationStatusChange = setIsMigrating;
@@ -25,6 +31,15 @@ export const DataSourceContextProvider = ({
     // Run migrations when the application starts
     currentDataSource.runMigrations().catch((error) => {
       Logger.error('Failed to run migrations:', error);
+    });
+
+    // Initialize syncing if the data source supports it
+    currentDataSource.initializeSync().catch((error) => {
+      Logger.error('Failed to initialize syncing:', error);
+      Notifications.showError({
+        title: 'Sync Initialization Error',
+        message: 'Failed to initialize data source syncing. Please check your configuration.',
+      });
     });
 
     // Cleanup function

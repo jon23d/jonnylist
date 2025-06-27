@@ -5,12 +5,16 @@ class V1AddMigrationsDoc implements Migration {
     return 1;
   }
 
+  _isPouchNotFoundError(err: any): err is PouchDB.Core.Error {
+    return err && (err.status === 404 || err.name === 'not_found');
+  }
+
   async needsMigration(db: PouchDB.Database): Promise<boolean> {
     try {
       await db.get('migrations');
       return false;
     } catch (err) {
-      if (err instanceof Error && err.name === 'not_found') {
+      if (this._isPouchNotFoundError(err)) {
         return true;
       }
       throw err;
