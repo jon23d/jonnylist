@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { Anchor, Text } from '@mantine/core';
 import AddNewItemButton from '@/components/Layout/NewItem/AddNewItemButton';
 import classes from './Layout.module.css';
@@ -8,7 +9,9 @@ export default function HeaderLinks() {
     <>
       <div>
         <Text size="xs" fw={800} c="black" ml={{ xs: 0, sm: 60 }} visibleFrom="sm">
-          JonnyList
+          <Anchor component={Link} href="/">
+            JonnyList
+          </Anchor>
         </Text>
       </div>
       <AddNewItemButton />

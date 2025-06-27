@@ -3,7 +3,6 @@ const jwt = require('jsonwebtoken');
 // Parse command line arguments
 const args = process.argv.slice(2);
 let user,
-  databaseName,
   base64Secret,
   verbose = false;
 
@@ -12,10 +11,6 @@ for (let i = 0; i < args.length; i++) {
     case '-u':
       user = args[i + 1];
       i++; // Skip next argument since it's the value
-      break;
-    case '-d':
-      databaseName = args[i + 1];
-      i++;
       break;
     case '-s':
       base64Secret = args[i + 1];

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useRouter } from 'next/router';
+import CommandPalette from '@/components/Layout/CommandPalette';
 import Layout from '@/components/Layout/Layout';
 import { act, renderWithDataSource, screen, waitFor } from '@/test-utils';
 import { setupTestDatabase } from '@/test-utils/db';
@@ -43,6 +44,8 @@ jest.mock('@/components/Layout/ListLinks', () => {
     return <div data-testid="list-links">List Links</div>;
   };
 });
+
+jest.mock('@/components/Layout/CommandPalette');
 
 describe('Layout', () => {
   const { getDataSource } = setupTestDatabase();
@@ -246,5 +249,20 @@ describe('Layout', () => {
     });
 
     jest.useRealTimers();
+  });
+
+  it('Renders the command palette', async () => {
+    const dataSource = getDataSource();
+    (CommandPalette as jest.Mock).mockImplementation(() => jest.fn());
+
+    renderWithDataSource(
+      <Layout>
+        <div data-testid="page-content">Page Content</div>
+      </Layout>,
+      dataSource
+    );
+
+    // Check if the command palette is rendered
+    expect(CommandPalette).toHaveBeenCalled();
   });
 });

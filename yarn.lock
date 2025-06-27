@@ -3391,12 +3391,35 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mantine/spotlight@npm:^8.1.2":
+  version: 8.1.2
+  resolution: "@mantine/spotlight@npm:8.1.2"
+  dependencies:
+    "@mantine/store": "npm:8.1.2"
+  peerDependencies:
+    "@mantine/core": 8.1.2
+    "@mantine/hooks": 8.1.2
+    react: ^18.x || ^19.x
+    react-dom: ^18.x || ^19.x
+  checksum: 10c0/09511a8c1a17305a686b33f266485d24a81f421612dd25a7652735db5cd8c34ef2626b72b545d049a77ee60e472bfd96e78aed076a178747eee9d1d9e474ca5b
+  languageName: node
+  linkType: hard
+
 "@mantine/store@npm:8.1.1":
   version: 8.1.1
   resolution: "@mantine/store@npm:8.1.1"
   peerDependencies:
     react: ^18.x || ^19.x
   checksum: 10c0/49255b116811b0d5910b79b90da671f26fedefe760241eceb2fe31d5c2afdef907180e932456e40b810c0aaef25bbb12bbeccb98666bc39809b67219ef6d5b2e
+  languageName: node
+  linkType: hard
+
+"@mantine/store@npm:8.1.2":
+  version: 8.1.2
+  resolution: "@mantine/store@npm:8.1.2"
+  peerDependencies:
+    react: ^18.x || ^19.x
+  checksum: 10c0/6d6a34bfe7e6e672496a8fc09326f5a9bd65614cc6e282af66e972593336b6464ee9af2f33973df174b2b2ea2e1d1a851149bc7283a03ec8c99ae337ba41f381
   languageName: node
   linkType: hard
 
@@ -11373,6 +11396,7 @@ __metadata:
     "@mantine/hooks": "npm:8.0.1"
     "@mantine/modals": "npm:^8.1.1"
     "@mantine/notifications": "npm:^8.1.1"
+    "@mantine/spotlight": "npm:^8.1.2"
     "@next/bundle-analyzer": "npm:^15.2.3"
     "@storybook/nextjs": "npm:^8.6.8"
     "@storybook/react": "npm:^8.6.8"
