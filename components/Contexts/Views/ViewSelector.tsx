@@ -31,6 +31,7 @@ export default function ViewSelector({
             </Center>
           ),
           value: 'Board',
+          disabled: true,
         },
         {
           label: (
@@ -40,6 +41,7 @@ export default function ViewSelector({
             </Center>
           ),
           value: 'Calendar',
+          disabled: true,
         },
       ]}
       value={value}

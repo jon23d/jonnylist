@@ -4,6 +4,7 @@ import { IconSettingsFilled } from '@tabler/icons-react';
 import { AppShell, Burger, Group, NavLink, ScrollArea } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import BulkOperationOverlay from '@/components/Common/BulkOperationOverlay';
+import CommandPalette from '@/components/Layout/CommandPalette';
 import ContextLinks from '@/components/Layout/ContextLinks';
 import DataMigrationOverlay from '@/components/Layout/DataMigrationOverlay';
 import Footer from '@/components/Layout/Footer';
@@ -65,6 +66,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <AppShell.Section grow my="md" component={ScrollArea}>
             <ContextLinks handleNavLinkClick={handleNavLinkClick} />
             <ListLinks handleNavLinkClick={handleNavLinkClick} />
+            <CommandPalette />
           </AppShell.Section>
           <AppShell.Section>
             <NavLink
