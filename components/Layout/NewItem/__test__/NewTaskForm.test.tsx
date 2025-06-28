@@ -9,21 +9,25 @@ describe('NewTaskForm', () => {
 
   it('Renders the context select with available contexts', async () => {
     const dataSource = getDataSource();
+    await dataSource.addContext('Context1');
+    await dataSource.addContext('Context2');
 
-    renderWithDataSource(
-      <NewTaskForm handleClose={() => {}} contexts={['Context1', 'Context2']} />,
-      dataSource
-    );
+    renderWithDataSource(<NewTaskForm handleClose={() => {}} />, dataSource);
 
+    // Wait for the component to load contexts
     const contextSelect = screen.getByRole('textbox', { name: 'Context' });
     await userEvent.click(contextSelect);
 
-    expect(screen.getByRole('option', { name: 'Context1' })).toBeInTheDocument();
+    // Mantine Select options appear as text elements, not role="option"
+    await waitFor(() => {
+      expect(screen.getByText('Context1')).toBeInTheDocument();
+    });
+
     expect(screen.getByText('Context2')).toBeInTheDocument();
   });
 
   it('Renders the status select with task status options', async () => {
-    renderWithDataSource(<NewTaskForm handleClose={() => {}} contexts={[]} />, getDataSource());
+    renderWithDataSource(<NewTaskForm handleClose={() => {}} />, getDataSource());
 
     const statusSelect = screen.getByRole('textbox', { name: 'Status' });
     await userEvent.click(statusSelect);
@@ -35,15 +39,17 @@ describe('NewTaskForm', () => {
   it('Saves a new task when the form is submitted', async () => {
     const handleClose = jest.fn();
     const dataSource = getDataSource();
+    await dataSource.addContext('Context1');
+    await dataSource.addContext('Context2');
 
-    renderWithDataSource(
-      <NewTaskForm handleClose={handleClose} contexts={['Context1', 'Context2']} />,
-      dataSource
-    );
+    renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
 
     const contextSelect = screen.getByRole('textbox', { name: 'Context' });
     await userEvent.click(contextSelect);
-    await userEvent.click(screen.getByText('Context2'));
+
+    await waitFor(() => {
+      userEvent.click(screen.getByText('Context2'));
+    });
 
     const titleInput = screen.getByRole('textbox', { name: 'Title' });
     await userEvent.type(titleInput, 'Test Task');
@@ -81,16 +87,14 @@ describe('NewTaskForm', () => {
 
   it('Uses the last selected context as the default value', async () => {
     const dataSource = getDataSource();
+    await dataSource.addContext('Context2');
     await dataSource.setPreferences({
       _id: 'preferences',
       type: 'preferences',
       lastSelectedContext: 'Context2',
     });
 
-    renderWithDataSource(
-      <NewTaskForm handleClose={() => {}} contexts={['Context1', 'Context2']} />,
-      dataSource
-    );
+    renderWithDataSource(<NewTaskForm handleClose={() => {}} />, dataSource);
 
     await waitFor(() => {
       expect(screen.getByRole('textbox', { name: 'Context' })).toHaveDisplayValue('Context2');

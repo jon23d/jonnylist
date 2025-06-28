@@ -1,4 +1,4 @@
-export default function NewMetricForm() {
+export default function NewMetricForm({ handleClose }: { handleClose: () => void }) {
   return (
     <div>
       <h2>Add New Metric</h2>
@@ -15,6 +15,9 @@ export default function NewMetricForm() {
         </label>
         <br />
         <button type="submit">Submit</button>
+        <button type="button" onClick={handleClose}>
+          Cancel
+        </button>
       </form>
     </div>
   );

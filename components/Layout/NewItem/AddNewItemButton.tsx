@@ -1,49 +1,56 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button, Menu, Modal } from '@mantine/core';
 import { useHotkeys } from '@mantine/hooks';
 import NewListItemForm from '@/components/Layout/NewItem/NewListItemForm';
 import NewMetricForm from '@/components/Layout/NewItem/NewMetricForm';
 import NewTaskForm from '@/components/Layout/NewItem/NewTaskForm';
-import { useDataSource } from '@/contexts/DataSourceContext';
+
+type FormType = 'task' | 'item' | 'metric';
+
+const MODALS = {
+  task: {
+    title: 'Add New Task',
+    component: NewTaskForm,
+    menuLabel: 'Task',
+  },
+  item: {
+    title: 'Add New Item to List',
+    component: NewListItemForm,
+    menuLabel: 'Item to list',
+  },
+  metric: {
+    title: 'Add New Metric',
+    component: NewMetricForm,
+    menuLabel: 'Metric',
+  },
+} as const;
 
 export default function AddNewItemButton() {
   const [modalOpened, setModalOpened] = useState(false);
-  const [newItemComponent, setNewItemComponent] = useState(<></>);
-  const [newItemModalTitle, setNewItemModalTitle] = useState('');
+  const [activeFormType, setActiveFormType] = useState<FormType | null>(null);
   const [newMenuOpened, setNewMenuOpened] = useState(false);
-  const dataSource = useDataSource();
-  const [contexts, setContexts] = useState<string[]>([]);
-
-  useEffect(() => {
-    const fetchContexts = async () => {
-      const contexts = await dataSource.getContexts();
-      setContexts(contexts);
-    };
-    fetchContexts();
-  }, [dataSource]);
 
   useHotkeys([['a', () => setNewMenuOpened(true)]]);
 
-  useEffect(() => {}, []);
-
-  const showForm = (which: string) => {
-    switch (which) {
-      case 'task':
-        setNewItemComponent(
-          <NewTaskForm handleClose={() => setModalOpened(false)} contexts={contexts} />
-        );
-        setNewItemModalTitle('Add New Task');
-        break;
-      case 'item':
-        setNewItemComponent(<NewListItemForm />);
-        setNewItemModalTitle('Add New Item to List');
-        break;
-      case 'metric':
-        setNewItemComponent(<NewMetricForm />);
-        setNewItemModalTitle('Add New Metric');
-        break;
-    }
+  const showForm = (formType: FormType) => {
+    setActiveFormType(formType);
     setModalOpened(true);
+  };
+
+  const handleClose = () => {
+    setModalOpened(false);
+    setActiveFormType(null);
+  };
+
+  const renderForm = () => {
+    if (!activeFormType) {
+      return null;
+    }
+
+    const FormComponent = MODALS[activeFormType].component;
+    const props = { handleClose };
+
+    return <FormComponent {...props} />;
   };
 
   return (
@@ -53,14 +60,20 @@ export default function AddNewItemButton() {
           <Button size="compact-xs">Add New (a)</Button>
         </Menu.Target>
         <Menu.Dropdown>
-          <Menu.Item onClick={() => showForm('task')}>Task</Menu.Item>
-          <Menu.Item onClick={() => showForm('item')}>Item to list</Menu.Item>
-          <Menu.Item onClick={() => showForm('metric')}>Metric</Menu.Item>
+          {Object.entries(MODALS).map(([key, config]) => (
+            <Menu.Item key={key} onClick={() => showForm(key as FormType)}>
+              {config.menuLabel}
+            </Menu.Item>
+          ))}
         </Menu.Dropdown>
       </Menu>
 
-      <Modal opened={modalOpened} onClose={() => setModalOpened(false)} title={newItemModalTitle}>
-        {newItemComponent}
+      <Modal
+        opened={modalOpened}
+        onClose={handleClose}
+        title={activeFormType ? MODALS[activeFormType].title : ''}
+      >
+        {renderForm()}
       </Modal>
     </>
   );

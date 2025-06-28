@@ -1,5 +1,4 @@
-import { renderWithDataSource, screen, userEvent } from '@/test-utils';
-import { setupTestDatabase } from '@/test-utils/db';
+import { render, screen, userEvent } from '@/test-utils';
 import AddNewItemButton from '../AddNewItemButton';
 
 jest.mock('@/components/Layout/NewItem/NewTaskForm', () => ({
@@ -18,9 +17,8 @@ jest.mock('@/components/Layout/NewItem/NewMetricForm', () => ({
 }));
 
 describe('AddNewItemButton', () => {
-  const { getDataSource } = setupTestDatabase();
   it('Opens the menu when "a" is pressed', async () => {
-    renderWithDataSource(<AddNewItemButton />, getDataSource());
+    render(<AddNewItemButton />);
 
     await userEvent.keyboard('a');
 
@@ -28,7 +26,7 @@ describe('AddNewItemButton', () => {
   });
 
   it('Renders the new task form when "Task" is clicked', async () => {
-    renderWithDataSource(<AddNewItemButton />, getDataSource());
+    render(<AddNewItemButton />);
 
     await userEvent.click(screen.getByText('Add New (a)'));
     await userEvent.click(screen.getByText('Task'));
@@ -38,7 +36,7 @@ describe('AddNewItemButton', () => {
   });
 
   it('Renders the new list item form when "Item to list" is clicked', async () => {
-    renderWithDataSource(<AddNewItemButton />, getDataSource());
+    render(<AddNewItemButton />);
 
     await userEvent.click(screen.getByText('Add New (a)'));
     await userEvent.click(screen.getByText('Item to list'));
@@ -48,7 +46,7 @@ describe('AddNewItemButton', () => {
   });
 
   it('Renders the new metric form when "Metric" is clicked', async () => {
-    renderWithDataSource(<AddNewItemButton />, getDataSource());
+    render(<AddNewItemButton />);
 
     await userEvent.click(screen.getByText('Add New (a)'));
     await userEvent.click(screen.getByText('Metric'));

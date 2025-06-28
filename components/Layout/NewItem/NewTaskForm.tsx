@@ -6,16 +6,11 @@ import { useDataSource } from '@/contexts/DataSourceContext';
 import { NewTask, TaskStatus, taskStatusSelectOptions } from '@/data/documentTypes/Task';
 import { Logger } from '@/helpers/Logger';
 
-export default function NewTaskForm({
-  contexts,
-  handleClose,
-}: {
-  contexts: string[];
-  handleClose: () => void;
-}) {
+export default function NewTaskForm({ handleClose }: { handleClose: () => void }) {
   const dataSource = useDataSource();
   // use to force an update of the contexts dropdown
   const [contextKey, setContextKey] = useState<number>(0);
+  const [contexts, setContexts] = useState<string[]>([]);
 
   const form = useForm<NewTask>({
     mode: 'uncontrolled',
@@ -31,12 +26,17 @@ export default function NewTaskForm({
   });
 
   useEffect(() => {
-    const initializeForm = async () => {
-      const preferences = await dataSource.getPreferences();
+    const initialize = async () => {
+      const [contexts, preferences] = await Promise.all([
+        dataSource.getContexts(),
+        dataSource.getPreferences(),
+      ]);
+
+      setContexts(contexts);
       form.setFieldValue('context', preferences.lastSelectedContext);
-      setContextKey((prev) => prev + 1); // Increment key to force re-render of Select component
+      setContextKey((prev) => prev + 1);
     };
-    initializeForm();
+    initialize();
   }, []);
 
   const handleSave = async () => {
