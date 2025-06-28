@@ -47,6 +47,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const headerBackgroundColor = process.env.NODE_ENV === 'development' ? 'yellow.0' : 'blue.0';
+
   return (
     <>
       {showOverlay && <DataMigrationOverlay />}
@@ -57,7 +59,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         padding="md"
       >
         <AppShell.Header>
-          <Group h="100%" px="md" bg="blue.0" wrap="nowrap" align="center" justify="space-between">
+          <Group
+            h="100%"
+            px="md"
+            bg={headerBackgroundColor}
+            wrap="nowrap"
+            align="center"
+            justify="space-between"
+          >
             <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
             <HeaderLinks />
           </Group>

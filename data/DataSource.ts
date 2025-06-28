@@ -467,6 +467,9 @@ export class DataSource {
     await this.db.put(doc);
   }
 
+  /**
+   * Export all data from the database, excluding _local documents.
+   */
   async exportAllData(): Promise<DocumentTypes[]> {
     Logger.info('Exporting all data from the database');
     try {
@@ -478,6 +481,30 @@ export class DataSource {
     } catch (error) {
       Logger.error('Error exporting data:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Import data into the database.
+   * @param docs
+   */
+  async importData(docs: DocumentTypes[]): Promise<void> {
+    Logger.info('Importing data into the database');
+    try {
+      // We probably don't want to allow _local documents to be imported, as it
+      // can activate sync
+      const filteredDocs = docs.filter((doc) => !doc._id.startsWith('_local/'));
+
+      const cleanedDocs = filteredDocs.map((doc) => {
+        const { _rev, ...cleanDoc } = doc as any;
+        return cleanDoc;
+      });
+
+      const response = await this.db.bulkDocs(cleanedDocs);
+      Logger.info('Data imported successfully:');
+    } catch (error) {
+      Logger.error('Error importing data:', error);
+      throw error; // Re-throw to handle it in the calling code
     }
   }
 
