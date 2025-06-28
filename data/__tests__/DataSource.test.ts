@@ -20,6 +20,8 @@ describe('DataSource', () => {
   const { getDataSource, getDb } = setupTestDatabase();
   const contextFactory = new ContextFactory();
   const taskFactory = new TaskFactory();
+  const localSettingsFactory = new LocalSettingsFactory();
+  const preferencesFactory = new PreferencesFactory();
 
   it('should initialize with an empty database', async () => {
     const dataSource = getDataSource();
@@ -628,6 +630,30 @@ describe('DataSource', () => {
 
       const contexts = await dataSource.getContexts();
       expect(contexts).toEqual(['new-context']);
+    });
+  });
+
+  describe('exportAllData', () => {
+    it('should export all documents from the database, except for _local', async () => {
+      const dataSource = getDataSource();
+      await Promise.all([
+        dataSource.addContext('a-context'),
+        dataSource.setLocalSettings(localSettingsFactory.create()),
+        dataSource.setPreferences(preferencesFactory.create()),
+        dataSource.addTask(taskFactory.create({ context: 'a-context' })),
+      ]);
+
+      const exportedData = await dataSource.exportAllData();
+
+      const exportedContext = exportedData.find((doc) => doc._id === 'context-a-context');
+      const exportedLocalSettings = exportedData.find((doc) => doc._id === 'local-settings');
+      const exportedPreferences = exportedData.find((doc) => doc._id === 'preferences');
+      const exportedTask = exportedData.find((doc) => doc._id.startsWith('task-'));
+
+      expect(exportedContext).toBeDefined();
+      expect(exportedLocalSettings).not.toBeDefined();
+      expect(exportedPreferences).toBeDefined();
+      expect(exportedTask).toBeDefined();
     });
   });
 });

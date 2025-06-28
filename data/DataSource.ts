@@ -467,6 +467,20 @@ export class DataSource {
     await this.db.put(doc);
   }
 
+  async exportAllData(): Promise<DocumentTypes[]> {
+    Logger.info('Exporting all data from the database');
+    try {
+      const result = await this.db.allDocs<DocumentTypes>({
+        include_docs: true,
+      });
+
+      return result.rows.map((row) => row.doc!);
+    } catch (error) {
+      Logger.error('Error exporting data:', error);
+      throw error;
+    }
+  }
+
   /**
    * Subscribe to changes in contexts. This will initially fetch all contexts and invoke the
    * callback with them, then set up a live changes feed to watch for updates, invoking the
