@@ -24,9 +24,10 @@ export default function ListRow({
           {...provided.draggableProps}
           className={classes.hoverable}
           onClick={() => handleClick(task)}
+          {...provided.dragHandleProps}
         >
           <Table.Td w={columnWidths[0]}>
-            <div className={classes.dragHandle} {...provided.dragHandleProps}>
+            <div className={classes.dragHandle}>
               <IconGripVertical size={18} stroke={1.5} />
             </div>
           </Table.Td>
