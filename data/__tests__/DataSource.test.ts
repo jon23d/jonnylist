@@ -656,4 +656,31 @@ describe('DataSource', () => {
       expect(exportedTask).toBeDefined();
     });
   });
+
+  describe('importData', () => {
+    it('should import data into the database', async () => {
+      const dataSource = getDataSource();
+      const context = contextFactory.create({ name: 'imported-context', _rev: 'abc-123' });
+      const task = taskFactory.create({ context: 'imported-context' });
+      const localSettings = localSettingsFactory.create({
+        syncServerUrl: 'https://imported.local/db',
+        syncServerAccessToken: 'foof',
+      });
+
+      const importedData = [context, task, localSettings];
+
+      await dataSource.importData(importedData);
+
+      const contexts = await dataSource.getContexts();
+      expect(contexts).toContain('imported-context');
+
+      const tasks = await dataSource.getTasks({ context: 'imported-context' });
+      expect(tasks).toHaveLength(1);
+      expect(tasks[0].context).toBe('imported-context');
+      expect(tasks[0]._rev).not.toBe('abc-123'); // this should have been replaced
+
+      const settings = await dataSource.getLocalSettings();
+      expect(settings).not.toEqual(expect.objectContaining(localSettings));
+    });
+  });
 });

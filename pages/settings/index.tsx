@@ -1,10 +1,11 @@
-import { Fieldset, Title } from '@mantine/core';
+import { Fieldset, Stack, Title } from '@mantine/core';
 import ExportForm from '@/components/Settings/ExportForm';
+import ImportForm from '@/components/Settings/ImportForm';
 import SyncServerForm from '@/components/Settings/SyncServerForm';
 
 export default function Page() {
   return (
-    <>
+    <Stack>
       <Title order={2} mb="md">
         Settings
       </Title>
@@ -16,6 +17,10 @@ export default function Page() {
       <Fieldset legend="Data Export" mb="md">
         <ExportForm />
       </Fieldset>
-    </>
+
+      <Fieldset legend="Data Import" mb="md">
+        <ImportForm />
+      </Fieldset>
+    </Stack>
   );
 }
