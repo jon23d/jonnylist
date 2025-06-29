@@ -1,6 +1,7 @@
 import { waitFor } from '@testing-library/dom';
 import { DataSource } from '@/data/DataSource';
 import { Preferences } from '@/data/documentTypes/Preferences';
+import { generateKeyBetween, generateNKeysBetween } from '@/helpers/fractionalIndexing';
 import { createTestDataSource, setupTestDatabase } from '@/test-utils/db';
 import { ContextFactory } from '@/test-utils/factories/ContextFactory';
 import { LocalSettingsFactory } from '@/test-utils/factories/LocalSettingsFactory';
@@ -155,7 +156,7 @@ describe('DataSource', () => {
     const dataSource = getDataSource();
     const database = getDb();
     const task = taskFactory.create({
-      sortOrder: 100,
+      sortOrder: 'a',
     });
 
     await dataSource.addTask(task);
@@ -165,16 +166,17 @@ describe('DataSource', () => {
 
     const returnedTask = tasks.rows[0].doc as Task;
 
+    const expectedSort = generateKeyBetween(null, null);
+
     expect(returnedTask.context).toEqual(task.context);
     expect(returnedTask._id.startsWith('task-')).toBe(true);
-    expect(returnedTask.sortOrder).toBe(100);
+    expect(returnedTask.sortOrder).toBe(expectedSort);
   });
 
   test('addTask should append the _rev to the task', async () => {
     const dataSource = getDataSource();
     const task = taskFactory.create({
       context: 'context1',
-      sortOrder: 100,
     });
 
     const addedTask = await dataSource.addTask(task);
@@ -191,39 +193,38 @@ describe('DataSource', () => {
     const dataSource = getDataSource();
     const newTask = taskFactory.create({
       context: 'context1',
-      sortOrder: 100,
+      sortOrder: 'a',
     });
 
     const task = await dataSource.addTask(newTask);
     const timeAfterUpdate = new Date();
 
-    task.sortOrder = 200;
-    const updatedTask = await dataSource.updateTask(task);
+    const updatedTask = await dataSource.updateTask({ ...task, sortOrder: 'z' });
 
-    expect(updatedTask.sortOrder).toBe(200);
+    expect(updatedTask.sortOrder).toBe('z');
 
     const tasks = await dataSource.getTasks({ context: 'context1' });
     expect(tasks).toHaveLength(1);
-    expect(tasks[0].sortOrder).toBe(200);
+    expect(tasks[0].sortOrder).toBe('z');
     expect(tasks[0].updatedAt.getTime()).toBeGreaterThanOrEqual(timeAfterUpdate.getTime());
   });
 
   test('updateTasks should update multiple tasks in the database', async () => {
     const dataSource = getDataSource();
-    const task1 = await dataSource.addTask(taskFactory.create({ sortOrder: 1 }));
-    const task2 = await dataSource.addTask(taskFactory.create({ sortOrder: 2 }));
+    const task1 = await dataSource.addTask(taskFactory.create({ sortOrder: 'a' }));
+    const task2 = await dataSource.addTask(taskFactory.create({ sortOrder: 'g' }));
 
     const rev1 = task1._rev;
     const rev2 = task2._rev;
 
-    task1.sortOrder = 3;
-    task2.sortOrder = 4;
+    task1.sortOrder = 'b';
+    task2.sortOrder = 'h';
 
     const updatedTasks = await dataSource.updateTasks([task1, task2]);
 
     expect(updatedTasks).toHaveLength(2);
-    expect(updatedTasks[0].sortOrder).toBe(3);
-    expect(updatedTasks[1].sortOrder).toBe(4);
+    expect(updatedTasks[0].sortOrder).toBe('b');
+    expect(updatedTasks[1].sortOrder).toBe('h');
     expect(updatedTasks[0]._rev).not.toBe(rev1);
     expect(updatedTasks[1]._rev).not.toBe(rev2);
   });
@@ -277,9 +278,11 @@ describe('DataSource', () => {
 
   test('getTasks should return tasks sorted by sortOrder', async () => {
     const dataSource = getDataSource();
-    const task1 = taskFactory.create({ _id: 'task1', context: 'context1', sortOrder: 1 });
-    const task2 = taskFactory.create({ _id: 'task2', context: 'context1', sortOrder: 0 });
-    const task3 = taskFactory.create({ _id: 'task3', context: 'context1', sortOrder: 2 });
+    const sorts = generateNKeysBetween(null, null, 3);
+    // out of order tasks
+    const task1 = taskFactory.create({ _id: 'task1', context: 'context1', sortOrder: sorts[1] });
+    const task2 = taskFactory.create({ _id: 'task2', context: 'context1', sortOrder: sorts[0] });
+    const task3 = taskFactory.create({ _id: 'task3', context: 'context1', sortOrder: sorts[2] });
 
     await dataSource.addTask(task1);
     await dataSource.addTask(task2);
@@ -288,9 +291,9 @@ describe('DataSource', () => {
     const tasks = await dataSource.getTasks({ context: 'context1' });
 
     expect(tasks).toHaveLength(3);
-    expect(tasks[0].sortOrder).toBe(0);
-    expect(tasks[1].sortOrder).toBe(1);
-    expect(tasks[2].sortOrder).toBe(2);
+    expect(tasks[0].sortOrder).toBe(sorts[0]); // task 2
+    expect(tasks[1].sortOrder).toBe(sorts[1]); // task 1
+    expect(tasks[2].sortOrder).toBe(sorts[2]); // task 3
   });
 
   test('subscribeToTasks should register a task change subscriber', async () => {
@@ -532,53 +535,70 @@ describe('DataSource', () => {
     });
   });
 
-  test('filterTasksByParams should filter tasks by context and statuses', () => {
-    const dataSource = getDataSource();
+  describe('filterTasksByParams', () => {
+    it('Should filter tasks by context and statuses', () => {
+      const dataSource = getDataSource();
 
-    const tasks: Task[] = [
-      taskFactory.create({ context: 'context1', status: TaskStatus.Ready }),
-      taskFactory.create({ context: 'context1', status: TaskStatus.Started }),
-      taskFactory.create({ context: 'context2', status: TaskStatus.Waiting }),
-      taskFactory.create({ context: 'context2', status: TaskStatus.Done }),
-    ];
+      const tasks: Task[] = [
+        taskFactory.create({ context: 'context1', status: TaskStatus.Ready }),
+        taskFactory.create({ context: 'context1', status: TaskStatus.Started }),
+        taskFactory.create({ context: 'context2', status: TaskStatus.Waiting }),
+        taskFactory.create({ context: 'context2', status: TaskStatus.Done }),
+      ];
 
-    const filteredTasks = dataSource.filterTasksByParams(tasks, {
-      context: 'context1',
-      statuses: [TaskStatus.Started, TaskStatus.Waiting],
+      const filteredTasks = dataSource.filterTasksByParams(tasks, {
+        context: 'context1',
+        statuses: [TaskStatus.Started, TaskStatus.Waiting],
+      });
+
+      expect(filteredTasks).toHaveLength(1);
+      expect(filteredTasks[0].status).toBe(TaskStatus.Started);
     });
 
-    expect(filteredTasks).toHaveLength(1);
-    expect(filteredTasks[0].status).toBe(TaskStatus.Started);
-  });
+    it('Should should filter by multiple statuses', () => {
+      const dataSource = getDataSource();
 
-  test('filterTasksByParams should filter by multiple statuses', () => {
-    const dataSource = getDataSource();
+      const tasks: Task[] = [
+        taskFactory.create({ status: TaskStatus.Ready }),
+        taskFactory.create({ status: TaskStatus.Started }),
+        taskFactory.create({ status: TaskStatus.Waiting }),
+        taskFactory.create({ status: TaskStatus.Done }),
+      ];
 
-    const tasks: Task[] = [
-      taskFactory.create({ status: TaskStatus.Ready }),
-      taskFactory.create({ status: TaskStatus.Started }),
-      taskFactory.create({ status: TaskStatus.Waiting }),
-      taskFactory.create({ status: TaskStatus.Done }),
-    ];
+      const filteredTasks = dataSource.filterTasksByParams(tasks, {
+        statuses: [TaskStatus.Ready, TaskStatus.Started],
+      });
 
-    const filteredTasks = dataSource.filterTasksByParams(tasks, {
-      statuses: [TaskStatus.Ready, TaskStatus.Started],
+      expect(filteredTasks).toHaveLength(2);
+      expect(filteredTasks[0].status).toBe(TaskStatus.Ready);
+      expect(filteredTasks[1].status).toBe(TaskStatus.Started);
     });
 
-    expect(filteredTasks).toHaveLength(2);
-    expect(filteredTasks[0].status).toBe(TaskStatus.Ready);
-    expect(filteredTasks[1].status).toBe(TaskStatus.Started);
-  });
+    it('Should should filter by a single status', () => {
+      const dataSource = getDataSource();
 
-  test('filterTasksByParams should filter by a single status', () => {
-    const dataSource = getDataSource();
+      const filteredTasks = dataSource.filterTasksByParams(
+        [taskFactory.create({ status: TaskStatus.Started })],
+        { statuses: [TaskStatus.Started] }
+      );
 
-    const filteredTasks = dataSource.filterTasksByParams(
-      [taskFactory.create({ status: TaskStatus.Started })],
-      { statuses: [TaskStatus.Started] }
-    );
+      expect(filteredTasks).toHaveLength(1);
+    });
 
-    expect(filteredTasks).toHaveLength(1);
+    it('Should return all tasks if no filters are applied', () => {
+      const dataSource = getDataSource();
+
+      const tasks: Task[] = [
+        taskFactory.create({ status: TaskStatus.Ready }),
+        taskFactory.create({ status: TaskStatus.Started }),
+        taskFactory.create({ status: TaskStatus.Waiting }),
+        taskFactory.create({ status: TaskStatus.Done }),
+      ];
+
+      const filteredTasks = dataSource.filterTasksByParams(tasks, {});
+
+      expect(filteredTasks).toHaveLength(4);
+    });
   });
 
   describe('archiveContext', () => {

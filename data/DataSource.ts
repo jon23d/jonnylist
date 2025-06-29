@@ -3,11 +3,10 @@ import { DocumentTypes } from '@/data/documentTypes';
 import { Context } from '@/data/documentTypes/Context';
 import { LocalSettings } from '@/data/documentTypes/LocalSettings';
 import { createDefaultPreferences, Preferences } from '@/data/documentTypes/Preferences';
-import { NewTask, Task, TaskStatus } from '@/data/documentTypes/Task';
+import { NewTask, sortedTasks, Task, TaskStatus } from '@/data/documentTypes/Task';
+import { generateKeyBetween } from '@/helpers/fractionalIndexing';
 import { Logger } from '@/helpers/Logger';
 import { MigrationManager } from './migrations/MigrationManager';
-
-export const DATABASE_VERSION = 3;
 
 type TaskSubscriberWithFilterParams = {
   params: getTasksParams;
@@ -144,13 +143,6 @@ export class DataSource {
   }
 
   /**
-   * Get the schema version of the database.
-   */
-  getVersion(): number {
-    return DATABASE_VERSION;
-  }
-
-  /**
    * Fetch the current preferences from the database.
    * This will return a Preferences object with default values if no preferences are found.
    */
@@ -231,12 +223,22 @@ export class DataSource {
    */
   async addTask(newTask: NewTask): Promise<Task> {
     Logger.info('Adding task');
+
+    // Get the last task of this context and status to determine the sort order
+    const tasks = await this.getTasks({
+      context: newTask.context,
+      statuses: [newTask.status],
+    });
+
+    const lastSortOrder = tasks.length ? tasks[tasks.length - 1].sortOrder : null;
+    const sortOrder = generateKeyBetween(lastSortOrder, null);
+
     const task: Task = {
       _id: `task-${new Date().toISOString()}-${Math.random().toString(36).substring(2, 15)}`,
       type: 'task',
       context: newTask.context,
       title: newTask.title,
-      sortOrder: newTask.sortOrder,
+      sortOrder,
       description: newTask.description,
       status: newTask.status,
       priority: newTask.priority,
@@ -343,12 +345,9 @@ export class DataSource {
       task.updatedAt = new Date(task.updatedAt);
     });
 
-    // Sort by Task.sortOrders asc
-    allTasks.sort((a, b) => {
-      return (a.sortOrder || 0) - (b.sortOrder || 0);
-    });
+    const filtered = this.filterTasksByParams(allTasks, params);
 
-    return this.filterTasksByParams(allTasks, params);
+    return sortedTasks(filtered);
   }
 
   /**
@@ -500,7 +499,7 @@ export class DataSource {
         return cleanDoc;
       });
 
-      const response = await this.db.bulkDocs(cleanedDocs);
+      await this.db.bulkDocs(cleanedDocs);
       Logger.info('Data imported successfully:');
     } catch (error) {
       Logger.error('Error importing data:', error);

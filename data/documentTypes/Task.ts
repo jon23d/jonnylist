@@ -21,7 +21,7 @@ export interface Task extends Common {
   context: string;
   type: 'task';
   title: string;
-  sortOrder: number;
+  sortOrder: string;
   description?: string;
   status: TaskStatus;
   priority: number; // Higher number means higher priority
@@ -35,8 +35,21 @@ export interface NewTask {
   context: string;
   title: string;
   description?: string;
-  sortOrder: number;
   status: TaskStatus;
   priority: number;
   dueDate?: string;
+}
+
+export function sortedTasks(tasks: Task[]): Task[] {
+  return tasks.toSorted((a, b) => {
+    const sortA = a.sortOrder.toString();
+    const sortB = b.sortOrder.toString();
+    if (sortA < sortB) {
+      return -1; // a comes before b
+    }
+    if (sortA > sortB) {
+      return 1; // a comes after b
+    }
+    return 0; // a and b are equal
+  });
 }

@@ -1,3 +1,4 @@
+import { DATABASE_VERSION } from '@/data/migrations/versions/Versions';
 import { renderWithDataSource, screen } from '@/test-utils';
 import { setupTestDatabase } from '@/test-utils/db';
 import Footer from '../Footer';
@@ -10,6 +11,6 @@ describe('Footer', () => {
 
     renderWithDataSource(<Footer />, dataSource);
 
-    expect(screen.getByText(`DB version ${dataSource.getVersion()}`)).toBeInTheDocument();
+    expect(screen.getByText(`DB version ${DATABASE_VERSION}`)).toBeInTheDocument();
   });
 });

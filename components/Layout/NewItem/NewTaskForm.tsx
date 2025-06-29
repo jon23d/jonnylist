@@ -18,7 +18,6 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
       context: '',
       title: '',
       description: '',
-      sortOrder: 0,
       priority: 1,
       dueDate: undefined,
       status: TaskStatus.Ready,

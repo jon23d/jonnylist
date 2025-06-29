@@ -1,11 +1,9 @@
 import React from 'react';
 import Link from 'next/link';
 import { Anchor, Text } from '@mantine/core';
-import { useDataSource } from '@/contexts/DataSourceContext';
+import { DATABASE_VERSION } from '@/data/migrations/versions/Versions';
 
 export default function Footer() {
-  const dataSource = useDataSource();
-
   return (
     <Text size="xs" ta="center" c="gray">
       <Anchor href="https://github.com/jon23d/jonnylist" component={Link} mr="0.5em">
@@ -26,7 +24,7 @@ export default function Footer() {
         </Anchor>
       </Text>
       <Text span visibleFrom="xs" ml="1em">
-        DB version {dataSource.getVersion()}
+        DB version {DATABASE_VERSION}
       </Text>
     </Text>
   );
