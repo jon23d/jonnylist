@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
-import { generateKeyBetween } from 'fractional-indexing';
 import { Box, Modal, Text } from '@mantine/core';
 import { useDisclosure, useListState } from '@mantine/hooks';
 import ListRow from '@/components/Contexts/Views/List/ListRow';
@@ -8,6 +7,7 @@ import { ViewProps } from '@/components/Contexts/Views/viewProps';
 import TaskEditor from '@/components/Tasks/TaskEditor';
 import { useDataSource } from '@/contexts/DataSourceContext';
 import { ALL_TASK_STATUSES, sortedTasks, Task, TaskStatus } from '@/data/documentTypes/Task';
+import { generateKeyBetween } from '@/helpers/fractionalIndexing';
 
 export default function List({ tasks, visibleStatuses }: ViewProps) {
   const dataSource = useDataSource();

@@ -1,6 +1,6 @@
-import { generateNKeysBetween } from 'fractional-indexing';
 import { MigrationsDoc } from '@/data/documentTypes/MigrationsDoc';
 import { Task } from '@/data/documentTypes/Task';
+import { generateNKeysBetween } from '@/helpers/fractionalIndexing';
 import { Migration } from '../Migration';
 
 class V4UpdateSortsToFractionalString implements Migration {

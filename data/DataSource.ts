@@ -1,10 +1,10 @@
-import { generateKeyBetween } from 'fractional-indexing';
 import PouchDB from 'pouchdb';
 import { DocumentTypes } from '@/data/documentTypes';
 import { Context } from '@/data/documentTypes/Context';
 import { LocalSettings } from '@/data/documentTypes/LocalSettings';
 import { createDefaultPreferences, Preferences } from '@/data/documentTypes/Preferences';
 import { NewTask, sortedTasks, Task, TaskStatus } from '@/data/documentTypes/Task';
+import { generateKeyBetween } from '@/helpers/fractionalIndexing';
 import { Logger } from '@/helpers/Logger';
 import { MigrationManager } from './migrations/MigrationManager';
 

@@ -1,6 +1,7 @@
 import { waitFor } from '@testing-library/dom';
 import { DataSource } from '@/data/DataSource';
 import { Preferences } from '@/data/documentTypes/Preferences';
+import { generateKeyBetween, generateNKeysBetween } from '@/helpers/fractionalIndexing';
 import { createTestDataSource, setupTestDatabase } from '@/test-utils/db';
 import { ContextFactory } from '@/test-utils/factories/ContextFactory';
 import { LocalSettingsFactory } from '@/test-utils/factories/LocalSettingsFactory';
@@ -165,9 +166,11 @@ describe('DataSource', () => {
 
     const returnedTask = tasks.rows[0].doc as Task;
 
+    const expectedSort = generateKeyBetween(null, null);
+
     expect(returnedTask.context).toEqual(task.context);
     expect(returnedTask._id.startsWith('task-')).toBe(true);
-    expect(returnedTask.sortOrder).toBe('a');
+    expect(returnedTask.sortOrder).toBe(expectedSort);
   });
 
   test('addTask should append the _rev to the task', async () => {
@@ -275,9 +278,11 @@ describe('DataSource', () => {
 
   test('getTasks should return tasks sorted by sortOrder', async () => {
     const dataSource = getDataSource();
-    const task1 = taskFactory.create({ _id: 'task1', context: 'context1', sortOrder: 'g' });
-    const task2 = taskFactory.create({ _id: 'task2', context: 'context1', sortOrder: 'a' });
-    const task3 = taskFactory.create({ _id: 'task3', context: 'context1', sortOrder: 'z' });
+    const sorts = generateNKeysBetween(null, null, 3);
+    // out of order tasks
+    const task1 = taskFactory.create({ _id: 'task1', context: 'context1', sortOrder: sorts[1] });
+    const task2 = taskFactory.create({ _id: 'task2', context: 'context1', sortOrder: sorts[0] });
+    const task3 = taskFactory.create({ _id: 'task3', context: 'context1', sortOrder: sorts[2] });
 
     await dataSource.addTask(task1);
     await dataSource.addTask(task2);
@@ -286,9 +291,9 @@ describe('DataSource', () => {
     const tasks = await dataSource.getTasks({ context: 'context1' });
 
     expect(tasks).toHaveLength(3);
-    expect(tasks[0].sortOrder).toBe('a'); // task 2
-    expect(tasks[1].sortOrder).toBe('g'); // task 1
-    expect(tasks[2].sortOrder).toBe('z'); // task 3
+    expect(tasks[0].sortOrder).toBe(sorts[0]); // task 2
+    expect(tasks[1].sortOrder).toBe(sorts[1]); // task 1
+    expect(tasks[2].sortOrder).toBe(sorts[2]); // task 3
   });
 
   test('subscribeToTasks should register a task change subscriber', async () => {

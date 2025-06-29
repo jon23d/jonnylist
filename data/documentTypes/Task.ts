@@ -44,6 +44,12 @@ export function sortedTasks(tasks: Task[]): Task[] {
   return tasks.toSorted((a, b) => {
     const sortA = a.sortOrder.toString();
     const sortB = b.sortOrder.toString();
-    return sortA.localeCompare(sortB);
+    if (sortA < sortB) {
+      return -1; // a comes before b
+    }
+    if (sortA > sortB) {
+      return 1; // a comes after b
+    }
+    return 0; // a and b are equal
   });
 }
