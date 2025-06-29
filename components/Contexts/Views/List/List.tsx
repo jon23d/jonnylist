@@ -8,6 +8,7 @@ import TaskEditor from '@/components/Tasks/TaskEditor';
 import { useDataSource } from '@/contexts/DataSourceContext';
 import { ALL_TASK_STATUSES, sortedTasks, Task, TaskStatus } from '@/data/documentTypes/Task';
 import { generateKeyBetween } from '@/helpers/fractionalIndexing';
+import classes from './List.module.css';
 
 export default function List({ tasks, visibleStatuses }: ViewProps) {
   const dataSource = useDataSource();
@@ -131,12 +132,9 @@ export default function List({ tasks, visibleStatuses }: ViewProps) {
                     </Box>
                   ) : (
                     groupedTasks[status].map((task, index) => (
-                      <ListRow
-                        key={task._id}
-                        task={task}
-                        index={index}
-                        handleClick={showEditDialog}
-                      />
+                      <div className={classes.listItemContainer} key={task._id}>
+                        <ListRow task={task} index={index} handleClick={showEditDialog} />
+                      </div>
                     ))
                   )}
                   {provided.placeholder}
