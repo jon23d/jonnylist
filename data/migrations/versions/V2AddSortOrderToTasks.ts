@@ -22,6 +22,7 @@ class V2AddSortOrderToTasks implements Migration {
 
     const updatedTasks = tasks.rows.map((row, index) => {
       const task = row.doc as Task;
+      // @ts-ignore   This is because the sortOrder field does not exist yet, and is not yet a string
       task.sortOrder = index * 10; // Increment sortOrder by 10 for each task
       return task;
     });

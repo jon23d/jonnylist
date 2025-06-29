@@ -33,6 +33,7 @@
     "@tabler/icons-react": "^3.31.0",
     "@types/pouchdb": "^6.4.2",
     "dayjs": "^1.11.13",
+    "fractional-indexing": "^3.2.0",
     "next": "15.3.2",
     "pouchdb": "^9.0.0",
     "react": "19.1.0",

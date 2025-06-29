@@ -1,4 +1,5 @@
 import { DropResult } from '@hello-pangea/dnd';
+import { generateKeyBetween } from 'fractional-indexing';
 import List from '@/components/Contexts/Views/List/List';
 import { TaskStatus } from '@/data/documentTypes/Task';
 import { renderWithDataSource, screen, waitFor, within } from '@/test-utils';
@@ -137,11 +138,11 @@ describe('Task list view component', () => {
 
   // In these tests, a means the sort order of the task after the drop index,
   // and b means the sort order of the task before
-  it('Sets sort order to the first position to a - 1000', async () => {
+  it('Sets sort order for the first position', async () => {
     const dataSource = getDataSource();
     const tasks = [
-      taskFactory.create({ _id: '1', status: TaskStatus.Ready, title: 'Task 1', sortOrder: 1000 }),
-      taskFactory.create({ _id: '2', status: TaskStatus.Ready, title: 'Task 2', sortOrder: 2000 }),
+      taskFactory.create({ _id: '1', status: TaskStatus.Ready, title: 'Task 1', sortOrder: 'a' }),
+      taskFactory.create({ _id: '2', status: TaskStatus.Ready, title: 'Task 2', sortOrder: 'z' }),
     ];
     await Promise.all(tasks.map((task) => dataSource.addTask(task)));
 
@@ -168,17 +169,19 @@ describe('Task list view component', () => {
       onDragEndSpy(mockDropResult);
     });
 
+    const expectedSortOrder = generateKeyBetween(null, 'z');
+
     expect(mockDataSource.updateTask).toHaveBeenCalledWith({
       ...tasks[1],
-      sortOrder: 0,
+      sortOrder: expectedSortOrder,
     });
   });
 
-  it('Sets sort order to the last position to b + 1000', async () => {
+  it('Sets sort order to the last position', async () => {
     const dataSource = getDataSource();
     const tasks = [
-      taskFactory.create({ _id: '1', status: TaskStatus.Ready, title: 'Task 1', sortOrder: 1000 }),
-      taskFactory.create({ _id: '2', status: TaskStatus.Ready, title: 'Task 2', sortOrder: 2000 }),
+      taskFactory.create({ _id: '1', status: TaskStatus.Ready, title: 'Task 1', sortOrder: 'a' }),
+      taskFactory.create({ _id: '2', status: TaskStatus.Ready, title: 'Task 2', sortOrder: 'b' }),
     ];
     await Promise.all(tasks.map((task) => dataSource.addTask(task)));
 
@@ -205,20 +208,24 @@ describe('Task list view component', () => {
       onDragEndSpy(mockDropResult);
     });
 
+    const expectedSortOrder = generateKeyBetween('b', null);
+
     expect(mockDataSource.updateTask).toHaveBeenCalledWith({
       ...tasks[0],
-      sortOrder: 3000,
+      sortOrder: expectedSortOrder,
     });
   });
 
-  it('Sets sort order to the middle position to an average of a, b', async () => {
+  it('Sets sort order to the middle position', async () => {
     const dataSource = getDataSource();
     const tasks = [
-      taskFactory.create({ _id: '1', status: TaskStatus.Ready, title: 'Task 1', sortOrder: 1000 }),
-      taskFactory.create({ _id: '2', status: TaskStatus.Ready, title: 'Task 2', sortOrder: 3000 }),
-      taskFactory.create({ _id: '3', status: TaskStatus.Ready, title: 'Task 3', sortOrder: 5000 }),
+      taskFactory.create({ _id: '1', status: TaskStatus.Ready, title: 'Task 1', sortOrder: 'a' }),
+      taskFactory.create({ _id: '2', status: TaskStatus.Ready, title: 'Task 2', sortOrder: 'g' }),
+      taskFactory.create({ _id: '3', status: TaskStatus.Ready, title: 'Task 3', sortOrder: 'z' }),
     ];
     await Promise.all(tasks.map((task) => dataSource.addTask(task)));
+
+    const expectedSortOrder = generateKeyBetween('g', 'z');
 
     renderWithDataSource(<List tasks={tasks} visibleStatuses={[TaskStatus.Ready]} />, dataSource);
 
@@ -245,7 +252,7 @@ describe('Task list view component', () => {
 
     expect(mockDataSource.updateTask).toHaveBeenCalledWith({
       ...tasks[0],
-      sortOrder: 4000,
+      sortOrder: expectedSortOrder,
     });
   });
 
@@ -286,12 +293,12 @@ describe('Task list view component', () => {
     });
   });
 
-  it('Sets sort order in a new status in first position to a - 1000', async () => {
+  it('Sets sort order in a new status in first position', async () => {
     const dataSource = getDataSource();
     const tasks = [
-      taskFactory.create({ _id: '1', status: TaskStatus.Ready, sortOrder: 1000 }),
-      taskFactory.create({ _id: '2', status: TaskStatus.Ready, sortOrder: 2000 }),
-      taskFactory.create({ _id: '2', status: TaskStatus.Waiting, sortOrder: 2000 }),
+      taskFactory.create({ _id: '1', status: TaskStatus.Ready, sortOrder: 'a' }),
+      taskFactory.create({ _id: '2', status: TaskStatus.Ready, sortOrder: 'g' }),
+      taskFactory.create({ _id: '2', status: TaskStatus.Waiting, sortOrder: 'z' }),
     ];
     await Promise.all(tasks.map((task) => dataSource.addTask(task)));
 
@@ -321,19 +328,21 @@ describe('Task list view component', () => {
       onDragEndSpy(mockDropResult);
     });
 
+    const expectedSortOrder = generateKeyBetween(null, null);
+
     expect(mockDataSource.updateTask).toHaveBeenCalledWith({
       ...tasks[0],
       status: TaskStatus.Waiting,
-      sortOrder: 1000,
+      sortOrder: expectedSortOrder,
     });
   });
 
-  it('Sets sort order in a new status in last position to b + 1000', async () => {
+  it('Sets sort order in a new status in last position', async () => {
     const dataSource = getDataSource();
     const tasks = [
-      taskFactory.create({ _id: '1', status: TaskStatus.Ready, sortOrder: 1000 }),
-      taskFactory.create({ _id: '2', status: TaskStatus.Ready, sortOrder: 2000 }),
-      taskFactory.create({ _id: '3', status: TaskStatus.Waiting, sortOrder: 2000 }),
+      taskFactory.create({ _id: '1', status: TaskStatus.Ready, sortOrder: 'a' }),
+      taskFactory.create({ _id: '2', status: TaskStatus.Ready, sortOrder: 'g' }),
+      taskFactory.create({ _id: '3', status: TaskStatus.Waiting, sortOrder: 'z' }),
     ];
     await Promise.all(tasks.map((task) => dataSource.addTask(task)));
 
@@ -363,20 +372,22 @@ describe('Task list view component', () => {
       onDragEndSpy(mockDropResult);
     });
 
+    const expectedSortOrder = generateKeyBetween('z', null);
+
     expect(mockDataSource.updateTask).toHaveBeenCalledWith({
       ...tasks[1],
       status: TaskStatus.Waiting,
-      sortOrder: 3000,
+      sortOrder: expectedSortOrder,
     });
   });
 
-  it('Sets sort order in a new status in middle position to an average of a, b', async () => {
+  it('Sets sort order in a new status in middle position', async () => {
     const dataSource = getDataSource();
     const tasks = [
-      taskFactory.create({ _id: '1', status: TaskStatus.Ready, sortOrder: 1000 }),
-      taskFactory.create({ _id: '2', status: TaskStatus.Ready, sortOrder: 3000 }),
-      taskFactory.create({ _id: '3', status: TaskStatus.Waiting, sortOrder: 5000 }),
-      taskFactory.create({ _id: '4', status: TaskStatus.Waiting, sortOrder: 7000 }),
+      taskFactory.create({ _id: '1', status: TaskStatus.Ready, sortOrder: 'a' }),
+      taskFactory.create({ _id: '2', status: TaskStatus.Ready, sortOrder: 'f' }),
+      taskFactory.create({ _id: '3', status: TaskStatus.Waiting, sortOrder: 'm' }),
+      taskFactory.create({ _id: '4', status: TaskStatus.Waiting, sortOrder: 'z' }),
     ];
     await Promise.all(tasks.map((task) => dataSource.addTask(task)));
 
@@ -406,10 +417,12 @@ describe('Task list view component', () => {
       onDragEndSpy(mockDropResult);
     });
 
+    const expectedSortOrder = generateKeyBetween('m', 'z');
+
     expect(mockDataSource.updateTask).toHaveBeenCalledWith({
       ...tasks[0],
       status: TaskStatus.Waiting,
-      sortOrder: 6000,
+      sortOrder: expectedSortOrder,
     });
   });
 });

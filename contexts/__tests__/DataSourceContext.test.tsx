@@ -5,12 +5,12 @@ import { setupTestDatabase } from '@/test-utils/db';
 import { useDataSource, useIsMigrating } from '../DataSourceContext';
 
 const TestComponent = () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const dataSource = useDataSource();
   const isMigrating = useIsMigrating();
   return (
     <div>
       <div data-testid="is-migrating">{isMigrating.toString()}</div>
-      <div data-testid="version">{dataSource.getVersion()}</div>
     </div>
   );
 };
@@ -89,17 +89,6 @@ describe('DataSourceContext', () => {
     }).toThrow('useIsMigrating must be used within a DataSourceContextProvider');
 
     consoleError.mockRestore();
-  });
-
-  it('uses provided dataSource instead of creating new one', () => {
-    const dataSource = getDataSource();
-    const getVersionSpy = jest.spyOn(dataSource, 'getVersion').mockReturnValue(999);
-
-    renderWithDataSource(<TestComponent />, dataSource);
-
-    expect(screen.getByTestId('version')).toHaveTextContent('999');
-
-    getVersionSpy.mockRestore();
   });
 
   it('Calls initialize sync on data source', async () => {

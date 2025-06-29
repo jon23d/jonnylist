@@ -1,6 +1,6 @@
 import React from 'react';
 import { Badge, Card, Center, Group, Image, Overlay, Text } from '@mantine/core';
-import { DATABASE_VERSION } from '@/data/DataSource';
+import { DATABASE_VERSION } from '@/data/migrations/versions/Versions';
 
 export default function DataMigrationOverlay() {
   return (
