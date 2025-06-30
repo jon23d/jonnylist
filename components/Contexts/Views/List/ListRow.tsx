@@ -1,6 +1,6 @@
 import React from 'react';
 import { Draggable } from '@hello-pangea/dnd';
-import { Box, Flex, Text } from '@mantine/core';
+import { Badge, Box, Flex, Text } from '@mantine/core';
 import { Task } from '@/data/documentTypes/Task';
 import classes from './List.module.css';
 
@@ -61,13 +61,15 @@ export default function ListRow({
               {/* Metadata - hidden on smallest screens */}
               <Flex gap="xs" align="center" style={{ flexShrink: 0 }} visibleFrom="sm">
                 <Text size="xs" c="blue" style={{ whiteSpace: 'nowrap' }}>
-                  tags
+                  {task.tags?.map((tag) => (
+                    <Badge size="xs" mr={3} variant="light">{`#${tag}`}</Badge>
+                  ))}
                 </Text>
                 <Text size="xs" c="orange" style={{ whiteSpace: 'nowrap' }}>
                   {task.dueDate}
                 </Text>
                 <Text size="xs" c="green" style={{ whiteSpace: 'nowrap' }}>
-                  project
+                  {/* project would go here if available*/}
                 </Text>
               </Flex>
             </Flex>
