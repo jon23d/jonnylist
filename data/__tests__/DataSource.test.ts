@@ -3,10 +3,10 @@ import { DataSource } from '@/data/DataSource';
 import { Preferences } from '@/data/documentTypes/Preferences';
 import { generateKeyBetween, generateNKeysBetween } from '@/helpers/fractionalIndexing';
 import { createTestDataSource, setupTestDatabase } from '@/test-utils/db';
-import { ContextFactory } from '@/test-utils/factories/ContextFactory';
-import { LocalSettingsFactory } from '@/test-utils/factories/LocalSettingsFactory';
-import { PreferencesFactory } from '@/test-utils/factories/PreferencesFactory';
-import { TaskFactory } from '@/test-utils/factories/TaskFactory';
+import { contextFactory } from '@/test-utils/factories/ContextFactory';
+import { localSettingsFactory } from '@/test-utils/factories/LocalSettingsFactory';
+import { preferencesFactory } from '@/test-utils/factories/PreferencesFactory';
+import { taskFactory } from '@/test-utils/factories/TaskFactory';
 import { DocumentTypes } from '../documentTypes';
 import { Task, TaskStatus } from '../documentTypes/Task';
 import { MigrationManager } from '../migrations/MigrationManager';
@@ -19,10 +19,6 @@ jest.mock('@/data/documentTypes/Preferences', () => ({
 
 describe('DataSource', () => {
   const { getDataSource, getDb } = setupTestDatabase();
-  const contextFactory = new ContextFactory();
-  const taskFactory = new TaskFactory();
-  const localSettingsFactory = new LocalSettingsFactory();
-  const preferencesFactory = new PreferencesFactory();
 
   it('should initialize with an empty database', async () => {
     const dataSource = getDataSource();
@@ -45,7 +41,7 @@ describe('DataSource', () => {
       // this is a little more complicated than normal because we need to deal with creating a sync db
       const dataSource = getDataSource();
       await dataSource.setLocalSettings(
-        new LocalSettingsFactory().create({
+        localSettingsFactory({
           syncServerUrl: 'https://local.local/db',
           syncServerAccessToken: 'a token',
         })
@@ -72,7 +68,7 @@ describe('DataSource', () => {
       // this is a little more complicated than normal because we need to deal with creating a sync db
       const dataSource = getDataSource();
       await dataSource.setLocalSettings(
-        new LocalSettingsFactory().create({
+        localSettingsFactory({
           syncServerUrl: 'https://local.local/db',
           syncServerAccessToken: 'a token',
         })
@@ -84,7 +80,7 @@ describe('DataSource', () => {
 
       await dataSource.initializeSync();
 
-      const newTask = new TaskFactory().create();
+      const newTask = taskFactory();
       await dataSource.addTask(newTask);
 
       await waitFor(async () => {
@@ -113,7 +109,7 @@ describe('DataSource', () => {
     const database = getDb();
     const dataSource = getDataSource();
     await database.post<Preferences>(
-      new PreferencesFactory().create({
+      preferencesFactory({
         lastSelectedContext: 'context1',
       })
     );
@@ -124,7 +120,7 @@ describe('DataSource', () => {
 
   test('setPreferences should create new preferences in the database', async () => {
     const dataSource = getDataSource();
-    const newPreferences = new PreferencesFactory().create({
+    const newPreferences = preferencesFactory({
       lastSelectedContext: 'foo-context',
     });
 
@@ -136,7 +132,7 @@ describe('DataSource', () => {
 
   test('setPreferences should update existing preferences', async () => {
     const dataSource = getDataSource();
-    const newPreferences = new PreferencesFactory().create({
+    const newPreferences = preferencesFactory({
       lastSelectedContext: 'foo-context',
     });
 
@@ -155,7 +151,7 @@ describe('DataSource', () => {
   test('addTask should add a task to the database', async () => {
     const dataSource = getDataSource();
     const database = getDb();
-    const task = taskFactory.create({
+    const task = taskFactory({
       sortOrder: 'a',
     });
 
@@ -175,7 +171,7 @@ describe('DataSource', () => {
 
   test('addTask should append the _rev to the task', async () => {
     const dataSource = getDataSource();
-    const task = taskFactory.create({
+    const task = taskFactory({
       context: 'context1',
     });
 
@@ -191,7 +187,7 @@ describe('DataSource', () => {
 
   test('updateTask should update an existing task in the database', async () => {
     const dataSource = getDataSource();
-    const newTask = taskFactory.create({
+    const newTask = taskFactory({
       context: 'context1',
       sortOrder: 'a',
     });
@@ -211,8 +207,8 @@ describe('DataSource', () => {
 
   test('updateTasks should update multiple tasks in the database', async () => {
     const dataSource = getDataSource();
-    const task1 = await dataSource.addTask(taskFactory.create({ sortOrder: 'a' }));
-    const task2 = await dataSource.addTask(taskFactory.create({ sortOrder: 'g' }));
+    const task1 = await dataSource.addTask(taskFactory({ sortOrder: 'a' }));
+    const task2 = await dataSource.addTask(taskFactory({ sortOrder: 'g' }));
 
     const rev1 = task1._rev;
     const rev2 = task2._rev;
@@ -250,7 +246,7 @@ describe('DataSource', () => {
 
   test('getTasks should return tasks filtered', async () => {
     const dataSource = getDataSource();
-    const task1 = taskFactory.create({ context: 'context1' });
+    const task1 = taskFactory({ context: 'context1' });
 
     await dataSource.addTask(task1);
 
@@ -280,9 +276,9 @@ describe('DataSource', () => {
     const dataSource = getDataSource();
     const sorts = generateNKeysBetween(null, null, 3);
     // out of order tasks
-    const task1 = taskFactory.create({ _id: 'task1', context: 'context1', sortOrder: sorts[1] });
-    const task2 = taskFactory.create({ _id: 'task2', context: 'context1', sortOrder: sorts[0] });
-    const task3 = taskFactory.create({ _id: 'task3', context: 'context1', sortOrder: sorts[2] });
+    const task1 = taskFactory({ _id: 'task1', context: 'context1', sortOrder: sorts[1] });
+    const task2 = taskFactory({ _id: 'task2', context: 'context1', sortOrder: sorts[0] });
+    const task3 = taskFactory({ _id: 'task3', context: 'context1', sortOrder: sorts[2] });
 
     await dataSource.addTask(task1);
     await dataSource.addTask(task2);
@@ -324,7 +320,7 @@ describe('DataSource', () => {
     unsubscribe();
     subscriber.mockReset();
 
-    await dataSource.addTask(taskFactory.create({ context: 'context1' }));
+    await dataSource.addTask(taskFactory({ context: 'context1' }));
 
     await waitFor(() => {
       expect(subscriber).not.toHaveBeenCalled();
@@ -346,9 +342,9 @@ describe('DataSource', () => {
     const database = getDb();
 
     await database.bulkDocs([
-      contextFactory.create({ name: 'context-1' }),
-      contextFactory.create({ name: 'context-2' }),
-      contextFactory.create({ name: 'context-3' }),
+      contextFactory({ name: 'context-1' }),
+      contextFactory({ name: 'context-2' }),
+      contextFactory({ name: 'context-3' }),
     ]);
 
     const contexts = await dataSource.getContexts();
@@ -359,11 +355,11 @@ describe('DataSource', () => {
     const dataSource = getDataSource();
     const database = getDb();
 
-    const archivedContext = contextFactory.create({
+    const archivedContext = contextFactory({
       name: 'deleted-context',
       deletedAt: new Date(),
     });
-    const activeContext = contextFactory.create({ name: 'active-context' });
+    const activeContext = contextFactory({ name: 'active-context' });
 
     await database.bulkDocs([archivedContext, activeContext]);
 
@@ -375,11 +371,11 @@ describe('DataSource', () => {
     const dataSource = getDataSource();
     const database = getDb();
 
-    const archivedContext = contextFactory.create({
+    const archivedContext = contextFactory({
       name: 'deleted-context',
       deletedAt: new Date(),
     });
-    const activeContext = contextFactory.create({ name: 'active-context' });
+    const activeContext = contextFactory({ name: 'active-context' });
 
     await database.bulkDocs([archivedContext, activeContext]);
 
@@ -540,10 +536,10 @@ describe('DataSource', () => {
       const dataSource = getDataSource();
 
       const tasks: Task[] = [
-        taskFactory.create({ context: 'context1', status: TaskStatus.Ready }),
-        taskFactory.create({ context: 'context1', status: TaskStatus.Started }),
-        taskFactory.create({ context: 'context2', status: TaskStatus.Waiting }),
-        taskFactory.create({ context: 'context2', status: TaskStatus.Done }),
+        taskFactory({ context: 'context1', status: TaskStatus.Ready }),
+        taskFactory({ context: 'context1', status: TaskStatus.Started }),
+        taskFactory({ context: 'context2', status: TaskStatus.Waiting }),
+        taskFactory({ context: 'context2', status: TaskStatus.Done }),
       ];
 
       const filteredTasks = dataSource.filterTasksByParams(tasks, {
@@ -559,10 +555,10 @@ describe('DataSource', () => {
       const dataSource = getDataSource();
 
       const tasks: Task[] = [
-        taskFactory.create({ status: TaskStatus.Ready }),
-        taskFactory.create({ status: TaskStatus.Started }),
-        taskFactory.create({ status: TaskStatus.Waiting }),
-        taskFactory.create({ status: TaskStatus.Done }),
+        taskFactory({ status: TaskStatus.Ready }),
+        taskFactory({ status: TaskStatus.Started }),
+        taskFactory({ status: TaskStatus.Waiting }),
+        taskFactory({ status: TaskStatus.Done }),
       ];
 
       const filteredTasks = dataSource.filterTasksByParams(tasks, {
@@ -578,7 +574,7 @@ describe('DataSource', () => {
       const dataSource = getDataSource();
 
       const filteredTasks = dataSource.filterTasksByParams(
-        [taskFactory.create({ status: TaskStatus.Started })],
+        [taskFactory({ status: TaskStatus.Started })],
         { statuses: [TaskStatus.Started] }
       );
 
@@ -589,10 +585,10 @@ describe('DataSource', () => {
       const dataSource = getDataSource();
 
       const tasks: Task[] = [
-        taskFactory.create({ status: TaskStatus.Ready }),
-        taskFactory.create({ status: TaskStatus.Started }),
-        taskFactory.create({ status: TaskStatus.Waiting }),
-        taskFactory.create({ status: TaskStatus.Done }),
+        taskFactory({ status: TaskStatus.Ready }),
+        taskFactory({ status: TaskStatus.Started }),
+        taskFactory({ status: TaskStatus.Waiting }),
+        taskFactory({ status: TaskStatus.Done }),
       ];
 
       const filteredTasks = dataSource.filterTasksByParams(tasks, {});
@@ -608,19 +604,11 @@ describe('DataSource', () => {
       await Promise.all([
         dataSource.addContext('old-context'),
         dataSource.addContext('new-context'),
-        dataSource.addTask(
-          taskFactory.create({ status: TaskStatus.Ready, context: 'old-context' })
-        ),
-        dataSource.addTask(
-          taskFactory.create({ status: TaskStatus.Waiting, context: 'old-context' })
-        ),
-        dataSource.addTask(
-          taskFactory.create({ status: TaskStatus.Started, context: 'old-context' })
-        ),
-        dataSource.addTask(taskFactory.create({ status: TaskStatus.Done, context: 'old-context' })),
-        dataSource.addTask(
-          taskFactory.create({ status: TaskStatus.Cancelled, context: 'old-context' })
-        ),
+        dataSource.addTask(taskFactory({ status: TaskStatus.Ready, context: 'old-context' })),
+        dataSource.addTask(taskFactory({ status: TaskStatus.Waiting, context: 'old-context' })),
+        dataSource.addTask(taskFactory({ status: TaskStatus.Started, context: 'old-context' })),
+        dataSource.addTask(taskFactory({ status: TaskStatus.Done, context: 'old-context' })),
+        dataSource.addTask(taskFactory({ status: TaskStatus.Cancelled, context: 'old-context' })),
       ]);
 
       await dataSource.archiveContext('old-context', 'new-context');
@@ -658,9 +646,9 @@ describe('DataSource', () => {
       const dataSource = getDataSource();
       await Promise.all([
         dataSource.addContext('a-context'),
-        dataSource.setLocalSettings(localSettingsFactory.create()),
-        dataSource.setPreferences(preferencesFactory.create()),
-        dataSource.addTask(taskFactory.create({ context: 'a-context' })),
+        dataSource.setLocalSettings(localSettingsFactory()),
+        dataSource.setPreferences(preferencesFactory()),
+        dataSource.addTask(taskFactory({ context: 'a-context' })),
       ]);
 
       const exportedData = await dataSource.exportAllData();
@@ -680,9 +668,9 @@ describe('DataSource', () => {
   describe('importData', () => {
     it('should import data into the database', async () => {
       const dataSource = getDataSource();
-      const context = contextFactory.create({ name: 'imported-context', _rev: 'abc-123' });
-      const task = taskFactory.create({ context: 'imported-context' });
-      const localSettings = localSettingsFactory.create({
+      const context = contextFactory({ name: 'imported-context', _rev: 'abc-123' });
+      const task = taskFactory({ context: 'imported-context' });
+      const localSettings = localSettingsFactory({
         syncServerUrl: 'https://imported.local/db',
         syncServerAccessToken: 'foof',
       });
