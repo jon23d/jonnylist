@@ -2,7 +2,7 @@ import ContextPage from '@/components/Contexts/ContextPage';
 import { DataSource } from '@/data/DataSource';
 import { renderWithDataSource, screen, userEvent, waitFor } from '@/test-utils';
 import { setupTestDatabase } from '@/test-utils/db';
-import { PreferencesFactory } from '@/test-utils/factories/PreferencesFactory';
+import { preferencesFactory } from '@/test-utils/factories/PreferencesFactory';
 
 jest.mock('@/components/Contexts/Views/Board/Board', () => () => <div>Board View</div>);
 jest.mock('@/components/Contexts/Views/List/List', () => () => <div>List View</div>);
@@ -27,7 +27,7 @@ describe('ContextPage', () => {
       .mockReturnValue(unsubscribeFunction);
 
     getPreferences = jest.spyOn(dataSource, 'getPreferences').mockResolvedValue(
-      new PreferencesFactory().create({
+      preferencesFactory({
         lastSelectedContext: 'Test Context',
       })
     );

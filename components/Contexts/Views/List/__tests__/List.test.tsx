@@ -4,7 +4,7 @@ import { TaskStatus } from '@/data/documentTypes/Task';
 import { generateKeyBetween, generateNKeysBetween } from '@/helpers/fractionalIndexing';
 import { renderWithDataSource, screen, waitFor, within } from '@/test-utils';
 import { setupTestDatabase } from '@/test-utils/db';
-import { TaskFactory } from '@/test-utils/factories/TaskFactory';
+import { taskFactory } from '@/test-utils/factories/TaskFactory';
 
 const mockDataSource = {
   updateTask: jest.fn(),
@@ -44,15 +44,14 @@ jest.mock('@hello-pangea/dnd', () => ({
 
 describe('Task list view component', () => {
   const { getDataSource } = setupTestDatabase();
-  const taskFactory = new TaskFactory();
 
   it('Only renders tasks with visible statuses', async () => {
     const dataSource = getDataSource();
 
     const tasks = [
-      taskFactory.create({ _id: '1', status: TaskStatus.Ready, title: 'Task 1' }),
-      taskFactory.create({ _id: '2', status: TaskStatus.Started, title: 'Task 2' }),
-      taskFactory.create({ _id: '3', status: TaskStatus.Done, title: 'Task 3' }),
+      taskFactory({ _id: '1', status: TaskStatus.Ready, title: 'Task 1' }),
+      taskFactory({ _id: '2', status: TaskStatus.Started, title: 'Task 2' }),
+      taskFactory({ _id: '3', status: TaskStatus.Done, title: 'Task 3' }),
     ];
     await Promise.all(tasks.map((task) => dataSource.addTask(task)));
 
@@ -70,9 +69,9 @@ describe('Task list view component', () => {
     const dataSource = getDataSource();
 
     const tasks = [
-      taskFactory.create({ _id: '1', status: TaskStatus.Ready, title: 'Task 1' }),
-      taskFactory.create({ _id: '2', status: TaskStatus.Ready, title: 'Task 2' }),
-      taskFactory.create({ _id: '3', status: TaskStatus.Started, title: 'Task 3' }),
+      taskFactory({ _id: '1', status: TaskStatus.Ready, title: 'Task 1' }),
+      taskFactory({ _id: '2', status: TaskStatus.Ready, title: 'Task 2' }),
+      taskFactory({ _id: '3', status: TaskStatus.Started, title: 'Task 3' }),
     ];
     await Promise.all(tasks.map((task) => dataSource.addTask(task)));
 
@@ -96,14 +95,14 @@ describe('Task list view component', () => {
     const sorts = generateNKeysBetween(null, null, 3);
 
     const tasks = [
-      taskFactory.create({ _id: '1', status: TaskStatus.Ready, sortOrder: sorts[0] }),
-      taskFactory.create({
+      taskFactory({ _id: '1', status: TaskStatus.Ready, sortOrder: sorts[0] }),
+      taskFactory({
         _id: '2',
         status: TaskStatus.Ready,
         title: 'Task A',
         sortOrder: sorts[1],
       }),
-      taskFactory.create({
+      taskFactory({
         _id: '3',
         status: TaskStatus.Started,
         title: 'Task B',
@@ -152,12 +151,12 @@ describe('Task list view component', () => {
     const dataSource = getDataSource();
     const sorts = generateNKeysBetween(null, null, 2);
     const tasks = [
-      taskFactory.create({
+      taskFactory({
         _id: '1',
         status: TaskStatus.Ready,
         sortOrder: sorts[0],
       }),
-      taskFactory.create({
+      taskFactory({
         _id: '2',
         status: TaskStatus.Ready,
         sortOrder: sorts[1],
@@ -200,13 +199,13 @@ describe('Task list view component', () => {
     const dataSource = getDataSource();
     const sorts = generateNKeysBetween(null, null, 2);
     const tasks = [
-      taskFactory.create({
+      taskFactory({
         _id: '1',
         status: TaskStatus.Ready,
         title: 'Task 1',
         sortOrder: sorts[0],
       }),
-      taskFactory.create({
+      taskFactory({
         _id: '2',
         status: TaskStatus.Ready,
         title: 'Task 2',
@@ -250,19 +249,19 @@ describe('Task list view component', () => {
     const dataSource = getDataSource();
     const sorts = generateNKeysBetween(null, null, 3);
     const tasks = [
-      taskFactory.create({
+      taskFactory({
         _id: '1',
         status: TaskStatus.Ready,
         title: 'Task 1',
         sortOrder: sorts[0],
       }),
-      taskFactory.create({
+      taskFactory({
         _id: '2',
         status: TaskStatus.Ready,
         title: 'Task 2',
         sortOrder: sorts[1],
       }),
-      taskFactory.create({
+      taskFactory({
         _id: '3',
         status: TaskStatus.Ready,
         title: 'Task 3',
@@ -305,9 +304,9 @@ describe('Task list view component', () => {
     const dataSource = getDataSource();
     const sorts = generateNKeysBetween(null, null, 3);
     const tasks = [
-      taskFactory.create({ _id: '1', status: TaskStatus.Ready, sortOrder: sorts[0] }),
-      taskFactory.create({ _id: '2', status: TaskStatus.Ready, sortOrder: sorts[1] }),
-      taskFactory.create({ _id: '3', status: TaskStatus.Waiting, sortOrder: sorts[2] }),
+      taskFactory({ _id: '1', status: TaskStatus.Ready, sortOrder: sorts[0] }),
+      taskFactory({ _id: '2', status: TaskStatus.Ready, sortOrder: sorts[1] }),
+      taskFactory({ _id: '3', status: TaskStatus.Waiting, sortOrder: sorts[2] }),
     ];
     await Promise.all(tasks.map((task) => dataSource.addTask(task)));
 
@@ -350,9 +349,9 @@ describe('Task list view component', () => {
     const dataSource = getDataSource();
     const sorts = generateNKeysBetween(null, null, 3);
     const tasks = [
-      taskFactory.create({ _id: '1', status: TaskStatus.Ready, sortOrder: sorts[0] }),
-      taskFactory.create({ _id: '2', status: TaskStatus.Ready, sortOrder: sorts[1] }),
-      taskFactory.create({ _id: '3', status: TaskStatus.Waiting, sortOrder: sorts[2] }),
+      taskFactory({ _id: '1', status: TaskStatus.Ready, sortOrder: sorts[0] }),
+      taskFactory({ _id: '2', status: TaskStatus.Ready, sortOrder: sorts[1] }),
+      taskFactory({ _id: '3', status: TaskStatus.Waiting, sortOrder: sorts[2] }),
     ];
     await Promise.all(tasks.map((task) => dataSource.addTask(task)));
 
@@ -395,10 +394,10 @@ describe('Task list view component', () => {
     const dataSource = getDataSource();
     const sorts = generateNKeysBetween(null, null, 4);
     const tasks = [
-      taskFactory.create({ _id: '1', status: TaskStatus.Ready, sortOrder: sorts[0] }),
-      taskFactory.create({ _id: '2', status: TaskStatus.Ready, sortOrder: sorts[1] }),
-      taskFactory.create({ _id: '3', status: TaskStatus.Waiting, sortOrder: sorts[2] }),
-      taskFactory.create({ _id: '4', status: TaskStatus.Waiting, sortOrder: sorts[3] }),
+      taskFactory({ _id: '1', status: TaskStatus.Ready, sortOrder: sorts[0] }),
+      taskFactory({ _id: '2', status: TaskStatus.Ready, sortOrder: sorts[1] }),
+      taskFactory({ _id: '3', status: TaskStatus.Waiting, sortOrder: sorts[2] }),
+      taskFactory({ _id: '4', status: TaskStatus.Waiting, sortOrder: sorts[3] }),
     ];
     await Promise.all(tasks.map((task) => dataSource.addTask(task)));
 

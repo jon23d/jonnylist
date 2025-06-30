@@ -2,11 +2,10 @@ import SyncServerForm from '@/components/Settings/SyncServerForm';
 import { DataSource } from '@/data/DataSource';
 import { renderWithDataSource, screen, userEvent, waitFor } from '@/test-utils';
 import { setupTestDatabase } from '@/test-utils/db';
-import { LocalSettingsFactory } from '@/test-utils/factories/LocalSettingsFactory';
+import { localSettingsFactory } from '@/test-utils/factories/LocalSettingsFactory';
 
 describe('SyncServerForm', () => {
   const { getDataSource: _getDataSource } = setupTestDatabase();
-  const factory = new LocalSettingsFactory();
 
   // We need to spy on initialize sync so that we don't actually call it during tests.
   const getDataSource = (): {
@@ -31,7 +30,7 @@ describe('SyncServerForm', () => {
   it('Renders form with values from local settings', async () => {
     const { dataSource } = getDataSource();
 
-    const localSettings = factory.create({
+    const localSettings = localSettingsFactory({
       syncServerUrl: 'https://example.com',
       syncServerAccessToken: 'test-token',
     });
@@ -165,7 +164,7 @@ describe('SyncServerForm', () => {
 
   it('Calls cancel sync when logout button is clicked', async () => {
     const { dataSource, cancelSyncSpy } = getDataSource();
-    const localSettings = factory.create({
+    const localSettings = localSettingsFactory({
       syncServerUrl: 'https://example.com',
       syncServerAccessToken: 'test-token',
     });
@@ -190,7 +189,7 @@ describe('SyncServerForm', () => {
 
   it('Clears sync server settings when logout button is clicked', async () => {
     const { dataSource } = getDataSource();
-    const localSettings = factory.create({
+    const localSettings = localSettingsFactory({
       syncServerUrl: 'https://example.com',
       syncServerAccessToken: 'test-token',
     });

@@ -2,7 +2,7 @@ import TaskEditor from '@/components/Tasks/TaskEditor';
 import { TaskStatus } from '@/data/documentTypes/Task';
 import { renderWithDataSource, screen, userEvent, waitFor } from '@/test-utils';
 import { setupTestDatabase } from '@/test-utils/db';
-import { TaskFactory } from '@/test-utils/factories/TaskFactory';
+import { taskFactory } from '@/test-utils/factories/TaskFactory';
 
 const updateTaskMock = jest.fn();
 const getContextsMock = jest.fn().mockResolvedValue(['context1', 'context2']);
@@ -16,7 +16,6 @@ jest.mock('@/contexts/DataSourceContext', () => ({
 }));
 
 describe('TaskEditor', () => {
-  const taskFactory = new TaskFactory();
   const { getDataSource } = setupTestDatabase();
 
   beforeEach(() => {
@@ -26,7 +25,7 @@ describe('TaskEditor', () => {
   it('Renders the public fields of a task in a form', async () => {
     const dataSource = getDataSource();
 
-    const task = taskFactory.create({
+    const task = taskFactory({
       status: TaskStatus.Ready,
       context: 'context1',
       dueDate: '2023-08-30',
@@ -64,7 +63,7 @@ describe('TaskEditor', () => {
 
   it('fetches contexts and populates the Context select input', async () => {
     const dataSource = getDataSource();
-    const task = taskFactory.create(); // Context value doesn't matter for this test
+    const task = taskFactory(); // Context value doesn't matter for this test
     renderWithDataSource(<TaskEditor task={task} handleClose={() => {}} />, dataSource);
 
     // Assert that getContexts was called when the component mounted
@@ -72,7 +71,7 @@ describe('TaskEditor', () => {
   });
 
   it('Saves the task when the form is submitted', async () => {
-    const task = taskFactory.create();
+    const task = taskFactory();
     const dataSource = getDataSource();
     renderWithDataSource(<TaskEditor task={task} handleClose={() => {}} />, dataSource);
 

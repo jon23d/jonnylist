@@ -4,7 +4,7 @@ import CommandPalette from '@/components/Layout/CommandPalette';
 import { TaskStatus } from '@/data/documentTypes/Task';
 import { renderWithDataSource, screen, userEvent } from '@/test-utils';
 import { setupTestDatabase } from '@/test-utils/db';
-import { TaskFactory } from '@/test-utils/factories/TaskFactory';
+import { taskFactory } from '@/test-utils/factories/TaskFactory';
 
 jest.mock('next/router', () => ({
   useRouter: jest.fn(),
@@ -12,7 +12,6 @@ jest.mock('next/router', () => ({
 
 describe('CommandPalette', () => {
   const { getDataSource } = setupTestDatabase();
-  const taskFactory = new TaskFactory();
 
   it('Opens the command palette when modifier-k is pressed', async () => {
     const mockPush = jest.fn();
@@ -43,7 +42,7 @@ describe('CommandPalette', () => {
   it('Adds open tasks to the command palette', async () => {
     const dataSource = getDataSource();
     await dataSource.addTask(
-      taskFactory.create({
+      taskFactory({
         title: 'Test Task',
         description: 'This is a test task.',
         status: TaskStatus.Ready,

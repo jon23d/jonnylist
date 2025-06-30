@@ -23,10 +23,10 @@ export interface Task extends Common {
   title: string;
   sortOrder: string;
   description?: string;
+  tags?: string[];
   status: TaskStatus;
   priority: number; // Higher number means higher priority
   dueDate?: string;
-
   createdAt: Date;
   updatedAt: Date;
 }
@@ -35,6 +35,7 @@ export interface NewTask {
   context: string;
   title: string;
   description?: string;
+  tags?: string[];
   status: TaskStatus;
   priority: number;
   dueDate?: string;

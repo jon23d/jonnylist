@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, FocusTrap, NumberInput, Select, Stack, TextInput } from '@mantine/core';
+import { Button, FocusTrap, NumberInput, Select, Stack, TagsInput, TextInput } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
 import { useDataSource } from '@/contexts/DataSourceContext';
@@ -16,6 +16,7 @@ export default function TaskEditor({ task, handleClose }: { task: Task; handleCl
       context: task.context,
       title: task.title,
       description: task.description,
+      tags: task.tags,
       priority: task.priority,
       dueDate: task.dueDate,
       status: task.status,
@@ -74,6 +75,7 @@ export default function TaskEditor({ task, handleClose }: { task: Task; handleCl
             placeholder="Task description"
             {...form.getInputProps('description')}
           />
+          <TagsInput label="Tags" {...form.getInputProps('tags')} />
           <NumberInput
             label="Priority"
             placeholder="1 (low) to 5 (high)"

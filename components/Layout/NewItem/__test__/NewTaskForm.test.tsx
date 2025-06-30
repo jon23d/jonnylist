@@ -57,6 +57,10 @@ describe('NewTaskForm', () => {
     const descriptionInput = screen.getByRole('textbox', { name: 'Description' });
     await userEvent.type(descriptionInput, 'This is a test task description.');
 
+    const tagsInput = screen.getByRole('textbox', { name: 'Tags' });
+    await userEvent.type(tagsInput, 'test-tag{enter}');
+    await userEvent.type(tagsInput, 'another-tag{enter}');
+
     const priorityInput = screen.getByRole('textbox', { name: 'Priority' });
     await userEvent.type(priorityInput, '5');
 
@@ -80,6 +84,7 @@ describe('NewTaskForm', () => {
     expect(tasks).toHaveLength(1);
     expect(tasks[0].title).toBe('Test Task');
     expect(tasks[0].description).toBe('This is a test task description.');
+    expect(tasks[0].tags).toStrictEqual(['test-tag', 'another-tag']);
     expect(tasks[0].priority).toBe(5);
     expect(tasks[0].dueDate).toBe('2026-01-15');
     expect(tasks[0].status).toBe(TaskStatus.Done);

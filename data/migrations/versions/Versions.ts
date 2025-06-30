@@ -4,7 +4,7 @@ import V2AddSortOrderToTasks from '@/data/migrations/versions/V2AddSortOrderToTa
 import V3AddArchivedAtToContexts from '@/data/migrations/versions/V3AddArchivedAtToContexts';
 import V4UpdateSortsToFractionalString from '@/data/migrations/versions/V4UpdateSortsToFractionalString';
 
-export const DATABASE_VERSION = 3;
+export const DATABASE_VERSION = 4;
 
 export const VERSIONS: Migration[] = [
   new V1AddMigrationsDoc(),

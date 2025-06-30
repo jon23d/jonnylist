@@ -240,6 +240,7 @@ export class DataSource {
       title: newTask.title,
       sortOrder,
       description: newTask.description,
+      tags: newTask.tags || [],
       status: newTask.status,
       priority: newTask.priority,
       dueDate: newTask.dueDate,
