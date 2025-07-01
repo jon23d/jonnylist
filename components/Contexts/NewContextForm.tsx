@@ -5,7 +5,9 @@ import { useDataSource } from '@/contexts/DataSourceContext';
 export default function NewContextForm({ onClose }: { onClose: () => void }) {
   const dataSource = useDataSource();
 
-  const form = useForm({
+  const form = useForm<{
+    newContextName: string;
+  }>({
     mode: 'uncontrolled',
     initialValues: {
       newContextName: '',

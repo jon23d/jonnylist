@@ -103,13 +103,7 @@ export default function List({ tasks, visibleStatuses }: ViewProps) {
       <DragDropContext onDragEnd={handleDragEnd}>
         {visibleStatuses.map((status) => (
           <React.Fragment key={status}>
-            <Box
-              style={{
-                backgroundColor: 'var(--mantine-color-gray-1)',
-                borderBottom: 'none',
-                paddingTop: 'var(--mantine-spacing-xs)',
-              }}
-            >
+            <Box bg="gray.3" p={10}>
               <Text fw={700} c="blue">
                 {status} ({groupedTasks[status].length})
               </Text>

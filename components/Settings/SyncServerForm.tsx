@@ -17,7 +17,10 @@ export default function SyncServerForm() {
     }
   };
 
-  const form = useForm({
+  const form = useForm<{
+    serverUrl: string;
+    accessToken: string;
+  }>({
     initialValues: {
       serverUrl: '',
       accessToken: '',

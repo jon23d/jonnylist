@@ -8,7 +8,7 @@ import { localSettingsFactory } from '@/test-utils/factories/LocalSettingsFactor
 import { preferencesFactory } from '@/test-utils/factories/PreferencesFactory';
 import { taskFactory } from '@/test-utils/factories/TaskFactory';
 import { DocumentTypes } from '../documentTypes';
-import { Task, TaskStatus } from '../documentTypes/Task';
+import { Task, TaskPriority, TaskStatus } from '../documentTypes/Task';
 import { MigrationManager } from '../migrations/MigrationManager';
 
 jest.mock('@/data/documentTypes/Preferences', () => ({
@@ -153,6 +153,7 @@ describe('DataSource', () => {
     const database = getDb();
     const task = taskFactory({
       sortOrder: 'a',
+      priority: TaskPriority.High,
     });
 
     await dataSource.addTask(task);
@@ -166,6 +167,7 @@ describe('DataSource', () => {
 
     expect(returnedTask.context).toEqual(task.context);
     expect(returnedTask._id.startsWith('task-')).toBe(true);
+    expect(returnedTask.priority).toBe(TaskPriority.High);
     expect(returnedTask.sortOrder).toBe(expectedSort);
   });
 
