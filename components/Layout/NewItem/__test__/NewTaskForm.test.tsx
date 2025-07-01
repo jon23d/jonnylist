@@ -1,5 +1,5 @@
 import { waitFor } from '@testing-library/react';
-import { TaskStatus } from '@/data/documentTypes/Task';
+import { TaskPriority, TaskStatus } from '@/data/documentTypes/Task';
 import { renderWithDataSource, screen, userEvent } from '@/test-utils';
 import { setupTestDatabase } from '@/test-utils/db';
 import NewTaskForm from '../NewTaskForm';
@@ -61,8 +61,8 @@ describe('NewTaskForm', () => {
     await userEvent.type(tagsInput, 'test-tag{enter}');
     await userEvent.type(tagsInput, 'another-tag{enter}');
 
-    const priorityInput = screen.getByRole('textbox', { name: 'Priority' });
-    await userEvent.type(priorityInput, '5');
+    await userEvent.click(screen.getByRole('textbox', { name: 'Priority' }));
+    await userEvent.click(screen.getByRole('option', { name: 'Low' }));
 
     const dueDateInput = screen.getByRole('textbox', { name: 'Due Date' });
     await userEvent.type(dueDateInput, '01/15/2026');
@@ -85,7 +85,7 @@ describe('NewTaskForm', () => {
     expect(tasks[0].title).toBe('Test Task');
     expect(tasks[0].description).toBe('This is a test task description.');
     expect(tasks[0].tags).toStrictEqual(['test-tag', 'another-tag']);
-    expect(tasks[0].priority).toBe(5);
+    expect(tasks[0].priority).toBe(TaskPriority.Low);
     expect(tasks[0].dueDate).toBe('2026-01-15');
     expect(tasks[0].status).toBe(TaskStatus.Done);
   });

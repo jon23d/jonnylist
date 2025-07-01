@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Button, FocusTrap, NumberInput, Select, Stack, TagsInput, TextInput } from '@mantine/core';
+import { Button, FocusTrap, Select, Stack, TagsInput, TextInput } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
 import { useDataSource } from '@/contexts/DataSourceContext';
-import { Task, taskStatusSelectOptions } from '@/data/documentTypes/Task';
+import {
+  Task,
+  taskPrioritySelectOptions,
+  taskStatusSelectOptions,
+} from '@/data/documentTypes/Task';
 import { Logger } from '@/helpers/Logger';
 
 export default function TaskEditor({ task, handleClose }: { task: Task; handleClose: () => void }) {
@@ -76,11 +80,11 @@ export default function TaskEditor({ task, handleClose }: { task: Task; handleCl
             {...form.getInputProps('description')}
           />
           <TagsInput label="Tags" {...form.getInputProps('tags')} />
-          <NumberInput
+          <Select
             label="Priority"
-            placeholder="1 (low) to 5 (high)"
-            min={1}
-            max={5}
+            placeholder="Select relative priority"
+            clearable
+            data={taskPrioritySelectOptions}
             {...form.getInputProps('priority')}
           />
           <DateInput

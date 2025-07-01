@@ -1,4 +1,4 @@
-import { Task, TaskStatus } from '@/data/documentTypes/Task';
+import { Task, TaskPriority, TaskStatus } from '@/data/documentTypes/Task';
 
 export const taskFactory = (data: Partial<Task> = {}): Task => {
   return {
@@ -12,7 +12,7 @@ export const taskFactory = (data: Partial<Task> = {}): Task => {
     tags: data.tags || [],
     status: data.status || TaskStatus.Ready,
     context: data.context || 'Work',
-    priority: data.priority || 1,
+    priority: data.priority || TaskPriority.Medium,
     dueDate: data.dueDate || undefined,
     createdAt: data.createdAt || new Date(),
     updatedAt: data.updatedAt || new Date(),

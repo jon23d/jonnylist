@@ -1,5 +1,5 @@
 import TaskEditor from '@/components/Tasks/TaskEditor';
-import { TaskStatus } from '@/data/documentTypes/Task';
+import { TaskPriority, TaskStatus } from '@/data/documentTypes/Task';
 import { renderWithDataSource, screen, userEvent, waitFor } from '@/test-utils';
 import { setupTestDatabase } from '@/test-utils/db';
 import { taskFactory } from '@/test-utils/factories/TaskFactory';
@@ -29,6 +29,7 @@ describe('TaskEditor', () => {
       status: TaskStatus.Ready,
       context: 'context1',
       dueDate: '2023-08-30',
+      priority: TaskPriority.High,
     });
 
     renderWithDataSource(<TaskEditor task={task} handleClose={() => {}} />, dataSource);
@@ -50,7 +51,7 @@ describe('TaskEditor', () => {
 
     const priorityInput = screen.getByRole('textbox', { name: 'Priority' });
     expect(priorityInput).toBeInTheDocument();
-    expect(priorityInput).toHaveValue(task.priority.toString());
+    expect(priorityInput).toHaveValue('High');
 
     const dueDateInput = screen.getByRole('textbox', { name: 'Due Date' });
     expect(dueDateInput).toBeInTheDocument();
@@ -89,8 +90,7 @@ describe('TaskEditor', () => {
     await userEvent.type(descriptionInput, 'Updated Task Description');
 
     const priorityInput = screen.getByRole('textbox', { name: 'Priority' });
-    await userEvent.clear(priorityInput);
-    await userEvent.type(priorityInput, '3');
+    await userEvent.type(priorityInput, 'Medium');
 
     const dueDateInput = screen.getByRole('textbox', { name: 'Due Date' });
     await userEvent.clear(dueDateInput);
@@ -110,7 +110,7 @@ describe('TaskEditor', () => {
         context: task.context,
         title: 'Updated Task Title',
         description: 'Updated Task Description',
-        priority: 3,
+        priority: TaskPriority.Medium,
         dueDate: '2023-10-15',
         status: TaskStatus.Started,
       })
