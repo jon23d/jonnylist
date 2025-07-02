@@ -3,8 +3,8 @@ import { DocumentTypes } from '@/data/documentTypes';
 import { Context } from '@/data/documentTypes/Context';
 import { LocalSettings } from '@/data/documentTypes/LocalSettings';
 import { createDefaultPreferences, Preferences } from '@/data/documentTypes/Preferences';
-import { NewTask, sortedTasks, Task, TaskStatus } from '@/data/documentTypes/Task';
-import { generateKeyBetween } from '@/helpers/fractionalIndexing';
+import { NewTask, Task, TaskStatus } from '@/data/documentTypes/Task';
+import { TaskRepository } from '@/data/TaskRepository';
 import { Logger } from '@/helpers/Logger';
 import { MigrationManager } from './migrations/MigrationManager';
 
@@ -222,39 +222,8 @@ export class DataSource {
    * @param newTask
    */
   async addTask(newTask: NewTask): Promise<Task> {
-    Logger.info('Adding task');
-
-    // Get the last task of this context and status to determine the sort order
-    const tasks = await this.getTasks({
-      context: newTask.context,
-      statuses: [newTask.status],
-    });
-
-    const lastSortOrder = tasks.length ? tasks[tasks.length - 1].sortOrder : null;
-    const sortOrder = generateKeyBetween(lastSortOrder, null);
-
-    const task: Task = {
-      _id: `task-${new Date().toISOString()}-${Math.random().toString(36).substring(2, 15)}`,
-      type: 'task',
-      context: newTask.context,
-      title: newTask.title,
-      sortOrder,
-      description: newTask.description,
-      tags: newTask.tags || [],
-      status: newTask.status,
-      priority: newTask.priority,
-      dueDate: newTask.dueDate,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    try {
-      const response = await this.db.put(task);
-      return { _rev: response.rev, ...task }; // Return the task with the revision ID
-    } catch (error) {
-      Logger.error('Error adding task:', error);
-      throw error; // Re-throw to handle it in the calling code
-    }
+    const taskRepository = new TaskRepository(this.db);
+    return taskRepository.addTask(newTask);
   }
 
   /**
@@ -263,26 +232,8 @@ export class DataSource {
    * @param task
    */
   async updateTask(task: Task): Promise<Task> {
-    Logger.info('Updating task');
-
-    // Update the updatedAt timestamp
-    task.updatedAt = new Date();
-
-    let response;
-
-    try {
-      response = await this.db.put(task);
-      Logger.info('Updated task');
-    } catch (error) {
-      Logger.error('Error updating task:', error);
-      throw error; // Re-throw to handle it in the calling code
-    }
-
-    if (response.ok) {
-      return task;
-    }
-
-    throw new Error('Failed to update task');
+    const taskRepository = new TaskRepository(this.db);
+    return taskRepository.updateTask(task);
   }
 
   /**
@@ -291,33 +242,8 @@ export class DataSource {
    * @param tasks
    */
   async updateTasks(tasks: Task[]): Promise<Task[]> {
-    Logger.info('Updating multiple tasks');
-    const updatedTasks: Task[] = tasks.map((task) => {
-      return { ...task, updatedAt: new Date() };
-    });
-
-    const taskMap = new Map<string, Task>();
-    updatedTasks.forEach((task) => {
-      taskMap.set(task._id, task);
-    });
-
-    try {
-      const response = await this.db.bulkDocs(updatedTasks);
-      Logger.info('Updated tasks successfully');
-
-      // Update the _rev field for each task in the map
-      for (const result of response) {
-        // TODO: We are making a lot of assumptions here. They are probably pretty safe, but
-        // let's consider better error handling
-        const taskInMap = taskMap.get(result.id!);
-        taskInMap!._rev = result.rev;
-      }
-
-      return updatedTasks;
-    } catch (error) {
-      Logger.error('Error updating tasks:', error);
-      throw error; // Re-throw to handle it in the calling code
-    }
+    const taskRepository = new TaskRepository(this.db);
+    return taskRepository.updateTasks(tasks);
   }
 
   /**
@@ -326,29 +252,8 @@ export class DataSource {
    * @param params
    */
   async getTasks(params: getTasksParams): Promise<Task[]> {
-    Logger.info('Getting tasks');
-    const result = await this.db.allDocs<Task>({
-      include_docs: true,
-      startkey: 'task-',
-      endkey: 'task-\ufff0',
-    });
-
-    const allTasks = result.rows.map((row) => row.doc as Task);
-
-    // Convert dates to Date objects
-    // TODO: Think more about how we handle dates
-    allTasks.forEach((task) => {
-      if (task.dueDate) {
-        const date = new Date(task.dueDate);
-        task.dueDate = date.toISOString().split('T')[0];
-      }
-      task.createdAt = new Date(task.createdAt);
-      task.updatedAt = new Date(task.updatedAt);
-    });
-
-    const filtered = this.filterTasksByParams(allTasks, params);
-
-    return sortedTasks(filtered);
+    const taskRepository = new TaskRepository(this.db);
+    return taskRepository.getTasks(params);
   }
 
   /**
