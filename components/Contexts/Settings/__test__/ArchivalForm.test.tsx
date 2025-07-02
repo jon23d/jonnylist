@@ -31,10 +31,6 @@ jest.mock('@/contexts/DataSourceContext', () => ({
 const onClose = jest.fn();
 
 describe('ArchivalForm', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('renders archival form with radio buttons for destination contexts', () => {
     const sourceContext = 'source-context';
     const destinationContexts = ['context1', 'context2', 'context3'];

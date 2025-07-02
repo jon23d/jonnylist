@@ -9,10 +9,6 @@ jest.mock('@/contexts/DataSourceContext', () => ({
 }));
 
 describe('NewContextForm', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('Adds a new context to the data source', async () => {
     const mockOnClose = jest.fn();
     render(<NewContextForm onClose={mockOnClose} />);

@@ -22,8 +22,6 @@ export function setupTestDatabase(): {
   let db: PouchDB.Database<DocumentTypes>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-
     const testData = createTestDataSource();
     dataSource = testData.dataSource;
     db = testData.database;

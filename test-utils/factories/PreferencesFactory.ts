@@ -1,4 +1,5 @@
 import { Preferences } from '@/data/documentTypes/Preferences';
+import { TaskStatus } from '@/data/documentTypes/Task';
 
 export const preferencesFactory = (data: Partial<Preferences> = {}): Preferences => {
   return {
@@ -7,5 +8,6 @@ export const preferencesFactory = (data: Partial<Preferences> = {}): Preferences
     type: 'preferences',
 
     lastSelectedContext: data.lastSelectedContext || 'context1',
+    lastSelectedStatuses: data.lastSelectedStatuses || [TaskStatus.Started],
   };
 };

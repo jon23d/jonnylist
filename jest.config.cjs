@@ -12,6 +12,7 @@ const customJestConfig = {
     '^uuid$': 'uuid',
   },
   testEnvironment: 'jest-environment-jsdom',
+  clearMocks: true,
 };
 
 module.exports = createJestConfig(customJestConfig);

@@ -18,10 +18,6 @@ jest.mock('@/contexts/DataSourceContext', () => ({
 describe('TaskEditor', () => {
   const { getDataSource } = setupTestDatabase();
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('Renders the public fields of a task in a form', async () => {
     const dataSource = getDataSource();
 
