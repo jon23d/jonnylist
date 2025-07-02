@@ -1,5 +1,6 @@
 import ContextPage from '@/components/Contexts/ContextPage';
 import { DataSource } from '@/data/DataSource';
+import { TaskStatus } from '@/data/documentTypes/Task';
 import { renderWithDataSource, screen, userEvent, waitFor } from '@/test-utils';
 import { setupTestDatabase } from '@/test-utils/db';
 import { preferencesFactory } from '@/test-utils/factories/PreferencesFactory';
@@ -64,7 +65,7 @@ describe('ContextPage', () => {
     expect(unsubscribeFunction).toHaveBeenCalled();
     expect(subscribeToTasks).toHaveBeenCalledWith(
       {
-        statuses: ['ready', 'started'],
+        statuses: [TaskStatus.Started, TaskStatus.Ready],
         context: 'Test Context',
       },
       expect.any(Function)

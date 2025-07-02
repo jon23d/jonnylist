@@ -77,6 +77,9 @@ export default function ListRow({
 
               {/* Metadata - hidden on smallest screens */}
               <Flex gap="xs" align="center" style={{ flexShrink: 0 }} visibleFrom="sm">
+                <Text size="xs" c="orange.5" fw={500} style={{ whiteSpace: 'nowrap' }}>
+                  {task.dueDate}
+                </Text>
                 <Text size="xs" c="blue" style={{ whiteSpace: 'nowrap' }}>
                   {task.tags?.map((tag) => (
                     <Badge size="xs" mr={3} variant="light">{`#${tag}`}</Badge>
@@ -84,9 +87,6 @@ export default function ListRow({
                 </Text>
                 <Text size="xs" style={{ whiteSpace: 'nowrap' }}>
                   {priorityBadge(task.priority)}
-                </Text>
-                <Text size="xs" c="orange.5" fw={500} style={{ whiteSpace: 'nowrap' }}>
-                  {task.dueDate}
                 </Text>
                 <Text size="xs" c="green" style={{ whiteSpace: 'nowrap' }}>
                   {/* project would go here if available*/}
