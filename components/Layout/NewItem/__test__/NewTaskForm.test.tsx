@@ -121,14 +121,23 @@ describe('NewTaskForm', () => {
     const titleInput = screen.getByRole('textbox', { name: 'Title' });
     await userEvent.type(titleInput, 'Test Task');
 
-    const submitButton = screen.getByRole('button', { name: 'Save' });
-    await userEvent.click(submitButton);
+    // Keep focus on the title input (simulating Enter key submission)
+    titleInput.focus();
+    expect(document.activeElement).toBe(titleInput);
+
+    // Spy on the blur method of the currently active element
+    const blurSpy = jest.spyOn(titleInput, 'blur');
+
+    // Submit via Enter key instead of clicking the button
+    await userEvent.keyboard('{Enter}');
 
     await waitFor(() => {
       expect(handleClose).toHaveBeenCalled();
     });
 
-    // Check if the active element is blurred
-    expect(document.activeElement).not.toBe(submitButton);
+    // Verify that blur was called on the active element (title input)
+    expect(blurSpy).toHaveBeenCalled();
+
+    blurSpy.mockRestore();
   });
 });

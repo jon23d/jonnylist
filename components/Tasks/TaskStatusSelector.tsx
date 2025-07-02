@@ -23,6 +23,11 @@ export default function TaskStatusSelector({
       return order.indexOf(a) - order.indexOf(b);
     });
     onChange(sortedSelected);
+
+    // We want to make sure that we've cleared focus so that keyboard navigation works properly
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
   };
 
   return (
