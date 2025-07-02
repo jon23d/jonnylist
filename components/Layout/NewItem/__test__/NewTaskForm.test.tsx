@@ -39,6 +39,8 @@ describe('NewTaskForm', () => {
   it('Saves a new task when the form is submitted', async () => {
     const handleClose = jest.fn();
     const dataSource = getDataSource();
+    const taskRepository = dataSource.getTaskRepository();
+
     await dataSource.addContext('Context1');
     await dataSource.addContext('Context2');
 
@@ -78,7 +80,7 @@ describe('NewTaskForm', () => {
       expect(handleClose).toHaveBeenCalled();
     });
 
-    const tasks = await dataSource.getTasks({
+    const tasks = await taskRepository.getTasks({
       statuses: [TaskStatus.Done],
     });
     expect(tasks).toHaveLength(1);

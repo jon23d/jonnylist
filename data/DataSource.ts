@@ -3,23 +3,12 @@ import { DocumentTypes } from '@/data/documentTypes';
 import { Context } from '@/data/documentTypes/Context';
 import { LocalSettings } from '@/data/documentTypes/LocalSettings';
 import { createDefaultPreferences, Preferences } from '@/data/documentTypes/Preferences';
-import { NewTask, Task, TaskStatus } from '@/data/documentTypes/Task';
+import { TaskStatus } from '@/data/documentTypes/Task';
 import { TaskRepository } from '@/data/TaskRepository';
 import { Logger } from '@/helpers/Logger';
 import { MigrationManager } from './migrations/MigrationManager';
 
-type TaskSubscriberWithFilterParams = {
-  params: getTasksParams;
-  callback: TaskSubscriber;
-};
-
-export type getTasksParams = {
-  context?: string;
-  statuses?: TaskStatus[];
-};
-
 export type UnsubscribeFunction = () => void;
-export type TaskSubscriber = (tasks: Task[]) => void;
 export type ContextSubscriber = (contexts: string[]) => void;
 
 /**
@@ -29,12 +18,13 @@ export type ContextSubscriber = (contexts: string[]) => void;
  */
 export class DataSource {
   protected db: PouchDB.Database<DocumentTypes>;
-  private taskChangesFeed?: PouchDB.Core.Changes<Task>;
-  private taskChangeSubscribers = new Set<TaskSubscriberWithFilterParams>();
+
   private contextChangesFeed?: PouchDB.Core.Changes<Context>;
   private contextChangeSubscribers = new Set<ContextSubscriber>();
   private migrationManager: MigrationManager;
   private syncHandler: PouchDB.Replication.Sync<{}> | null = null;
+  private taskRepository: TaskRepository | null = null;
+
   public onMigrationStatusChange?: (isMigrating: boolean) => void;
 
   /**
@@ -53,6 +43,39 @@ export class DataSource {
     } else {
       this.migrationManager = new MigrationManager(this.db);
     }
+  }
+
+  /**
+   * Cleanup all active subscriptions and resources.
+   * This should be called when the DataSource instance is no longer needed
+   * to prevent memory leaks and ensure proper cleanup of PouchDB change feeds.
+   */
+  async cleanup(): Promise<void> {
+    Logger.info('Cleaning up DataSource');
+
+    await this.getTaskRepository().cleanup();
+
+    // Cancel active change feeds
+    if (this.contextChangesFeed) {
+      this.contextChangesFeed.cancel();
+      this.contextChangesFeed = undefined;
+    }
+
+    // Clear all subscribers
+    this.contextChangeSubscribers.clear();
+
+    Logger.info('DataSource cleanup completed');
+  }
+
+  /**
+   * Create/return the TaskRepository singleton
+   */
+  getTaskRepository(): TaskRepository {
+    if (!this.taskRepository) {
+      this.taskRepository = new TaskRepository(this.db);
+    }
+
+    return this.taskRepository;
   }
 
   /**
@@ -216,47 +239,6 @@ export class DataSource {
   }
 
   /**
-   * Add a new task to the database.
-   * This will create a new document with the type 'task' and the provided values.
-   *
-   * @param newTask
-   */
-  async addTask(newTask: NewTask): Promise<Task> {
-    const taskRepository = new TaskRepository(this.db);
-    return taskRepository.addTask(newTask);
-  }
-
-  /**
-   * Update an existing task in the database.
-   *
-   * @param task
-   */
-  async updateTask(task: Task): Promise<Task> {
-    const taskRepository = new TaskRepository(this.db);
-    return taskRepository.updateTask(task);
-  }
-
-  /**
-   * Bulki update multiple tasks
-   *
-   * @param tasks
-   */
-  async updateTasks(tasks: Task[]): Promise<Task[]> {
-    const taskRepository = new TaskRepository(this.db);
-    return taskRepository.updateTasks(tasks);
-  }
-
-  /**
-   * Do a one-time fetch of tasks based on the provided parameters.
-   *
-   * @param params
-   */
-  async getTasks(params: getTasksParams): Promise<Task[]> {
-    const taskRepository = new TaskRepository(this.db);
-    return taskRepository.getTasks(params);
-  }
-
-  /**
    * Archive a context by moving all tasks from the source context to the destination context
    *
    * @param sourceContext
@@ -286,8 +268,10 @@ export class DataSource {
   async moveOpenTasksInContext(sourceContext: string, destinationContext: string): Promise<void> {
     Logger.info(`Moving tasks from context: ${sourceContext} to ${destinationContext}`);
 
+    const taskRepository = this.getTaskRepository();
+
     // Fetch all tasks in the source context
-    const tasks = await this.getTasks({
+    const tasks = await taskRepository.getTasks({
       context: sourceContext,
       statuses: [TaskStatus.Ready, TaskStatus.Waiting, TaskStatus.Started],
     });
@@ -298,43 +282,10 @@ export class DataSource {
         context: destinationContext,
       }));
 
-      await this.updateTasks(updatedTasks);
+      await taskRepository.updateTasks(updatedTasks);
     }
 
     Logger.info(`Moved tasks from context: ${sourceContext} to ${destinationContext}`);
-  }
-
-  /**
-   * Subscribe to changes in tasks based on the provided parameters.
-   * This will set up a live changes feed that listens for updates to tasks matching the
-   * provided parameters and invokes the callback with the updated tasks whenever a change occurs.
-   *
-   * The return function should be used to unsubscribe from the changes feed when no longer needed
-   * or when the component using this is unmounted.
-   *
-   * @param params
-   * @param callback
-   *
-   * @return A function to unsubscribe from the changes feed.
-   */
-  subscribeToTasks(params: getTasksParams, callback: (tasks: Task[]) => void): UnsubscribeFunction {
-    // Register the callback so that we can notify it of changes
-    this.taskChangeSubscribers.add({ callback, params });
-
-    // Set up the PouchDB changes feed if this is the first subscriber
-    if (this.taskChangeSubscribers.size === 1) {
-      this.initializeTaskChangesFeed();
-    }
-
-    // Provide the initial tasks to the callback
-    this.getTasks(params)
-      .then((tasks) => callback(tasks))
-      .catch((error) => {
-        Logger.error('Error fetching initial tasks for watcher:', error);
-      });
-
-    // Return an unsubscribe function
-    return () => this.removeTaskSubscriber({ callback, params });
   }
 
   /**
@@ -446,47 +397,6 @@ export class DataSource {
     return () => this.removeContextSubscriber(callback);
   }
 
-  /**
-   * Filter tasks based on the provided getTaskParams object.
-   *
-   * @param tasks
-   * @param params
-   */
-  filterTasksByParams(tasks: Task[], params: getTasksParams): Task[] {
-    return tasks.filter((task) => {
-      if (params.context && task.context !== params.context) {
-        return false;
-      }
-      return !(params.statuses && !params.statuses.includes(task.status));
-    });
-  }
-
-  /**
-   * Cleanup all active subscriptions and resources.
-   * This should be called when the LocalDataSource instance is no longer needed
-   * to prevent memory leaks and ensure proper cleanup of PouchDB change feeds.
-   */
-  async cleanup(): Promise<void> {
-    Logger.info('Cleaning up LocalDataSource');
-
-    // Cancel active change feeds
-    if (this.taskChangesFeed) {
-      this.taskChangesFeed.cancel();
-      this.taskChangesFeed = undefined;
-    }
-
-    if (this.contextChangesFeed) {
-      this.contextChangesFeed.cancel();
-      this.contextChangesFeed = undefined;
-    }
-
-    // Clear all subscribers
-    this.taskChangeSubscribers.clear();
-    this.contextChangeSubscribers.clear();
-
-    Logger.info('LocalDataSource cleanup completed');
-  }
-
   private async verifySyncConnection(syncDb: PouchDB.Database): Promise<void> {
     try {
       await syncDb.info();
@@ -496,38 +406,6 @@ export class DataSource {
         'Failed to connect to sync database. Please check your sync server URL and access token.'
       );
     }
-  }
-
-  /**
-   * Initialize the PouchDB changes feed to listen for changes to task documents.
-   *
-   * @private
-   */
-  private initializeTaskChangesFeed(): void {
-    Logger.info('Initializing PouchDB changes feed for tasks');
-    this.taskChangesFeed = this.db
-      .changes<Task>({
-        live: true,
-        since: 'now',
-      })
-      .on('change', async (change) => {
-        if (change.id.startsWith('task-')) {
-          try {
-            // This is probably pretty inefficient. We should only fetch
-            // The tasks that have actually changed
-            // TODO: Deal with this before it gets out of hand
-            const updatedTasks = await this.getTasks({});
-            this.notifyTaskSubscribers(updatedTasks);
-          } catch (error) {
-            // TODO
-            Logger.error('Error fetching updated tasks after change:', error);
-          }
-        }
-      })
-      .on('error', (err) => {
-        // TODO
-        Logger.error('Error in PouchDB changes feed for tasks:', err);
-      });
   }
 
   /**
@@ -562,25 +440,6 @@ export class DataSource {
   }
 
   /**
-   * Notify all subscribers of task changes.
-   *
-   * @param tasks
-   * @private
-   */
-  private notifyTaskSubscribers(tasks: Task[]): void {
-    Logger.info('Notifying task change subscribers');
-    this.taskChangeSubscribers.forEach((taskSubscriber: TaskSubscriberWithFilterParams) => {
-      try {
-        const tasksToNotify = this.filterTasksByParams(tasks, taskSubscriber.params);
-        taskSubscriber.callback(tasksToNotify);
-      } catch (error) {
-        // TODO
-        Logger.error('Error notifying task change subscriber:', error);
-      }
-    });
-  }
-
-  /**
    * Notify all subscribers of context changes.
    *
    * @param contexts
@@ -596,23 +455,6 @@ export class DataSource {
         Logger.error('Error notifying context change subscriber:', error);
       }
     });
-  }
-
-  /**
-   * Remove a task subscriber and cancel the changes feed if there are no more subscribers.
-   *
-   * @param subscriber
-   * @private
-   */
-  private removeTaskSubscriber(subscriber: TaskSubscriberWithFilterParams): void {
-    Logger.info('Removing task change subscriber');
-    this.taskChangeSubscribers.delete(subscriber);
-
-    if (this.taskChangeSubscribers.size === 0 && this.taskChangesFeed) {
-      Logger.info('No more task subscribers, cancelling changes feed');
-      this.taskChangesFeed.cancel();
-      this.taskChangesFeed = undefined;
-    }
   }
 
   /**

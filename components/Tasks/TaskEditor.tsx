@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button, FocusTrap, Select, Stack, TagsInput, TextInput } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
-import { useDataSource } from '@/contexts/DataSourceContext';
+import { useDataSource, useTaskRepository } from '@/contexts/DataSourceContext';
 import {
   Task,
   taskPrioritySelectOptions,
@@ -12,6 +12,8 @@ import { Logger } from '@/helpers/Logger';
 
 export default function TaskEditor({ task, handleClose }: { task: Task; handleClose: () => void }) {
   const dataSource = useDataSource();
+  const taskRepository = useTaskRepository();
+
   const [contexts, setContexts] = useState<string[]>([]);
 
   const form = useForm<Partial<Task>>({
@@ -48,7 +50,7 @@ export default function TaskEditor({ task, handleClose }: { task: Task; handleCl
 
   const handleSave = async () => {
     try {
-      await dataSource.updateTask({
+      await taskRepository.updateTask({
         ...task,
         ...form.getValues(),
       });

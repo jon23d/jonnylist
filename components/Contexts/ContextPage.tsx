@@ -6,7 +6,7 @@ import List from '@/components/Contexts/Views/List/List';
 import { ViewProps } from '@/components/Contexts/Views/viewProps';
 import ViewSelector, { ViewType } from '@/components/Contexts/Views/ViewSelector';
 import TaskStatusSelector from '@/components/Tasks/TaskStatusSelector';
-import { useDataSource } from '@/contexts/DataSourceContext';
+import { useDataSource, useTaskRepository } from '@/contexts/DataSourceContext';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
 import { Logger } from '@/helpers/Logger';
 
@@ -18,6 +18,8 @@ const views: Record<ViewType, (props: ViewProps) => React.ReactElement> = {
 
 export default function ContextPage({ contextName }: { contextName: string }) {
   const datasource = useDataSource();
+  const taskRepository = useTaskRepository();
+
   const [currentView, setCurrentView] = useState<ViewType>('List');
   const [selectedTaskStatuses, setSelectedTaskStatuses] = useState<TaskStatus[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -41,7 +43,7 @@ export default function ContextPage({ contextName }: { contextName: string }) {
       return;
     }
 
-    const unsubscribe = datasource.subscribeToTasks(
+    const unsubscribe = taskRepository.subscribeToTasks(
       {
         statuses: selectedTaskStatuses,
         context: contextName,

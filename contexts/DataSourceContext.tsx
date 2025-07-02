@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import PouchDB from 'pouchdb';
 import { DataSource } from '@/data/DataSource';
 import { DocumentTypes } from '@/data/documentTypes';
+import { TaskRepository } from '@/data/TaskRepository';
 import { Logger } from '@/helpers/Logger';
 import { Notifications } from '@/helpers/Notifications';
 
@@ -71,4 +72,9 @@ export const useIsMigrating = (): boolean => {
     throw new Error('useIsMigrating must be used within a DataSourceContextProvider');
   }
   return context.isMigrating;
+};
+
+export const useTaskRepository = (): TaskRepository => {
+  const dataSource = useDataSource();
+  return dataSource.getTaskRepository();
 };

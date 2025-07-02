@@ -10,9 +10,13 @@ const mockDataSource = {
   getContexts: getContextsMock,
   updateTask: updateTaskMock,
 };
+const mockTaskRepository = {
+  updateTask: updateTaskMock,
+};
 jest.mock('@/contexts/DataSourceContext', () => ({
   ...jest.requireActual('@/contexts/DataSourceContext'),
   useDataSource: () => mockDataSource,
+  useTaskRepository: () => mockTaskRepository,
 }));
 
 describe('TaskEditor', () => {

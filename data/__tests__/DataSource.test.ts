@@ -1,14 +1,12 @@
 import { waitFor } from '@testing-library/dom';
 import { DataSource } from '@/data/DataSource';
 import { Preferences } from '@/data/documentTypes/Preferences';
-import { generateKeyBetween, generateNKeysBetween } from '@/helpers/fractionalIndexing';
 import { createTestDataSource, setupTestDatabase } from '@/test-utils/db';
 import { contextFactory } from '@/test-utils/factories/ContextFactory';
 import { localSettingsFactory } from '@/test-utils/factories/LocalSettingsFactory';
 import { preferencesFactory } from '@/test-utils/factories/PreferencesFactory';
 import { taskFactory } from '@/test-utils/factories/TaskFactory';
-import { DocumentTypes } from '../documentTypes';
-import { Task, TaskPriority, TaskStatus } from '../documentTypes/Task';
+import { Task, TaskStatus } from '../documentTypes/Task';
 import { MigrationManager } from '../migrations/MigrationManager';
 
 jest.mock('@/data/documentTypes/Preferences', () => ({
@@ -67,6 +65,8 @@ describe('DataSource', () => {
     it('Syncs the database with the sync server', async () => {
       // this is a little more complicated than normal because we need to deal with creating a sync db
       const dataSource = getDataSource();
+      const taskRepository = dataSource.getTaskRepository();
+
       await dataSource.setLocalSettings(
         localSettingsFactory({
           syncServerUrl: 'https://local.local/db',
@@ -81,7 +81,7 @@ describe('DataSource', () => {
       await dataSource.initializeSync();
 
       const newTask = taskFactory();
-      await dataSource.addTask(newTask);
+      await taskRepository.addTask(newTask);
 
       await waitFor(async () => {
         const tasks = await syncDb.allDocs<Task>({
@@ -146,42 +146,6 @@ describe('DataSource', () => {
 
     const updatedPreferences = await dataSource.getPreferences();
     expect(updatedPreferences.lastSelectedContext).toBe('poo-context');
-  });
-
-  test('subscribeToTasks should register a task change subscriber', async () => {
-    const dataSource = getDataSource();
-    const subscriber = jest.fn();
-
-    dataSource.subscribeToTasks({ context: 'context1' }, subscriber);
-
-    // The subscriber should be called with the tasks right away
-    await waitFor(() => {
-      expect(subscriber).toHaveBeenCalled();
-    });
-  });
-
-  test('subscribeToTasks should stop callback when unsubscribe is called', async () => {
-    const dataSource = getDataSource();
-    const subscriber = jest.fn();
-    const subscriber2 = jest.fn();
-
-    const unsubscribe = dataSource.subscribeToTasks({ context: 'context1' }, subscriber);
-    dataSource.subscribeToTasks({ context: 'context1' }, subscriber2);
-
-    await waitFor(() => {
-      // The subscriber should be called with the tasks right away
-      expect(subscriber).toHaveBeenCalledWith([]);
-    });
-
-    unsubscribe();
-    subscriber.mockReset();
-
-    await dataSource.addTask(taskFactory({ context: 'context1' }));
-
-    await waitFor(() => {
-      expect(subscriber).not.toHaveBeenCalled();
-      expect(subscriber2).toHaveBeenCalled();
-    });
   });
 
   test('addContext should add a context to the database', async () => {
@@ -390,23 +354,26 @@ describe('DataSource', () => {
   describe('archiveContext', () => {
     it('Moves tasks with status of ready, waiting, and started to a new context', async () => {
       const dataSource = getDataSource();
+      const taskRepository = dataSource.getTaskRepository();
 
       await Promise.all([
         dataSource.addContext('old-context'),
         dataSource.addContext('new-context'),
-        dataSource.addTask(taskFactory({ status: TaskStatus.Ready, context: 'old-context' })),
-        dataSource.addTask(taskFactory({ status: TaskStatus.Waiting, context: 'old-context' })),
-        dataSource.addTask(taskFactory({ status: TaskStatus.Started, context: 'old-context' })),
-        dataSource.addTask(taskFactory({ status: TaskStatus.Done, context: 'old-context' })),
-        dataSource.addTask(taskFactory({ status: TaskStatus.Cancelled, context: 'old-context' })),
+        taskRepository.addTask(taskFactory({ status: TaskStatus.Ready, context: 'old-context' })),
+        taskRepository.addTask(taskFactory({ status: TaskStatus.Waiting, context: 'old-context' })),
+        taskRepository.addTask(taskFactory({ status: TaskStatus.Started, context: 'old-context' })),
+        taskRepository.addTask(taskFactory({ status: TaskStatus.Done, context: 'old-context' })),
+        taskRepository.addTask(
+          taskFactory({ status: TaskStatus.Cancelled, context: 'old-context' })
+        ),
       ]);
 
       await dataSource.archiveContext('old-context', 'new-context');
 
-      const newContextTasks = await dataSource.getTasks({
+      const newContextTasks = await taskRepository.getTasks({
         context: 'new-context',
       });
-      const oldContextTasks = await dataSource.getTasks({
+      const oldContextTasks = await taskRepository.getTasks({
         context: 'old-context',
       });
 
@@ -434,11 +401,13 @@ describe('DataSource', () => {
   describe('exportAllData', () => {
     it('should export all documents from the database, except for _local', async () => {
       const dataSource = getDataSource();
+      const taskRepository = dataSource.getTaskRepository();
+
       await Promise.all([
         dataSource.addContext('a-context'),
         dataSource.setLocalSettings(localSettingsFactory()),
         dataSource.setPreferences(preferencesFactory()),
-        dataSource.addTask(taskFactory({ context: 'a-context' })),
+        taskRepository.addTask(taskFactory({ context: 'a-context' })),
       ]);
 
       const exportedData = await dataSource.exportAllData();
@@ -458,6 +427,8 @@ describe('DataSource', () => {
   describe('importData', () => {
     it('should import data into the database', async () => {
       const dataSource = getDataSource();
+      const taskRepository = dataSource.getTaskRepository();
+
       const context = contextFactory({ name: 'imported-context', _rev: 'abc-123' });
       const task = taskFactory({ context: 'imported-context' });
       const localSettings = localSettingsFactory({
@@ -472,7 +443,7 @@ describe('DataSource', () => {
       const contexts = await dataSource.getContexts();
       expect(contexts).toContain('imported-context');
 
-      const tasks = await dataSource.getTasks({ context: 'imported-context' });
+      const tasks = await taskRepository.getTasks({ context: 'imported-context' });
       expect(tasks).toHaveLength(1);
       expect(tasks[0].context).toBe('imported-context');
       expect(tasks[0]._rev).not.toBe('abc-123'); // this should have been replaced

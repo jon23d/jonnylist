@@ -5,13 +5,13 @@ import { useDisclosure, useListState } from '@mantine/hooks';
 import ListRow from '@/components/Contexts/Views/List/ListRow';
 import { ViewProps } from '@/components/Contexts/Views/viewProps';
 import TaskEditor from '@/components/Tasks/TaskEditor';
-import { useDataSource } from '@/contexts/DataSourceContext';
+import { useTaskRepository } from '@/contexts/DataSourceContext';
 import { ALL_TASK_STATUSES, sortedTasks, Task, TaskStatus } from '@/data/documentTypes/Task';
 import { generateKeyBetween } from '@/helpers/fractionalIndexing';
 import classes from './List.module.css';
 
 export default function List({ tasks, visibleStatuses }: ViewProps) {
-  const dataSource = useDataSource();
+  const taskRepository = useTaskRepository();
 
   const [tasksState, handlers] = useListState<Task>(tasks);
   const [editorOpened, { open, close }] = useDisclosure(false);
@@ -85,7 +85,11 @@ export default function List({ tasks, visibleStatuses }: ViewProps) {
     handlers.setItem(taskIndex, { ...task, status: destinationStatus, sortOrder: task.sortOrder });
 
     // Update the task in the data source
-    await dataSource.updateTask({ ...task, status: destinationStatus, sortOrder: task.sortOrder });
+    await taskRepository.updateTask({
+      ...task,
+      status: destinationStatus,
+      sortOrder: task.sortOrder,
+    });
   };
 
   const showEditDialog = (task: Task) => {
