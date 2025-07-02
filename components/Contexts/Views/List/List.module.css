@@ -18,6 +18,9 @@
   border-bottom: 1px solid var(--mantine-color-gray-3);
   margin: 0;
 }
+.listItemContainer:last-child {
+    border-bottom: none;
+}
 
 .listItemContainer:hover {
     background-color: var(--mantine-color-gray-1);
@@ -26,4 +29,20 @@
 .listRow {
   padding-top: 10px;
   padding-bottom: 10px;
+}
+
+.statusHeader {
+  background-image: linear-gradient(
+          to bottom,
+          var(--mantine-color-gray-1),
+          var(--mantine-color-gray-0)
+  );
+}
+
+.emptyList {
+    font-style: italic;
+    color: var(--mantine-color-gray-6);
+    text-align: center;
+    border-top: 0;
+    padding-bottom: var(--mantine-spacing-xs);
 }

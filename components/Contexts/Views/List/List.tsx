@@ -103,7 +103,7 @@ export default function List({ tasks, visibleStatuses }: ViewProps) {
       <DragDropContext onDragEnd={handleDragEnd}>
         {visibleStatuses.map((status) => (
           <React.Fragment key={status}>
-            <Box bg="gray.3" p={10}>
+            <Box className={classes.statusHeader} p={10}>
               <Text fw={700} c="blue">
                 {status} ({groupedTasks[status].length})
               </Text>
@@ -113,15 +113,7 @@ export default function List({ tasks, visibleStatuses }: ViewProps) {
               {(provided) => (
                 <Box {...provided.droppableProps} ref={provided.innerRef}>
                   {groupedTasks[status].length === 0 ? (
-                    <Box
-                      style={{
-                        fontStyle: 'italic',
-                        color: 'var(--mantine-color-gray-6)',
-                        textAlign: 'center',
-                        borderTop: 'none',
-                        paddingBottom: 'var(--mantine-spacing-xs)',
-                      }}
-                    >
+                    <Box className={classes.emptyList}>
                       No tasks in this status. Drag here to add.
                     </Box>
                   ) : (

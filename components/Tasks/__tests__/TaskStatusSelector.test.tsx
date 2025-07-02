@@ -41,4 +41,21 @@ describe('TaskStatusSelector', () => {
       TaskStatus.Cancelled,
     ]);
   });
+
+  it('Blurs the active element when a chip is selected', async () => {
+    const mockOnChange = jest.fn();
+    const initialValue = [TaskStatus.Ready];
+
+    render(<TaskStatusSelector value={initialValue} onChange={mockOnChange} />);
+
+    const chip = screen.getByRole('checkbox', { name: 'Started' });
+    const blurSpy = jest.spyOn(chip, 'blur');
+
+    await userEvent.click(chip);
+
+    // Verify that blur was called on the active element
+    expect(blurSpy).toHaveBeenCalled();
+
+    blurSpy.mockRestore();
+  });
 });
