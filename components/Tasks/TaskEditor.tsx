@@ -25,6 +25,11 @@ export default function TaskEditor({ task, handleClose }: { task: Task; handleCl
       dueDate: task.dueDate,
       status: task.status,
     },
+    validate: {
+      title: (value) => (value ? null : 'Title is required'),
+      context: (value) => (value ? null : 'Context is required'),
+      status: (value) => (value ? null : 'Status is required'),
+    },
   });
 
   useEffect(() => {
@@ -49,6 +54,12 @@ export default function TaskEditor({ task, handleClose }: { task: Task; handleCl
       });
 
       form.reset();
+
+      // We want to make sure that we've cleared focus so that keyboard navigation works properly
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+
       handleClose();
     } catch (error) {
       // @TODO handle error properly
@@ -74,6 +85,16 @@ export default function TaskEditor({ task, handleClose }: { task: Task; handleCl
             {...form.getInputProps('title')}
             withAsterisk
           />
+          <Select
+            label="Status"
+            placeholder="Select task status"
+            data={taskStatusSelectOptions}
+            {...form.getInputProps('status')}
+            data-autofocus
+            clearable={false}
+            allowDeselect={false}
+            withAsterisk
+          />
           <TextInput
             label="Description"
             placeholder="Task description"
@@ -92,13 +113,6 @@ export default function TaskEditor({ task, handleClose }: { task: Task; handleCl
             placeholder="Select a due date"
             {...form.getInputProps('dueDate')}
             clearable
-          />
-          <Select
-            label="Status"
-            placeholder="Select task status"
-            data={taskStatusSelectOptions}
-            {...form.getInputProps('status')}
-            data-autofocus
           />
 
           <Button type="submit">Save</Button>

@@ -116,4 +116,20 @@ describe('TaskEditor', () => {
       })
     );
   });
+
+  it('blurs the active element after saving', async () => {
+    const task = taskFactory();
+    const dataSource = getDataSource();
+    renderWithDataSource(<TaskEditor task={task} handleClose={() => {}} />, dataSource);
+
+    // Wait for contexts to be fetched
+    await waitFor(() => {
+      expect(screen.getByRole('textbox', { name: 'Context' })).toBeInTheDocument();
+    });
+
+    const saveButton = screen.getByRole('button', { name: /save/i });
+    await userEvent.click(saveButton);
+
+    expect(document.activeElement).not.toBe(saveButton);
+  });
 });
