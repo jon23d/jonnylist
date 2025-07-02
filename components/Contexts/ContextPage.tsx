@@ -19,12 +19,28 @@ const views: Record<ViewType, (props: ViewProps) => React.ReactElement> = {
 export default function ContextPage({ contextName }: { contextName: string }) {
   const datasource = useDataSource();
   const [currentView, setCurrentView] = useState<ViewType>('List');
-  const [selectedTaskStatuses, setSelectedTaskStatuses] = useState<TaskStatus[]>([
-    TaskStatus.Ready,
-  ]);
+  const [selectedTaskStatuses, setSelectedTaskStatuses] = useState<TaskStatus[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
 
+  // Load saved statuses on mount, then subscribe to tasks
   useEffect(() => {
+    datasource
+      .getPreferences()
+      .then((preferences) => {
+        const savedStatuses = preferences.lastSelectedStatuses || [TaskStatus.Ready];
+        setSelectedTaskStatuses(savedStatuses);
+      })
+      .catch((error) => {
+        Logger.error('Error loading preferences:', error);
+        setSelectedTaskStatuses([TaskStatus.Ready]);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (selectedTaskStatuses.length === 0) {
+      return;
+    }
+
     const unsubscribe = datasource.subscribeToTasks(
       {
         statuses: selectedTaskStatuses,
@@ -33,15 +49,16 @@ export default function ContextPage({ contextName }: { contextName: string }) {
       setTasks
     );
 
-    // Record the last selected context in preferences
+    // Update preferences
     datasource
       .getPreferences()
       .then((preferences) => {
         preferences.lastSelectedContext = contextName;
+        preferences.lastSelectedStatuses = selectedTaskStatuses;
         return datasource.setPreferences(preferences);
       })
       .catch((error) => {
-        Logger.error('Error setting last selected context:', error);
+        Logger.error('Error updating preferences:', error);
       });
 
     return () => {

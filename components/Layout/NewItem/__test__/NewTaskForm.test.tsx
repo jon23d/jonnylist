@@ -105,4 +105,30 @@ describe('NewTaskForm', () => {
       expect(screen.getByRole('textbox', { name: 'Context' })).toHaveDisplayValue('Context2');
     });
   });
+
+  it('Blurs the active element when the form is submitted', async () => {
+    const handleClose = jest.fn();
+    const dataSource = getDataSource();
+    await dataSource.addContext('Context1');
+
+    renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
+
+    await waitFor(async () => {
+      await userEvent.click(screen.getByRole('textbox', { name: 'Context' }));
+      await userEvent.click(screen.getByRole('option', { name: 'Context1' }));
+    });
+
+    const titleInput = screen.getByRole('textbox', { name: 'Title' });
+    await userEvent.type(titleInput, 'Test Task');
+
+    const submitButton = screen.getByRole('button', { name: 'Save' });
+    await userEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(handleClose).toHaveBeenCalled();
+    });
+
+    // Check if the active element is blurred
+    expect(document.activeElement).not.toBe(submitButton);
+  });
 });

@@ -24,7 +24,6 @@ describe('ContextLinks', () => {
   const handleNavLinkClick = jest.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue({});
   });
 

@@ -11,8 +11,8 @@ export const ALL_TASK_STATUSES: TaskStatus[] = Object.values(TaskStatus);
 
 export const taskStatusSelectOptions = [
   { value: TaskStatus.Started, label: 'Started' },
-  { value: TaskStatus.Ready, label: 'Ready' },
   { value: TaskStatus.Waiting, label: 'Waiting' },
+  { value: TaskStatus.Ready, label: 'Ready' },
   { value: TaskStatus.Done, label: 'Done' },
   { value: TaskStatus.Cancelled, label: 'Cancelled' },
 ];

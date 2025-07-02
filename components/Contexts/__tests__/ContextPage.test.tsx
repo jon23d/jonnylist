@@ -17,7 +17,6 @@ describe('ContextPage', () => {
   const { getDataSource } = setupTestDatabase();
   let dataSource: DataSource;
   let subscribeToTasks: jest.SpyInstance;
-  let getPreferences: jest.SpyInstance;
   const unsubscribeFunction = jest.fn();
 
   beforeEach(() => {
@@ -26,35 +25,37 @@ describe('ContextPage', () => {
     subscribeToTasks = jest
       .spyOn(dataSource, 'subscribeToTasks')
       .mockReturnValue(unsubscribeFunction);
-
-    getPreferences = jest.spyOn(dataSource, 'getPreferences').mockResolvedValue(
-      preferencesFactory({
-        lastSelectedContext: 'Test Context',
-      })
-    );
-  });
-
-  afterEach(async () => {
-    subscribeToTasks.mockRestore();
-    getPreferences.mockRestore();
   });
 
   it('Subscribes to tasks with the correct parameters', async () => {
+    jest.spyOn(dataSource, 'getPreferences').mockResolvedValue(
+      preferencesFactory({
+        lastSelectedContext: 'Test Context',
+        lastSelectedStatuses: [TaskStatus.Ready],
+      })
+    );
+
     renderWithDataSource(<ContextPage contextName="Test Context" />, dataSource);
 
-    // The view selector needs to be loaded so that this test doesn't cause issues
-    await screen.findByRole('radio', { name: 'List' });
-
-    expect(subscribeToTasks).toHaveBeenCalledWith(
-      {
-        statuses: ['ready'],
-        context: 'Test Context',
-      },
-      expect.any(Function)
-    );
+    await waitFor(() => {
+      expect(subscribeToTasks).toHaveBeenCalledWith(
+        {
+          statuses: [TaskStatus.Ready],
+          context: 'Test Context',
+        },
+        expect.any(Function)
+      );
+    });
   });
 
   it('Re-subscribes to tasks when the status selector is invoked', async () => {
+    jest.spyOn(dataSource, 'getPreferences').mockResolvedValue(
+      preferencesFactory({
+        lastSelectedContext: 'Test Context',
+        lastSelectedStatuses: [TaskStatus.Ready],
+      })
+    );
+
     renderWithDataSource(<ContextPage contextName="Test Context" />, dataSource);
 
     // The view selector needs to be loaded so that this test doesn't cause issues
@@ -80,6 +81,55 @@ describe('ContextPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('List View')).toBeInTheDocument();
+    });
+  });
+
+  it('Remembers and re-uses the statuses selected', async () => {
+    jest.spyOn(dataSource, 'getPreferences').mockResolvedValue(
+      preferencesFactory({
+        lastSelectedContext: 'Test Context',
+        lastSelectedStatuses: [TaskStatus.Ready],
+      })
+    );
+
+    // Render with the just the Ready status selected
+    renderWithDataSource(<ContextPage contextName="context1" />, dataSource);
+
+    await waitFor(() => {
+      expect(subscribeToTasks).toHaveBeenCalledWith(
+        {
+          statuses: [TaskStatus.Ready],
+          context: 'context1',
+        },
+        expect.any(Function)
+      );
+    });
+
+    // Now select the Waiting status
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Waiting' }));
+
+    await waitFor(() => {
+      expect(subscribeToTasks).toHaveBeenCalledWith(
+        {
+          statuses: [TaskStatus.Waiting, TaskStatus.Ready],
+          context: 'context1',
+        },
+        expect.any(Function)
+      );
+    });
+
+    // Now we can completely re-render the component
+    renderWithDataSource(<ContextPage contextName="context1" />, dataSource);
+
+    // And we should expect the same statuses to be used
+    await waitFor(() => {
+      expect(subscribeToTasks).toHaveBeenCalledWith(
+        {
+          statuses: [TaskStatus.Waiting, TaskStatus.Ready],
+          context: 'context1',
+        },
+        expect.any(Function)
+      );
     });
   });
 

@@ -28,6 +28,11 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
       dueDate: undefined,
       status: TaskStatus.Ready,
     },
+    validate: {
+      title: (value) => (value ? null : 'Title is required'),
+      context: (value) => (value ? null : 'Context is required'),
+      status: (value) => (value ? null : 'Status is required'),
+    },
   });
 
   useEffect(() => {
@@ -53,6 +58,12 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
       await dataSource.addTask(newTask);
 
       form.reset();
+
+      // We want to make sure that we've cleared focus so that keyboard navigation works properly
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+
       handleClose();
     } catch (error) {
       // @TODO handle error properly
@@ -70,14 +81,22 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
             data={contexts}
             {...form.getInputProps('context')}
             key={`context-${contextKey}`} // Force re-render when contexts change
-            required
+            withAsterisk
           />
           <TextInput
             label="Title"
             placeholder="Task title"
             {...form.getInputProps('title')}
-            required
+            withAsterisk
             data-autofocus
+          />
+          <Select
+            label="Status"
+            placeholder="Select task status"
+            data={taskStatusSelectOptions}
+            {...form.getInputProps('status')}
+            withAsterisk
+            allowDeselect={false}
           />
           <TextInput
             label="Description"
@@ -96,12 +115,6 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
             placeholder="Select a due date"
             {...form.getInputProps('dueDate')}
             clearable
-          />
-          <Select
-            label="Status"
-            placeholder="Select task status"
-            data={taskStatusSelectOptions}
-            {...form.getInputProps('status')}
           />
 
           <Button type="submit">Save</Button>

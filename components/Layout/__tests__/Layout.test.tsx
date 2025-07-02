@@ -52,7 +52,6 @@ describe('Layout', () => {
 
   beforeEach(() => {
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
-    jest.clearAllMocks();
   });
 
   afterEach(async () => {

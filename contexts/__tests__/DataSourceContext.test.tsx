@@ -18,10 +18,6 @@ const TestComponent = () => {
 describe('DataSourceContext', () => {
   const { getDataSource } = setupTestDatabase();
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('shows migration status when migrations are running', async () => {
     const dataSource = getDataSource();
     // Mock the runMigrations method to simulate a migration
