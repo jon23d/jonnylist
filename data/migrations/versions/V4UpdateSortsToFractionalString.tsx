@@ -1,8 +1,11 @@
 import { MigrationsDoc } from '@/data/documentTypes/MigrationsDoc';
-import { Task } from '@/data/documentTypes/Task';
-import { generateNKeysBetween } from '@/helpers/fractionalIndexing';
 import { Migration } from '../Migration';
 
+/**
+ * This class is defunct now. I later removed sorting completely in favor of
+ * an algorithm. This class relied on a no-longer-present library, so I've
+ * removed the migration code completely.
+ */
 class V4UpdateSortsToFractionalString implements Migration {
   getVersion(): number {
     return 4;
@@ -14,29 +17,6 @@ class V4UpdateSortsToFractionalString implements Migration {
   }
 
   async up(db: PouchDB.Database): Promise<void> {
-    const results = await db.allDocs<Task>({
-      include_docs: true,
-      startkey: 'task-',
-      endkey: 'task-\ufff0',
-    });
-    const tasks = results.rows.map((row) => row.doc);
-
-    // Sort them by the old sort algorithm
-    tasks.sort((a, b) => {
-      return (
-        ((a?.sortOrder as unknown as number) || 0) - ((b?.sortOrder as unknown as number) || 0)
-      );
-    });
-
-    // Update the sortOrder to be a fractional string
-    const keys = generateNKeysBetween(null, null, tasks.length);
-
-    for (let i = 0; i < tasks.length; i++) {
-      const task = tasks[i];
-      task!.sortOrder = keys[i];
-      await db.put(task!);
-    }
-
     // Update the migrations document to reflect the new version
     const migrationsDoc = await db.get<MigrationsDoc>('migrations');
     migrationsDoc.version = 4;
