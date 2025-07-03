@@ -30,7 +30,6 @@ export const taskPrioritySelectOptions = [
 ];
 
 export interface Task extends Common {
-  context: string;
   type: 'task';
   title: string;
   description?: string;

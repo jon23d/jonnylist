@@ -24,7 +24,9 @@ export const DataSourceContextProvider = ({
   const [isMigrating, setIsMigrating] = useState(false);
   const [currentDataSource] = useState<DataSource>(
     // Use the provided dataSource if it exists, otherwise create a new one
-    () => dataSource || new DataSource(new PouchDB<DocumentTypes>('jonnylist'))
+    () =>
+      dataSource ||
+      new DataSource(new PouchDB<DocumentTypes>('jonnylist', { auto_compaction: true }))
   );
 
   useEffect(() => {

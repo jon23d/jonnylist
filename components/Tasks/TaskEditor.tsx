@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import {
   Button,
   FocusTrap,
@@ -11,7 +10,7 @@ import {
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
-import { useContextRepository, useTaskRepository } from '@/contexts/DataSourceContext';
+import { useTaskRepository } from '@/contexts/DataSourceContext';
 import {
   NewTask,
   Task,
@@ -21,16 +20,12 @@ import {
 import { Logger } from '@/helpers/Logger';
 
 export default function TaskEditor({ task, handleClose }: { task: Task; handleClose: () => void }) {
-  const contextRepository = useContextRepository();
   const taskRepository = useTaskRepository();
-
-  const [contexts, setContexts] = useState<string[]>([]);
 
   const form = useForm<NewTask>({
     // NewTask is a task without metadata
     mode: 'uncontrolled',
     initialValues: {
-      context: task.context,
       title: task.title,
       description: task.description,
       tags: task.tags,
@@ -41,24 +36,9 @@ export default function TaskEditor({ task, handleClose }: { task: Task; handleCl
     },
     validate: {
       title: (value) => (value ? null : 'Title is required'),
-      context: (value) => (value ? null : 'Context is required'),
       status: (value) => (value ? null : 'Status is required'),
     },
   });
-
-  useEffect(() => {
-    const initializeForm = async () => {
-      const [availableContexts] = await Promise.all([
-        contextRepository.getContexts().catch((err) => {
-          Logger.error('Error fetching contexts:', err);
-          return [] as string[];
-        }),
-      ]);
-
-      setContexts(availableContexts);
-    };
-    initializeForm();
-  }, []);
 
   const handleSave = async () => {
     try {
@@ -112,15 +92,6 @@ export default function TaskEditor({ task, handleClose }: { task: Task; handleCl
           </Group>
 
           <Group justify="space-between" grow>
-            <Select
-              label="Context"
-              data={contexts.map((context) => ({ value: context, label: context }))}
-              {...form.getInputProps('context')}
-              key="context"
-              withAsterisk
-              size="xs"
-            />
-
             <Select
               label="Status"
               data={taskStatusSelectOptions}

@@ -1,10 +1,8 @@
 import PouchDB from 'pouchdb';
 import { ContextRepository } from '@/data/ContextRepository';
 import { DocumentTypes } from '@/data/documentTypes';
-import { Context } from '@/data/documentTypes/Context';
 import { LocalSettings } from '@/data/documentTypes/LocalSettings';
 import { createDefaultPreferences, Preferences } from '@/data/documentTypes/Preferences';
-import { TaskStatus } from '@/data/documentTypes/Task';
 import { TaskRepository } from '@/data/TaskRepository';
 import { Logger } from '@/helpers/Logger';
 import { MigrationManager } from './migrations/MigrationManager';
@@ -235,56 +233,6 @@ export class DataSource {
       Logger.error('Error setting local settings:', error);
       throw error; // Re-throw to handle it in the calling code
     }
-  }
-
-  /**
-   * Archive a context by moving all tasks from the source context to the destination context
-   *
-   * @param sourceContext
-   * @param destinationContext
-   */
-  async archiveContext(sourceContext: string, destinationContext: string): Promise<void> {
-    Logger.info(`Archiving context: ${sourceContext} to ${destinationContext}`);
-
-    // We are going to move open tasks from the source context to the destination context
-    await this.moveOpenTasksInContext(sourceContext, destinationContext);
-
-    // Mark the source context as deleted
-    const sourceContextDoc = await this.db.get<Context>(`context-${sourceContext}`);
-    sourceContextDoc.deletedAt = new Date();
-    await this.db.put(sourceContextDoc);
-
-    Logger.info(`Archived context: ${sourceContext}`);
-  }
-
-  /**
-   * Move all open tasks from the source context to the destination context.
-   * This will update the context field of all tasks in the source context to the destination context.
-   *
-   * @param sourceContext
-   * @param destinationContext
-   */
-  async moveOpenTasksInContext(sourceContext: string, destinationContext: string): Promise<void> {
-    Logger.info(`Moving tasks from context: ${sourceContext} to ${destinationContext}`);
-
-    const taskRepository = this.getTaskRepository();
-
-    // Fetch all tasks in the source context
-    const tasks = await taskRepository.getTasks({
-      context: sourceContext,
-      statuses: [TaskStatus.Ready, TaskStatus.Waiting, TaskStatus.Started],
-    });
-
-    if (tasks.length !== 0) {
-      const updatedTasks = tasks.map((task) => ({
-        ...task,
-        context: destinationContext,
-      }));
-
-      await taskRepository.updateTasks(updatedTasks);
-    }
-
-    Logger.info(`Moved tasks from context: ${sourceContext} to ${destinationContext}`);
   }
 
   /**

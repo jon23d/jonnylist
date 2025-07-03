@@ -45,7 +45,6 @@ describe('ContextPage', () => {
       expect(subscribeToTasks).toHaveBeenCalledWith(
         {
           statuses: [TaskStatus.Ready],
-          context: 'Test Context',
         },
         expect.any(Function)
       );
@@ -71,7 +70,6 @@ describe('ContextPage', () => {
     expect(subscribeToTasks).toHaveBeenCalledWith(
       {
         statuses: [TaskStatus.Started, TaskStatus.Ready],
-        context: 'Test Context',
       },
       expect.any(Function)
     );
@@ -103,7 +101,6 @@ describe('ContextPage', () => {
       expect(subscribeToTasks).toHaveBeenCalledWith(
         {
           statuses: [TaskStatus.Ready],
-          context: 'context1',
         },
         expect.any(Function)
       );
@@ -116,7 +113,6 @@ describe('ContextPage', () => {
       expect(subscribeToTasks).toHaveBeenCalledWith(
         {
           statuses: [TaskStatus.Waiting, TaskStatus.Ready],
-          context: 'context1',
         },
         expect.any(Function)
       );
@@ -130,7 +126,6 @@ describe('ContextPage', () => {
       expect(subscribeToTasks).toHaveBeenCalledWith(
         {
           statuses: [TaskStatus.Waiting, TaskStatus.Ready],
-          context: 'context1',
         },
         expect.any(Function)
       );
