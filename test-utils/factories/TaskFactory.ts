@@ -7,7 +7,6 @@ export const taskFactory = (data: Partial<Task> = {}): Task => {
 
     type: 'task',
     title: data.title || 'A task',
-    sortOrder: data.sortOrder || 'g',
     description: data.description || 'This is a sample task description.',
     tags: data.tags || [],
     project: data.project || 'a project',

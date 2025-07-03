@@ -1,9 +1,8 @@
 import PouchDB from 'pouchdb';
 import { DocumentTypes } from '@/data/documentTypes';
 import { Repository } from '@/data/Repository';
-import { generateKeyBetween } from '@/helpers/fractionalIndexing';
 import { Logger } from '@/helpers/Logger';
-import { NewTask, sortedTasks, Task, TaskStatus } from './documentTypes/Task';
+import { NewTask, Task, TaskStatus } from './documentTypes/Task';
 
 export type getTasksParams = {
   context?: string;
@@ -45,22 +44,12 @@ export class TaskRepository implements Repository {
   async addTask(newTask: NewTask): Promise<Task> {
     Logger.info('Adding task');
 
-    // Get the last task of this context and status to determine the sort order
-    const tasks = await this.getTasks({
-      context: newTask.context,
-      statuses: [newTask.status],
-    });
-
-    const lastSortOrder = tasks.length ? tasks[tasks.length - 1].sortOrder : null;
-    const sortOrder = generateKeyBetween(lastSortOrder, null);
-
     const tags = newTask.tags || [];
 
     const task: Task = {
       ...newTask,
       _id: `task-${new Date().toISOString()}-${Math.random().toString(36).substring(2, 15)}`,
       type: 'task',
-      sortOrder,
       tags: tags.map((tag) => this.cleanTag(tag)),
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -167,9 +156,7 @@ export class TaskRepository implements Repository {
       task.updatedAt = new Date(task.updatedAt);
     });
 
-    const filtered = this.filterTasksByParams(allTasks, params);
-
-    return sortedTasks(filtered);
+    return this.filterTasksByParams(allTasks, params);
   }
 
   /**

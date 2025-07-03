@@ -1,6 +1,5 @@
 import { waitFor } from '@testing-library/react';
 import { TaskRepository } from '@/data/TaskRepository';
-import { generateKeyBetween, generateNKeysBetween } from '@/helpers/fractionalIndexing';
 import { setupTestDatabase } from '@/test-utils/db';
 import { taskFactory } from '@/test-utils/factories/TaskFactory';
 import { DocumentTypes } from '../documentTypes';
@@ -14,7 +13,6 @@ describe('DataSource', () => {
     const repository = new TaskRepository(database);
 
     const task = taskFactory({
-      sortOrder: 'a',
       priority: TaskPriority.High,
       project: 'a project',
     });
@@ -26,12 +24,9 @@ describe('DataSource', () => {
 
     const returnedTask = tasks.rows[0].doc as Task;
 
-    const expectedSort = generateKeyBetween(null, null);
-
     expect(returnedTask.context).toEqual(task.context);
     expect(returnedTask._id.startsWith('task-')).toBe(true);
     expect(returnedTask.priority).toBe(TaskPriority.High);
-    expect(returnedTask.sortOrder).toBe(expectedSort);
     expect(returnedTask.project).toBe('a project');
   });
 
@@ -83,21 +78,17 @@ describe('DataSource', () => {
     const repository = new TaskRepository(database);
     const newTask = taskFactory({
       context: 'context1',
-      sortOrder: 'a',
       project: 'world domination',
     });
 
     const task = await repository.addTask(newTask);
     const timeAfterUpdate = new Date();
 
-    const updatedTask = await repository.updateTask({ ...task, sortOrder: 'z' });
-
-    expect(updatedTask.sortOrder).toBe('z');
+    await repository.updateTask({ ...task, project: 'county domination' });
 
     const tasks = await repository.getTasks({ context: 'context1' });
     expect(tasks).toHaveLength(1);
-    expect(tasks[0].sortOrder).toBe('z');
-    expect(tasks[0].project).toBe('world domination');
+    expect(tasks[0].project).toBe('county domination');
     expect(tasks[0].updatedAt.getTime()).toBeGreaterThanOrEqual(timeAfterUpdate.getTime());
   });
 
@@ -105,20 +96,20 @@ describe('DataSource', () => {
     const database = getDb();
     const repository = new TaskRepository(database);
 
-    const task1 = await repository.addTask(taskFactory({ sortOrder: 'a' }));
-    const task2 = await repository.addTask(taskFactory({ sortOrder: 'g' }));
+    const task1 = await repository.addTask(taskFactory());
+    const task2 = await repository.addTask(taskFactory());
 
     const rev1 = task1._rev;
     const rev2 = task2._rev;
 
-    task1.sortOrder = 'b';
-    task2.sortOrder = 'h';
+    task1.title = 'foo1';
+    task2.title = 'foo2';
 
     const updatedTasks = await repository.updateTasks([task1, task2]);
 
     expect(updatedTasks).toHaveLength(2);
-    expect(updatedTasks[0].sortOrder).toBe('b');
-    expect(updatedTasks[1].sortOrder).toBe('h');
+    expect(updatedTasks[0].title).toBe('foo1');
+    expect(updatedTasks[1].title).toBe('foo2');
     expect(updatedTasks[0]._rev).not.toBe(rev1);
     expect(updatedTasks[1]._rev).not.toBe(rev2);
   });
@@ -172,28 +163,6 @@ describe('DataSource', () => {
         statuses: [],
       }
     );
-  });
-
-  test('getTasks should return tasks sorted by sortOrder', async () => {
-    const database = getDb();
-    const repository = new TaskRepository(database);
-
-    const sorts = generateNKeysBetween(null, null, 3);
-    // out of order tasks
-    const task1 = taskFactory({ _id: 'task1', context: 'context1', sortOrder: sorts[1] });
-    const task2 = taskFactory({ _id: 'task2', context: 'context1', sortOrder: sorts[0] });
-    const task3 = taskFactory({ _id: 'task3', context: 'context1', sortOrder: sorts[2] });
-
-    await repository.addTask(task1);
-    await repository.addTask(task2);
-    await repository.addTask(task3);
-
-    const tasks = await repository.getTasks({ context: 'context1' });
-
-    expect(tasks).toHaveLength(3);
-    expect(tasks[0].sortOrder).toBe(sorts[0]); // task 2
-    expect(tasks[1].sortOrder).toBe(sorts[1]); // task 1
-    expect(tasks[2].sortOrder).toBe(sorts[2]); // task 3
   });
 
   describe('filterTasksByParams', () => {

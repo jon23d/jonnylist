@@ -33,7 +33,6 @@ export interface Task extends Common {
   context: string;
   type: 'task';
   title: string;
-  sortOrder: string;
   description?: string;
   tags?: string[];
   project?: string;
@@ -44,14 +43,4 @@ export interface Task extends Common {
   updatedAt: Date;
 }
 
-export type NewTask = Omit<Task, keyof Common | 'type' | 'sortOrder' | 'createdAt' | 'updatedAt'>;
-
-export function sortedTasks(tasks: Task[]): Task[] {
-  // We cannot use a locale-aware sort because we need a consistent
-  // lexicographical comparison order across different locales.
-  return [...tasks].sort((a, b) => {
-    const sortA = a.sortOrder.toString();
-    const sortB = b.sortOrder.toString();
-    return sortA < sortB ? -1 : sortA > sortB ? 1 : 0;
-  });
-}
+export type NewTask = Omit<Task, keyof Common | 'type' | 'createdAt' | 'updatedAt'>;
