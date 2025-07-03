@@ -3,20 +3,21 @@ import { Button, Modal, SimpleGrid, Title } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import ContextSummaryCard from '@/components/Contexts/ContextSummaryCard';
 import NewContextForm from '@/components/Contexts/NewContextForm';
-import { useDataSource } from '@/contexts/DataSourceContext';
+import { useContextRepository } from '@/contexts/DataSourceContext';
 
 export default function ContextsPage() {
-  const dataSource = useDataSource();
+  const contextRepository = useContextRepository();
+
   const [contexts, setContexts] = useState<string[]>([]);
   const [opened, { open, close }] = useDisclosure(false);
 
   useEffect(() => {
-    const unsubscribe = dataSource.subscribeToContexts(setContexts);
+    const unsubscribe = contextRepository.subscribeToContexts(setContexts);
 
     return () => {
       unsubscribe();
     };
-  }, [dataSource]);
+  }, []);
 
   const handleAddContext = () => {
     open();

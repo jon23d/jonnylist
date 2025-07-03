@@ -20,7 +20,9 @@ describe('DataSource', () => {
 
   it('should initialize with an empty database', async () => {
     const dataSource = getDataSource();
-    const contexts = await dataSource.getContexts();
+    const contextRepository = dataSource.getContextRepository();
+
+    const contexts = await contextRepository.getContexts();
     expect(contexts).toEqual([]);
   });
 
@@ -148,61 +150,6 @@ describe('DataSource', () => {
     expect(updatedPreferences.lastSelectedContext).toBe('poo-context');
   });
 
-  test('addContext should add a context to the database', async () => {
-    const dataSource = getDataSource();
-    const contextName = 'test-context';
-    await dataSource.addContext(contextName);
-
-    const contexts = await dataSource.getContexts();
-    expect(contexts).toContain(contextName);
-  });
-
-  test('getContexts should return multiple contexts', async () => {
-    const dataSource = getDataSource();
-    const database = getDb();
-
-    await database.bulkDocs([
-      contextFactory({ name: 'context-1' }),
-      contextFactory({ name: 'context-2' }),
-      contextFactory({ name: 'context-3' }),
-    ]);
-
-    const contexts = await dataSource.getContexts();
-    expect(contexts).toEqual(['context-1', 'context-2', 'context-3']);
-  });
-
-  test('getContexts should not filter when includeDeleted is true', async () => {
-    const dataSource = getDataSource();
-    const database = getDb();
-
-    const archivedContext = contextFactory({
-      name: 'deleted-context',
-      deletedAt: new Date(),
-    });
-    const activeContext = contextFactory({ name: 'active-context' });
-
-    await database.bulkDocs([archivedContext, activeContext]);
-
-    const contexts = await dataSource.getContexts(true);
-    expect(contexts).toEqual(expect.arrayContaining(['deleted-context', 'active-context']));
-  });
-
-  test('getContexts should filter archived contexts when includeDeleted is false', async () => {
-    const dataSource = getDataSource();
-    const database = getDb();
-
-    const archivedContext = contextFactory({
-      name: 'deleted-context',
-      deletedAt: new Date(),
-    });
-    const activeContext = contextFactory({ name: 'active-context' });
-
-    await database.bulkDocs([archivedContext, activeContext]);
-
-    const contexts = await dataSource.getContexts();
-    expect(contexts).toEqual(['active-context']);
-  });
-
   describe('runMigrations', () => {
     it('Should not call onMigrationStatusChange if no migrations are needed', async () => {
       const dataSource = getDataSource();
@@ -278,87 +225,15 @@ describe('DataSource', () => {
     });
   });
 
-  describe('subscribeToContexts', () => {
-    const { getDataSource } = setupTestDatabase();
-
-    it('Should register a context change subscriber and call getContexts', async () => {
-      const dataSource = getDataSource();
-      const contextName = 'test-context';
-
-      await dataSource.addContext(contextName);
-
-      const subscriber = jest.fn();
-
-      dataSource.subscribeToContexts(subscriber);
-
-      await waitFor(() => {
-        expect(subscriber).toHaveBeenCalledWith([contextName]);
-      });
-    });
-
-    it('Should initialize the context changes feed on first subscriber', async () => {
-      const dataSource = getDataSource();
-
-      const subscriber = jest.fn();
-      const initializeSpy = jest.spyOn(
-        dataSource,
-        'initializeContextChangesFeed' as keyof DataSource
-      );
-
-      dataSource.subscribeToContexts(subscriber);
-
-      expect(initializeSpy).toHaveBeenCalled();
-
-      initializeSpy.mockRestore();
-    });
-
-    it('Should not init the context feed if a subscriber is already registered', async () => {
-      const dataSource = getDataSource();
-
-      const subscriber1 = jest.fn();
-      const subscriber2 = jest.fn();
-      const initializeSpy = jest.spyOn(
-        dataSource,
-        'initializeContextChangesFeed' as keyof DataSource
-      );
-      // First subscription should initialize the feed
-      dataSource.subscribeToContexts(subscriber1);
-      expect(initializeSpy).toHaveBeenCalled();
-      initializeSpy.mockReset();
-
-      // Second subscription should not re-initialize the feed
-      dataSource.subscribeToContexts(subscriber2);
-      expect(initializeSpy).not.toHaveBeenCalled();
-
-      initializeSpy.mockRestore();
-    });
-  });
-
-  it('Should notify subscribers of context changes', async () => {
-    const dataSource = getDataSource();
-    const subscriber = jest.fn();
-
-    dataSource.subscribeToContexts(subscriber);
-
-    await waitFor(() => {
-      expect(subscriber).toHaveBeenCalledWith([]);
-    });
-
-    await dataSource.addContext('a new context');
-
-    await waitFor(() => {
-      expect(subscriber).toHaveBeenCalledWith(['a new context']);
-    });
-  });
-
   describe('archiveContext', () => {
     it('Moves tasks with status of ready, waiting, and started to a new context', async () => {
       const dataSource = getDataSource();
+      const contextRepository = dataSource.getContextRepository();
       const taskRepository = dataSource.getTaskRepository();
 
       await Promise.all([
-        dataSource.addContext('old-context'),
-        dataSource.addContext('new-context'),
+        contextRepository.addContext('old-context'),
+        contextRepository.addContext('new-context'),
         taskRepository.addTask(taskFactory({ status: TaskStatus.Ready, context: 'old-context' })),
         taskRepository.addTask(taskFactory({ status: TaskStatus.Waiting, context: 'old-context' })),
         taskRepository.addTask(taskFactory({ status: TaskStatus.Started, context: 'old-context' })),
@@ -387,13 +262,14 @@ describe('DataSource', () => {
 
     it('Archives the source context', async () => {
       const dataSource = getDataSource();
+      const contextRepository = dataSource.getContextRepository();
 
-      await dataSource.addContext('old-context');
-      await dataSource.addContext('new-context');
+      await contextRepository.addContext('old-context');
+      await contextRepository.addContext('new-context');
 
       await dataSource.archiveContext('old-context', 'new-context');
 
-      const contexts = await dataSource.getContexts();
+      const contexts = await contextRepository.getContexts();
       expect(contexts).toEqual(['new-context']);
     });
   });
@@ -401,10 +277,12 @@ describe('DataSource', () => {
   describe('exportAllData', () => {
     it('should export all documents from the database, except for _local', async () => {
       const dataSource = getDataSource();
+      const contextRepository = dataSource.getContextRepository();
+
       const taskRepository = dataSource.getTaskRepository();
 
       await Promise.all([
-        dataSource.addContext('a-context'),
+        contextRepository.addContext('a-context'),
         dataSource.setLocalSettings(localSettingsFactory()),
         dataSource.setPreferences(preferencesFactory()),
         taskRepository.addTask(taskFactory({ context: 'a-context' })),
@@ -428,6 +306,7 @@ describe('DataSource', () => {
     it('should import data into the database', async () => {
       const dataSource = getDataSource();
       const taskRepository = dataSource.getTaskRepository();
+      const contextRepository = dataSource.getContextRepository();
 
       const context = contextFactory({ name: 'imported-context', _rev: 'abc-123' });
       const task = taskFactory({ context: 'imported-context' });
@@ -440,7 +319,7 @@ describe('DataSource', () => {
 
       await dataSource.importData(importedData);
 
-      const contexts = await dataSource.getContexts();
+      const contexts = await contextRepository.getContexts();
       expect(contexts).toContain('imported-context');
 
       const tasks = await taskRepository.getTasks({ context: 'imported-context' });

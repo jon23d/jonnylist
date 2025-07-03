@@ -20,7 +20,9 @@ describe('CommandPalette', () => {
     });
 
     const dataSource = getDataSource();
-    await dataSource.addContext('the circus');
+    const contextRepository = dataSource.getContextRepository();
+
+    await contextRepository.addContext('the circus');
 
     renderWithDataSource(<CommandPalette />, dataSource);
 

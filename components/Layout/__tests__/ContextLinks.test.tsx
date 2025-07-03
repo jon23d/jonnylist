@@ -11,12 +11,12 @@ const mockSubscribeToContexts = jest.fn((callback) => {
   callback(['context1', 'context2']);
   return () => {};
 });
-const mockDataSource = {
+const mockContextRepository = {
   subscribeToContexts: mockSubscribeToContexts,
 };
 jest.mock('@/contexts/DataSourceContext', () => ({
   ...jest.requireActual('@/contexts/DataSourceContext'),
-  useDataSource: () => mockDataSource,
+  useContextRepository: () => mockContextRepository,
 }));
 
 describe('ContextLinks', () => {

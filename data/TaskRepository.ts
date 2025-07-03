@@ -1,5 +1,6 @@
 import PouchDB from 'pouchdb';
 import { DocumentTypes } from '@/data/documentTypes';
+import { Repository } from '@/data/Repository';
 import { generateKeyBetween } from '@/helpers/fractionalIndexing';
 import { Logger } from '@/helpers/Logger';
 import { NewTask, sortedTasks, Task, TaskStatus } from './documentTypes/Task';

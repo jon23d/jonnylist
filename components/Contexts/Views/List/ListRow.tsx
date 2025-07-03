@@ -4,18 +4,14 @@ import { Badge, Box, Flex, Text } from '@mantine/core';
 import { Task, TaskPriority } from '@/data/documentTypes/Task';
 import classes from './List.module.css';
 
-const low = <Badge color="gray.4">L</Badge>;
-const medium = <Badge color="lime.4">M</Badge>;
-const high = <Badge color="yellow.5">H</Badge>;
-
 const priorityBadge = (priority?: TaskPriority) => {
   switch (priority) {
     case TaskPriority.Low:
-      return low;
+      return <Badge color="gray.4">L</Badge>;
     case TaskPriority.Medium:
-      return medium;
+      return <Badge color="lime.4">M</Badge>;
     case TaskPriority.High:
-      return high;
+      return <Badge color="yellow.5">H</Badge>;
     default:
       return null;
   }
@@ -80,14 +76,14 @@ export default function ListRow({
                 <Text size="xs" c="orange.5" fw={500} style={{ whiteSpace: 'nowrap' }}>
                   {task.dueDate}
                 </Text>
-                <Text size="xs" c="blue" style={{ whiteSpace: 'nowrap' }}>
-                  {task.tags?.map((tag) => (
-                    <Badge size="xs" mr={3} variant="light">{`#${tag}`}</Badge>
+                <Box size="xs" c="blue" style={{ whiteSpace: 'nowrap' }}>
+                  {task.tags?.map((tag, index) => (
+                    <Badge key={index} size="xs" mr={3} variant="light">{`#${tag}`}</Badge>
                   ))}
-                </Text>
-                <Text size="xs" style={{ whiteSpace: 'nowrap' }}>
+                </Box>
+                <Box size="xs" style={{ whiteSpace: 'nowrap' }}>
                   {priorityBadge(task.priority)}
-                </Text>
+                </Box>
                 <Text size="xs" c="green" style={{ whiteSpace: 'nowrap' }}>
                   {/* project would go here if available*/}
                 </Text>

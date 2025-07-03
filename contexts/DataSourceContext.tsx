@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import PouchDB from 'pouchdb';
+import { ContextRepository } from '@/data/ContextRepository';
 import { DataSource } from '@/data/DataSource';
 import { DocumentTypes } from '@/data/documentTypes';
 import { TaskRepository } from '@/data/TaskRepository';
@@ -77,4 +78,9 @@ export const useIsMigrating = (): boolean => {
 export const useTaskRepository = (): TaskRepository => {
   const dataSource = useDataSource();
   return dataSource.getTaskRepository();
+};
+
+export const useContextRepository = (): ContextRepository => {
+  const dataSource = useDataSource();
+  return dataSource.getContextRepository();
 };

@@ -6,17 +6,17 @@ import { taskFactory } from '@/test-utils/factories/TaskFactory';
 
 const updateTaskMock = jest.fn();
 const getContextsMock = jest.fn().mockResolvedValue(['context1', 'context2']);
-const mockDataSource = {
+
+const mockContextRepository = {
   getContexts: getContextsMock,
-  updateTask: updateTaskMock,
 };
 const mockTaskRepository = {
   updateTask: updateTaskMock,
 };
 jest.mock('@/contexts/DataSourceContext', () => ({
   ...jest.requireActual('@/contexts/DataSourceContext'),
-  useDataSource: () => mockDataSource,
   useTaskRepository: () => mockTaskRepository,
+  useContextRepository: () => mockContextRepository,
 }));
 
 describe('TaskEditor', () => {

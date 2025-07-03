@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button, FocusTrap, Select, Stack, TagsInput, TextInput } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
-import { useDataSource, useTaskRepository } from '@/contexts/DataSourceContext';
+import { useContextRepository, useTaskRepository } from '@/contexts/DataSourceContext';
 import {
   Task,
   taskPrioritySelectOptions,
@@ -11,7 +11,7 @@ import {
 import { Logger } from '@/helpers/Logger';
 
 export default function TaskEditor({ task, handleClose }: { task: Task; handleClose: () => void }) {
-  const dataSource = useDataSource();
+  const contextRepository = useContextRepository();
   const taskRepository = useTaskRepository();
 
   const [contexts, setContexts] = useState<string[]>([]);
@@ -37,7 +37,7 @@ export default function TaskEditor({ task, handleClose }: { task: Task; handleCl
   useEffect(() => {
     const initializeForm = async () => {
       const [availableContexts] = await Promise.all([
-        dataSource.getContexts().catch((err) => {
+        contextRepository.getContexts().catch((err) => {
           Logger.error('Error fetching contexts:', err);
           return [] as string[];
         }),

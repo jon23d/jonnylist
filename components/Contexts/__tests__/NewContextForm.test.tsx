@@ -3,13 +3,13 @@ import { render, screen, userEvent } from '@/test-utils';
 
 const mockAddContext = jest.fn().mockResolvedValue(undefined);
 jest.mock('@/contexts/DataSourceContext', () => ({
-  useDataSource: () => ({
+  useContextRepository: () => ({
     addContext: mockAddContext,
   }),
 }));
 
 describe('NewContextForm', () => {
-  it('Adds a new context to the data source', async () => {
+  it('Calls add context on form submission', async () => {
     const mockOnClose = jest.fn();
     render(<NewContextForm onClose={mockOnClose} />);
 

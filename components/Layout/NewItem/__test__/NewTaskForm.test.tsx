@@ -9,8 +9,10 @@ describe('NewTaskForm', () => {
 
   it('Renders the context select with available contexts', async () => {
     const dataSource = getDataSource();
-    await dataSource.addContext('Context1');
-    await dataSource.addContext('Context2');
+    const contextRepository = dataSource.getContextRepository();
+
+    await contextRepository.addContext('Context1');
+    await contextRepository.addContext('Context2');
 
     renderWithDataSource(<NewTaskForm handleClose={() => {}} />, dataSource);
 
@@ -40,9 +42,10 @@ describe('NewTaskForm', () => {
     const handleClose = jest.fn();
     const dataSource = getDataSource();
     const taskRepository = dataSource.getTaskRepository();
+    const contextRepository = dataSource.getContextRepository();
 
-    await dataSource.addContext('Context1');
-    await dataSource.addContext('Context2');
+    await contextRepository.addContext('Context1');
+    await contextRepository.addContext('Context2');
 
     renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
 
@@ -94,7 +97,9 @@ describe('NewTaskForm', () => {
 
   it('Uses the last selected context as the default value', async () => {
     const dataSource = getDataSource();
-    await dataSource.addContext('Context2');
+    const contextRepository = dataSource.getContextRepository();
+
+    await contextRepository.addContext('Context2');
     await dataSource.setPreferences({
       _id: 'preferences',
       type: 'preferences',
@@ -111,7 +116,9 @@ describe('NewTaskForm', () => {
   it('Blurs the active element when the form is submitted', async () => {
     const handleClose = jest.fn();
     const dataSource = getDataSource();
-    await dataSource.addContext('Context1');
+    const contextRepository = dataSource.getContextRepository();
+
+    await contextRepository.addContext('Context1');
 
     renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
 
