@@ -72,6 +72,7 @@ export default function AddNewItemButton() {
         opened={modalOpened}
         onClose={handleClose}
         title={activeFormType ? MODALS[activeFormType].title : ''}
+        size="lg"
       >
         {renderForm()}
       </Modal>

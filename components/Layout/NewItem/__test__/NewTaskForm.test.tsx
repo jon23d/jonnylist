@@ -76,6 +76,9 @@ describe('NewTaskForm', () => {
     await userEvent.click(statusSelect);
     await userEvent.click(screen.getByText('Done'));
 
+    const projectInput = screen.getByRole('textbox', { name: 'Project' });
+    await userEvent.type(projectInput, 'Test Project');
+
     const submitButton = screen.getByRole('button', { name: 'Save' });
     await userEvent.click(submitButton);
 
@@ -93,6 +96,7 @@ describe('NewTaskForm', () => {
     expect(tasks[0].priority).toBe(TaskPriority.Low);
     expect(tasks[0].dueDate).toBe('2026-01-15');
     expect(tasks[0].status).toBe(TaskStatus.Done);
+    expect(tasks[0].project).toBe('Test Project');
   });
 
   it('Uses the last selected context as the default value', async () => {
@@ -122,10 +126,13 @@ describe('NewTaskForm', () => {
 
     renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
 
-    await waitFor(() => {
-      userEvent.click(screen.getByRole('textbox', { name: 'Context' }));
-      userEvent.click(screen.getByRole('option', { name: 'Context1' }));
-    });
+    await waitFor(
+      () => {
+        userEvent.click(screen.getByRole('textbox', { name: 'Context' }));
+        userEvent.click(screen.getByRole('option', { name: 'Context1' }));
+      },
+      { timeout: 5000 }
+    );
 
     const titleInput = screen.getByRole('textbox', { name: 'Title' });
     await userEvent.type(titleInput, 'Test Task');

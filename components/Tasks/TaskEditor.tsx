@@ -1,9 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Button, FocusTrap, Select, Stack, TagsInput, TextInput } from '@mantine/core';
+import {
+  Button,
+  FocusTrap,
+  Group,
+  Select,
+  Stack,
+  TagsInput,
+  Textarea,
+  TextInput,
+} from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
 import { useContextRepository, useTaskRepository } from '@/contexts/DataSourceContext';
 import {
+  NewTask,
   Task,
   taskPrioritySelectOptions,
   taskStatusSelectOptions,
@@ -16,13 +26,15 @@ export default function TaskEditor({ task, handleClose }: { task: Task; handleCl
 
   const [contexts, setContexts] = useState<string[]>([]);
 
-  const form = useForm<Partial<Task>>({
+  const form = useForm<NewTask>({
+    // NewTask is a task without metadata
     mode: 'uncontrolled',
     initialValues: {
       context: task.context,
       title: task.title,
       description: task.description,
       tags: task.tags,
+      project: task.project,
       priority: task.priority,
       dueDate: task.dueDate,
       status: task.status,
@@ -72,55 +84,56 @@ export default function TaskEditor({ task, handleClose }: { task: Task; handleCl
   return (
     <form onSubmit={form.onSubmit(handleSave)}>
       <FocusTrap>
-        <Stack>
-          <Select
-            label="Context"
-            placeholder="Select a context"
-            data={contexts.map((context) => ({ value: context, label: context }))}
-            {...form.getInputProps('context')}
-            key="context"
-            withAsterisk
-          />
-          <TextInput
-            label="Title"
-            placeholder="Task title"
-            {...form.getInputProps('title')}
-            withAsterisk
-          />
-          <Select
-            label="Status"
-            placeholder="Select task status"
-            data={taskStatusSelectOptions}
-            {...form.getInputProps('status')}
-            data-autofocus
-            clearable={false}
-            allowDeselect={false}
-            withAsterisk
-          />
-          <TextInput
+        <Stack gap="xs">
+          <TextInput label="Title" {...form.getInputProps('title')} withAsterisk />
+
+          <Textarea
             label="Description"
-            placeholder="Task description"
+            autosize
+            minRows={3}
+            size="xs"
             {...form.getInputProps('description')}
           />
-          <TagsInput label="Tags" {...form.getInputProps('tags')} />
-          <Select
-            label="Priority"
-            placeholder="Select relative priority"
-            clearable
-            data={taskPrioritySelectOptions}
-            {...form.getInputProps('priority')}
-          />
-          <DateInput
-            label="Due Date"
-            placeholder="Select a due date"
-            {...form.getInputProps('dueDate')}
-            clearable
-          />
+
+          <Group justify="space-between" grow>
+            <TagsInput label="Tags" {...form.getInputProps('tags')} size="xs" />
+            <TextInput label="Project" {...form.getInputProps('project')} size="xs" />
+          </Group>
+
+          <Group justify="space-between" grow>
+            <Select
+              label="Priority"
+              clearable
+              data={taskPrioritySelectOptions}
+              {...form.getInputProps('priority')}
+              size="xs"
+            />
+            <DateInput label="Due Date" {...form.getInputProps('dueDate')} clearable size="xs" />
+          </Group>
+
+          <Group justify="space-between" grow>
+            <Select
+              label="Context"
+              data={contexts.map((context) => ({ value: context, label: context }))}
+              {...form.getInputProps('context')}
+              key="context"
+              withAsterisk
+              size="xs"
+            />
+
+            <Select
+              label="Status"
+              data={taskStatusSelectOptions}
+              {...form.getInputProps('status')}
+              data-autofocus
+              clearable={false}
+              allowDeselect={false}
+              withAsterisk
+              size="xs"
+            />
+          </Group>
 
           <Button type="submit">Save</Button>
-          <Button type="button" onClick={handleClose} variant="outline">
-            Cancel
-          </Button>
         </Stack>
       </FocusTrap>
     </form>

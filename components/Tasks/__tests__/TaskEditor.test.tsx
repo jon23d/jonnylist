@@ -100,6 +100,13 @@ describe('TaskEditor', () => {
     await userEvent.click(statusInput);
     await userEvent.click(screen.getByRole('option', { name: 'Started' }));
 
+    const tagsInput = screen.getByRole('textbox', { name: 'Tags' });
+    await userEvent.type(tagsInput, 'tag1{enter}tag2{enter}');
+
+    const projectInput = screen.getByRole('textbox', { name: 'Project' });
+    await userEvent.clear(projectInput);
+    await userEvent.type(projectInput, 'Updated Project');
+
     const saveButton = screen.getByRole('button', { name: /save/i });
     await userEvent.click(saveButton);
 
@@ -113,6 +120,8 @@ describe('TaskEditor', () => {
         priority: TaskPriority.Medium,
         dueDate: '2023-10-15',
         status: TaskStatus.Started,
+        project: 'Updated Project',
+        tags: ['tag1', 'tag2'],
       })
     );
   });

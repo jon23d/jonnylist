@@ -10,6 +10,7 @@ export const taskFactory = (data: Partial<Task> = {}): Task => {
     sortOrder: data.sortOrder || 'g',
     description: data.description || 'This is a sample task description.',
     tags: data.tags || [],
+    project: data.project || 'a project',
     status: data.status || TaskStatus.Ready,
     context: data.context || 'Work',
     priority: data.priority || TaskPriority.Medium,
