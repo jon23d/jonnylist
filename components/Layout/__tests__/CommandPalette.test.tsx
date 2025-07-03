@@ -20,7 +20,9 @@ describe('CommandPalette', () => {
     });
 
     const dataSource = getDataSource();
-    await dataSource.addContext('the circus');
+    const contextRepository = dataSource.getContextRepository();
+
+    await contextRepository.addContext('the circus');
 
     renderWithDataSource(<CommandPalette />, dataSource);
 
@@ -41,7 +43,7 @@ describe('CommandPalette', () => {
 
   it('Adds open tasks to the command palette', async () => {
     const dataSource = getDataSource();
-    await dataSource.addTask(
+    await dataSource.getTaskRepository().addTask(
       taskFactory({
         title: 'Test Task',
         description: 'This is a test task.',

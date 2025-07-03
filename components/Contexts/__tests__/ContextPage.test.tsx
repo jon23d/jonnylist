@@ -1,6 +1,7 @@
 import ContextPage from '@/components/Contexts/ContextPage';
 import { DataSource } from '@/data/DataSource';
 import { TaskStatus } from '@/data/documentTypes/Task';
+import { TaskRepository } from '@/data/TaskRepository';
 import { renderWithDataSource, screen, userEvent, waitFor } from '@/test-utils';
 import { setupTestDatabase } from '@/test-utils/db';
 import { preferencesFactory } from '@/test-utils/factories/PreferencesFactory';
@@ -16,14 +17,17 @@ jest.mock('next/router', () => ({
 describe('ContextPage', () => {
   const { getDataSource } = setupTestDatabase();
   let dataSource: DataSource;
+  let taskRepository: TaskRepository;
+
   let subscribeToTasks: jest.SpyInstance;
   const unsubscribeFunction = jest.fn();
 
   beforeEach(() => {
     dataSource = getDataSource();
+    taskRepository = dataSource.getTaskRepository();
 
     subscribeToTasks = jest
-      .spyOn(dataSource, 'subscribeToTasks')
+      .spyOn(taskRepository, 'subscribeToTasks')
       .mockReturnValue(unsubscribeFunction);
   });
 

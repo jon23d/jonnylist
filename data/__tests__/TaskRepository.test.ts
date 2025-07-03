@@ -1,3 +1,4 @@
+import { waitFor } from '@testing-library/react';
 import { TaskRepository } from '@/data/TaskRepository';
 import { generateKeyBetween, generateNKeysBetween } from '@/helpers/fractionalIndexing';
 import { setupTestDatabase } from '@/test-utils/db';
@@ -61,6 +62,18 @@ describe('DataSource', () => {
     const addedTask = await repository.addTask(newTask);
 
     expect(addedTask.tags).toEqual(['tag1']);
+  });
+
+  test('updateTask should clean tags', async () => {
+    const database = getDb();
+    const repository = new TaskRepository(database);
+
+    const newTask = taskFactory({});
+
+    const task = await repository.addTask(newTask);
+    const updatedTask = await repository.updateTask({ ...task, tags: ['#tag2'] });
+
+    expect(updatedTask.tags).toEqual(['tag2']);
   });
 
   test('updateTask should update an existing task in the database', async () => {
@@ -246,6 +259,44 @@ describe('DataSource', () => {
       const filteredTasks = repository.filterTasksByParams(tasks, {});
 
       expect(filteredTasks).toHaveLength(4);
+    });
+  });
+
+  test('subscribeToTasks should register a task change subscriber', async () => {
+    const taskRepository = new TaskRepository(getDb());
+
+    const subscriber = jest.fn();
+
+    taskRepository.subscribeToTasks({ context: 'context1' }, subscriber);
+
+    // The subscriber should be called with the tasks right away
+    await waitFor(() => {
+      expect(subscriber).toHaveBeenCalled();
+    });
+  });
+
+  test('subscribeToTasks should stop callback when unsubscribe is called', async () => {
+    const taskRepository = new TaskRepository(getDb());
+
+    const subscriber = jest.fn();
+    const subscriber2 = jest.fn();
+
+    const unsubscribe = taskRepository.subscribeToTasks({ context: 'context1' }, subscriber);
+    taskRepository.subscribeToTasks({ context: 'context1' }, subscriber2);
+
+    await waitFor(() => {
+      // The subscriber should be called with the tasks right away
+      expect(subscriber).toHaveBeenCalledWith([]);
+    });
+
+    unsubscribe();
+    subscriber.mockReset();
+
+    await taskRepository.addTask(taskFactory({ context: 'context1' }));
+
+    await waitFor(() => {
+      expect(subscriber).not.toHaveBeenCalled();
+      expect(subscriber2).toHaveBeenCalled();
     });
   });
 });

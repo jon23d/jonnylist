@@ -2,7 +2,11 @@ import { useEffect, useState } from 'react';
 import { Button, FocusTrap, Select, Stack, TagsInput, TextInput } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
-import { useDataSource } from '@/contexts/DataSourceContext';
+import {
+  useContextRepository,
+  useDataSource,
+  useTaskRepository,
+} from '@/contexts/DataSourceContext';
 import {
   NewTask,
   taskPrioritySelectOptions,
@@ -13,6 +17,9 @@ import { Logger } from '@/helpers/Logger';
 
 export default function NewTaskForm({ handleClose }: { handleClose: () => void }) {
   const dataSource = useDataSource();
+  const contextRepository = useContextRepository();
+  const taskRepository = useTaskRepository();
+
   // use to force an update of the contexts dropdown
   const [contextKey, setContextKey] = useState<number>(0);
   const [contexts, setContexts] = useState<string[]>([]);
@@ -38,7 +45,7 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
   useEffect(() => {
     const initialize = async () => {
       const [contexts, preferences] = await Promise.all([
-        dataSource.getContexts(),
+        contextRepository.getContexts(),
         dataSource.getPreferences(),
       ]);
 
@@ -55,7 +62,7 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
         ...form.getValues(),
       };
 
-      await dataSource.addTask(newTask);
+      await taskRepository.addTask(newTask);
 
       form.reset();
 

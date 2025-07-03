@@ -1,14 +1,12 @@
 import { waitFor } from '@testing-library/dom';
 import { DataSource } from '@/data/DataSource';
 import { Preferences } from '@/data/documentTypes/Preferences';
-import { generateKeyBetween, generateNKeysBetween } from '@/helpers/fractionalIndexing';
 import { createTestDataSource, setupTestDatabase } from '@/test-utils/db';
 import { contextFactory } from '@/test-utils/factories/ContextFactory';
 import { localSettingsFactory } from '@/test-utils/factories/LocalSettingsFactory';
 import { preferencesFactory } from '@/test-utils/factories/PreferencesFactory';
 import { taskFactory } from '@/test-utils/factories/TaskFactory';
-import { DocumentTypes } from '../documentTypes';
-import { Task, TaskPriority, TaskStatus } from '../documentTypes/Task';
+import { Task, TaskStatus } from '../documentTypes/Task';
 import { MigrationManager } from '../migrations/MigrationManager';
 
 jest.mock('@/data/documentTypes/Preferences', () => ({
@@ -22,7 +20,9 @@ describe('DataSource', () => {
 
   it('should initialize with an empty database', async () => {
     const dataSource = getDataSource();
-    const contexts = await dataSource.getContexts();
+    const contextRepository = dataSource.getContextRepository();
+
+    const contexts = await contextRepository.getContexts();
     expect(contexts).toEqual([]);
   });
 
@@ -67,6 +67,8 @@ describe('DataSource', () => {
     it('Syncs the database with the sync server', async () => {
       // this is a little more complicated than normal because we need to deal with creating a sync db
       const dataSource = getDataSource();
+      const taskRepository = dataSource.getTaskRepository();
+
       await dataSource.setLocalSettings(
         localSettingsFactory({
           syncServerUrl: 'https://local.local/db',
@@ -81,7 +83,7 @@ describe('DataSource', () => {
       await dataSource.initializeSync();
 
       const newTask = taskFactory();
-      await dataSource.addTask(newTask);
+      await taskRepository.addTask(newTask);
 
       await waitFor(async () => {
         const tasks = await syncDb.allDocs<Task>({
@@ -146,97 +148,6 @@ describe('DataSource', () => {
 
     const updatedPreferences = await dataSource.getPreferences();
     expect(updatedPreferences.lastSelectedContext).toBe('poo-context');
-  });
-
-  test('subscribeToTasks should register a task change subscriber', async () => {
-    const dataSource = getDataSource();
-    const subscriber = jest.fn();
-
-    dataSource.subscribeToTasks({ context: 'context1' }, subscriber);
-
-    // The subscriber should be called with the tasks right away
-    await waitFor(() => {
-      expect(subscriber).toHaveBeenCalled();
-    });
-  });
-
-  test('subscribeToTasks should stop callback when unsubscribe is called', async () => {
-    const dataSource = getDataSource();
-    const subscriber = jest.fn();
-    const subscriber2 = jest.fn();
-
-    const unsubscribe = dataSource.subscribeToTasks({ context: 'context1' }, subscriber);
-    dataSource.subscribeToTasks({ context: 'context1' }, subscriber2);
-
-    await waitFor(() => {
-      // The subscriber should be called with the tasks right away
-      expect(subscriber).toHaveBeenCalledWith([]);
-    });
-
-    unsubscribe();
-    subscriber.mockReset();
-
-    await dataSource.addTask(taskFactory({ context: 'context1' }));
-
-    await waitFor(() => {
-      expect(subscriber).not.toHaveBeenCalled();
-      expect(subscriber2).toHaveBeenCalled();
-    });
-  });
-
-  test('addContext should add a context to the database', async () => {
-    const dataSource = getDataSource();
-    const contextName = 'test-context';
-    await dataSource.addContext(contextName);
-
-    const contexts = await dataSource.getContexts();
-    expect(contexts).toContain(contextName);
-  });
-
-  test('getContexts should return multiple contexts', async () => {
-    const dataSource = getDataSource();
-    const database = getDb();
-
-    await database.bulkDocs([
-      contextFactory({ name: 'context-1' }),
-      contextFactory({ name: 'context-2' }),
-      contextFactory({ name: 'context-3' }),
-    ]);
-
-    const contexts = await dataSource.getContexts();
-    expect(contexts).toEqual(['context-1', 'context-2', 'context-3']);
-  });
-
-  test('getContexts should not filter when includeDeleted is true', async () => {
-    const dataSource = getDataSource();
-    const database = getDb();
-
-    const archivedContext = contextFactory({
-      name: 'deleted-context',
-      deletedAt: new Date(),
-    });
-    const activeContext = contextFactory({ name: 'active-context' });
-
-    await database.bulkDocs([archivedContext, activeContext]);
-
-    const contexts = await dataSource.getContexts(true);
-    expect(contexts).toEqual(expect.arrayContaining(['deleted-context', 'active-context']));
-  });
-
-  test('getContexts should filter archived contexts when includeDeleted is false', async () => {
-    const dataSource = getDataSource();
-    const database = getDb();
-
-    const archivedContext = contextFactory({
-      name: 'deleted-context',
-      deletedAt: new Date(),
-    });
-    const activeContext = contextFactory({ name: 'active-context' });
-
-    await database.bulkDocs([archivedContext, activeContext]);
-
-    const contexts = await dataSource.getContexts();
-    expect(contexts).toEqual(['active-context']);
   });
 
   describe('runMigrations', () => {
@@ -314,99 +225,30 @@ describe('DataSource', () => {
     });
   });
 
-  describe('subscribeToContexts', () => {
-    const { getDataSource } = setupTestDatabase();
-
-    it('Should register a context change subscriber and call getContexts', async () => {
-      const dataSource = getDataSource();
-      const contextName = 'test-context';
-
-      await dataSource.addContext(contextName);
-
-      const subscriber = jest.fn();
-
-      dataSource.subscribeToContexts(subscriber);
-
-      await waitFor(() => {
-        expect(subscriber).toHaveBeenCalledWith([contextName]);
-      });
-    });
-
-    it('Should initialize the context changes feed on first subscriber', async () => {
-      const dataSource = getDataSource();
-
-      const subscriber = jest.fn();
-      const initializeSpy = jest.spyOn(
-        dataSource,
-        'initializeContextChangesFeed' as keyof DataSource
-      );
-
-      dataSource.subscribeToContexts(subscriber);
-
-      expect(initializeSpy).toHaveBeenCalled();
-
-      initializeSpy.mockRestore();
-    });
-
-    it('Should not init the context feed if a subscriber is already registered', async () => {
-      const dataSource = getDataSource();
-
-      const subscriber1 = jest.fn();
-      const subscriber2 = jest.fn();
-      const initializeSpy = jest.spyOn(
-        dataSource,
-        'initializeContextChangesFeed' as keyof DataSource
-      );
-      // First subscription should initialize the feed
-      dataSource.subscribeToContexts(subscriber1);
-      expect(initializeSpy).toHaveBeenCalled();
-      initializeSpy.mockReset();
-
-      // Second subscription should not re-initialize the feed
-      dataSource.subscribeToContexts(subscriber2);
-      expect(initializeSpy).not.toHaveBeenCalled();
-
-      initializeSpy.mockRestore();
-    });
-  });
-
-  it('Should notify subscribers of context changes', async () => {
-    const dataSource = getDataSource();
-    const subscriber = jest.fn();
-
-    dataSource.subscribeToContexts(subscriber);
-
-    await waitFor(() => {
-      expect(subscriber).toHaveBeenCalledWith([]);
-    });
-
-    await dataSource.addContext('a new context');
-
-    await waitFor(() => {
-      expect(subscriber).toHaveBeenCalledWith(['a new context']);
-    });
-  });
-
   describe('archiveContext', () => {
     it('Moves tasks with status of ready, waiting, and started to a new context', async () => {
       const dataSource = getDataSource();
+      const contextRepository = dataSource.getContextRepository();
+      const taskRepository = dataSource.getTaskRepository();
 
       await Promise.all([
-        dataSource.addContext('old-context'),
-        dataSource.addContext('new-context'),
-        dataSource.addTask(taskFactory({ status: TaskStatus.Ready, context: 'old-context' })),
-        dataSource.addTask(taskFactory({ status: TaskStatus.Waiting, context: 'old-context' })),
-        dataSource.addTask(taskFactory({ status: TaskStatus.Started, context: 'old-context' })),
-        dataSource.addTask(taskFactory({ status: TaskStatus.Done, context: 'old-context' })),
-        dataSource.addTask(taskFactory({ status: TaskStatus.Cancelled, context: 'old-context' })),
+        contextRepository.addContext('old-context'),
+        contextRepository.addContext('new-context'),
+        taskRepository.addTask(taskFactory({ status: TaskStatus.Ready, context: 'old-context' })),
+        taskRepository.addTask(taskFactory({ status: TaskStatus.Waiting, context: 'old-context' })),
+        taskRepository.addTask(taskFactory({ status: TaskStatus.Started, context: 'old-context' })),
+        taskRepository.addTask(taskFactory({ status: TaskStatus.Done, context: 'old-context' })),
+        taskRepository.addTask(
+          taskFactory({ status: TaskStatus.Cancelled, context: 'old-context' })
+        ),
       ]);
 
       await dataSource.archiveContext('old-context', 'new-context');
 
-      const newContextTasks = await dataSource.getTasks({
+      const newContextTasks = await taskRepository.getTasks({
         context: 'new-context',
       });
-      const oldContextTasks = await dataSource.getTasks({
+      const oldContextTasks = await taskRepository.getTasks({
         context: 'old-context',
       });
 
@@ -420,13 +262,14 @@ describe('DataSource', () => {
 
     it('Archives the source context', async () => {
       const dataSource = getDataSource();
+      const contextRepository = dataSource.getContextRepository();
 
-      await dataSource.addContext('old-context');
-      await dataSource.addContext('new-context');
+      await contextRepository.addContext('old-context');
+      await contextRepository.addContext('new-context');
 
       await dataSource.archiveContext('old-context', 'new-context');
 
-      const contexts = await dataSource.getContexts();
+      const contexts = await contextRepository.getContexts();
       expect(contexts).toEqual(['new-context']);
     });
   });
@@ -434,11 +277,15 @@ describe('DataSource', () => {
   describe('exportAllData', () => {
     it('should export all documents from the database, except for _local', async () => {
       const dataSource = getDataSource();
+      const contextRepository = dataSource.getContextRepository();
+
+      const taskRepository = dataSource.getTaskRepository();
+
       await Promise.all([
-        dataSource.addContext('a-context'),
+        contextRepository.addContext('a-context'),
         dataSource.setLocalSettings(localSettingsFactory()),
         dataSource.setPreferences(preferencesFactory()),
-        dataSource.addTask(taskFactory({ context: 'a-context' })),
+        taskRepository.addTask(taskFactory({ context: 'a-context' })),
       ]);
 
       const exportedData = await dataSource.exportAllData();
@@ -458,6 +305,9 @@ describe('DataSource', () => {
   describe('importData', () => {
     it('should import data into the database', async () => {
       const dataSource = getDataSource();
+      const taskRepository = dataSource.getTaskRepository();
+      const contextRepository = dataSource.getContextRepository();
+
       const context = contextFactory({ name: 'imported-context', _rev: 'abc-123' });
       const task = taskFactory({ context: 'imported-context' });
       const localSettings = localSettingsFactory({
@@ -469,10 +319,10 @@ describe('DataSource', () => {
 
       await dataSource.importData(importedData);
 
-      const contexts = await dataSource.getContexts();
+      const contexts = await contextRepository.getContexts();
       expect(contexts).toContain('imported-context');
 
-      const tasks = await dataSource.getTasks({ context: 'imported-context' });
+      const tasks = await taskRepository.getTasks({ context: 'imported-context' });
       expect(tasks).toHaveLength(1);
       expect(tasks[0].context).toBe('imported-context');
       expect(tasks[0]._rev).not.toBe('abc-123'); // this should have been replaced

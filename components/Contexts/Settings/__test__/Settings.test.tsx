@@ -58,8 +58,10 @@ describe('Settings', () => {
 
   it('renders both RenameForm and ArchivalForm', async () => {
     const dataSource = getDataSource();
+    const contextRepository = dataSource.getContextRepository();
+
     const contextNames = ['context1', 'context2', 'context3'];
-    await Promise.all(contextNames.map((name) => dataSource.addContext(name)));
+    await Promise.all(contextNames.map((name) => contextRepository.addContext(name)));
 
     renderWithDataSource(<Settings contextName="context1" onClose={onClose} />, dataSource);
 
@@ -72,8 +74,10 @@ describe('Settings', () => {
 
   it('passes correct props to RenameForm', async () => {
     const dataSource = getDataSource();
+    const contextRepository = dataSource.getContextRepository();
+
     const contextNames = ['test-context'];
-    await Promise.all(contextNames.map((name) => dataSource.addContext(name)));
+    await Promise.all(contextNames.map((name) => contextRepository.addContext(name)));
 
     renderWithDataSource(<Settings contextName="test-context" onClose={onClose} />, dataSource);
 
@@ -82,8 +86,10 @@ describe('Settings', () => {
 
   it('fetches contexts and filters out current context for ArchivalForm', async () => {
     const dataSource = getDataSource();
+    const contextRepository = dataSource.getContextRepository();
+
     const contextNames = ['context1', 'context2', 'context3'];
-    await Promise.all(contextNames.map((name) => dataSource.addContext(name)));
+    await Promise.all(contextNames.map((name) => contextRepository.addContext(name)));
 
     renderWithDataSource(<Settings contextName="context2" onClose={onClose} />, dataSource);
 

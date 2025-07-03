@@ -5,12 +5,13 @@ import { Modal } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { Spotlight, SpotlightActionData, SpotlightActionGroupData } from '@mantine/spotlight';
 import TaskEditor from '@/components/Tasks/TaskEditor';
-import { useDataSource } from '@/contexts/DataSourceContext';
+import { useContextRepository, useTaskRepository } from '@/contexts/DataSourceContext';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
 
 export default function CommandPalette() {
   const router = useRouter();
-  const dataSource = useDataSource();
+  const contextRepository = useContextRepository();
+  const taskRepository = useTaskRepository();
   const [contexts, setContexts] = useState<string[]>([]);
   const [openTasks, setOpenTasks] = useState<Task[]>([]);
   const [taskOpened, { open, close }] = useDisclosure(false);
@@ -71,16 +72,16 @@ export default function CommandPalette() {
 
   // Subscribe to contexts
   useEffect(() => {
-    const unsubscribe = dataSource.subscribeToContexts(setContexts);
+    const unsubscribe = contextRepository.subscribeToContexts(setContexts);
 
     return () => {
       unsubscribe();
     };
-  }, [dataSource]);
+  }, []);
 
   // Subscribe to open tasks
   useEffect(() => {
-    const unsubscribe = dataSource.subscribeToTasks(
+    const unsubscribe = taskRepository.subscribeToTasks(
       {
         statuses: [TaskStatus.Started, TaskStatus.Waiting, TaskStatus.Ready],
       },
@@ -90,7 +91,7 @@ export default function CommandPalette() {
     return () => {
       unsubscribe();
     };
-  }, [dataSource]);
+  }, []);
 
   return (
     <>

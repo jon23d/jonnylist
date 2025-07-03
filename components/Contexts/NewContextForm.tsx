@@ -1,9 +1,9 @@
 import { Button, FocusTrap, Stack, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { useDataSource } from '@/contexts/DataSourceContext';
+import { useContextRepository } from '@/contexts/DataSourceContext';
 
 export default function NewContextForm({ onClose }: { onClose: () => void }) {
-  const dataSource = useDataSource();
+  const contextRepository = useContextRepository();
 
   const form = useForm<{
     newContextName: string;
@@ -22,7 +22,7 @@ export default function NewContextForm({ onClose }: { onClose: () => void }) {
 
   const handleSave = async () => {
     const newContextName = form.getTransformedValues().newContextName;
-    await dataSource.addContext(newContextName);
+    await contextRepository.addContext(newContextName);
     onClose();
   };
 

@@ -1,5 +1,6 @@
 import PouchDB from 'pouchdb';
 import { DocumentTypes } from '@/data/documentTypes';
+import { Repository } from '@/data/Repository';
 import { generateKeyBetween } from '@/helpers/fractionalIndexing';
 import { Logger } from '@/helpers/Logger';
 import { NewTask, sortedTasks, Task, TaskStatus } from './documentTypes/Task';
@@ -9,11 +10,30 @@ export type getTasksParams = {
   statuses?: TaskStatus[];
 };
 
-export class TaskRepository {
+type TaskSubscriberWithFilterParams = {
+  params: getTasksParams;
+  callback: TaskSubscriber;
+};
+
+export type UnsubscribeFunction = () => void;
+export type TaskSubscriber = (tasks: Task[]) => void;
+
+export class TaskRepository implements Repository {
   protected db: PouchDB.Database<DocumentTypes>;
+  private taskChangeSubscribers = new Set<TaskSubscriberWithFilterParams>();
+  private taskChangesFeed?: PouchDB.Core.Changes<Task>;
 
   constructor(database: PouchDB.Database<DocumentTypes>) {
     this.db = database;
+  }
+
+  async cleanup(): Promise<void> {
+    if (this.taskChangesFeed) {
+      this.taskChangesFeed.cancel();
+      this.taskChangesFeed = undefined;
+    }
+
+    this.taskChangeSubscribers.clear();
   }
 
   /**
@@ -68,13 +88,16 @@ export class TaskRepository {
   async updateTask(task: Task): Promise<Task> {
     Logger.info('Updating task');
 
-    // Update the updatedAt timestamp
-    task.updatedAt = new Date();
+    const updatedTask = {
+      ...task,
+      updatedAt: new Date(),
+      tags: task.tags?.map((tag) => this.cleanTag(tag)),
+    };
 
     let response;
 
     try {
-      response = await this.db.put(task);
+      response = await this.db.put(updatedTask);
       Logger.info('Updated task');
     } catch (error) {
       Logger.error('Error updating task:', error);
@@ -82,7 +105,7 @@ export class TaskRepository {
     }
 
     if (response.ok) {
-      return task;
+      return updatedTask;
     }
 
     throw new Error('Failed to update task');
@@ -169,11 +192,117 @@ export class TaskRepository {
     });
   }
 
+  /**
+   * Clean a tag by removing leading/trailing whitespace or leading # character.
+   *
+   * @param tag
+   */
   cleanTag(tag: string): string {
     // Remove leading/trailing whitespace and convert to lowercase
     const newTag = tag.trim();
 
     // Strip and preceding #
     return newTag.startsWith('#') ? newTag.slice(1) : newTag;
+  }
+
+  /**
+   * Subscribe to changes in tasks based on the provided parameters.
+   * This will set up a live changes feed that listens for updates to tasks matching the
+   * provided parameters and invokes the callback with the updated tasks whenever a change occurs.
+   *
+   * The return function should be used to unsubscribe from the changes feed when no longer needed
+   * or when the component using this is unmounted.
+   *
+   * @param params
+   * @param callback
+   *
+   * @return A function to unsubscribe from the changes feed.
+   */
+  subscribeToTasks(params: getTasksParams, callback: (tasks: Task[]) => void): UnsubscribeFunction {
+    // Register the callback so that we can notify it of changes
+    this.taskChangeSubscribers.add({ callback, params });
+
+    // Set up the PouchDB changes feed if this is the first subscriber
+    if (this.taskChangeSubscribers.size === 1) {
+      this.initializeTaskChangesFeed();
+    }
+
+    // Provide the initial tasks to the callback
+    this.getTasks(params)
+      .then((tasks) => callback(tasks))
+      .catch((error) => {
+        Logger.error('Error fetching initial tasks for watcher:', error);
+      });
+
+    // Return an unsubscribe function
+    return () => this.removeTaskSubscriber({ callback, params });
+  }
+
+  /**
+   * Initialize the PouchDB changes feed to listen for changes to task documents.
+   *
+   * @private
+   */
+  private initializeTaskChangesFeed(): void {
+    Logger.info('Initializing PouchDB changes feed for tasks');
+    this.taskChangesFeed = this.db
+      .changes<Task>({
+        live: true,
+        since: 'now',
+      })
+      .on('change', async (change) => {
+        if (change.id.startsWith('task-')) {
+          try {
+            // This is probably pretty inefficient. We should only fetch
+            // The tasks that have actually changed
+            // TODO: Deal with this before it gets out of hand
+            const updatedTasks = await this.getTasks({});
+            this.notifyTaskSubscribers(updatedTasks);
+          } catch (error) {
+            // TODO
+            Logger.error('Error fetching updated tasks after change:', error);
+          }
+        }
+      })
+      .on('error', (err) => {
+        // TODO
+        Logger.error('Error in PouchDB changes feed for tasks:', err);
+      });
+  }
+
+  /**
+   * Remove a task subscriber and cancel the changes feed if there are no more subscribers.
+   *
+   * @param subscriber
+   * @private
+   */
+  private removeTaskSubscriber(subscriber: TaskSubscriberWithFilterParams): void {
+    Logger.info('Removing task change subscriber');
+    this.taskChangeSubscribers.delete(subscriber);
+
+    if (this.taskChangeSubscribers.size === 0 && this.taskChangesFeed) {
+      Logger.info('No more task subscribers, cancelling changes feed');
+      this.taskChangesFeed.cancel();
+      this.taskChangesFeed = undefined;
+    }
+  }
+
+  /**
+   * Notify all subscribers of task changes.
+   *
+   * @param tasks
+   * @private
+   */
+  private notifyTaskSubscribers(tasks: Task[]): void {
+    Logger.info('Notifying task change subscribers');
+    this.taskChangeSubscribers.forEach((taskSubscriber: TaskSubscriberWithFilterParams) => {
+      try {
+        const tasksToNotify = this.filterTasksByParams(tasks, taskSubscriber.params);
+        taskSubscriber.callback(tasksToNotify);
+      } catch (error) {
+        // TODO
+        Logger.error('Error notifying task change subscriber:', error);
+      }
+    });
   }
 }

@@ -9,8 +9,10 @@ describe('NewTaskForm', () => {
 
   it('Renders the context select with available contexts', async () => {
     const dataSource = getDataSource();
-    await dataSource.addContext('Context1');
-    await dataSource.addContext('Context2');
+    const contextRepository = dataSource.getContextRepository();
+
+    await contextRepository.addContext('Context1');
+    await contextRepository.addContext('Context2');
 
     renderWithDataSource(<NewTaskForm handleClose={() => {}} />, dataSource);
 
@@ -39,8 +41,11 @@ describe('NewTaskForm', () => {
   it('Saves a new task when the form is submitted', async () => {
     const handleClose = jest.fn();
     const dataSource = getDataSource();
-    await dataSource.addContext('Context1');
-    await dataSource.addContext('Context2');
+    const taskRepository = dataSource.getTaskRepository();
+    const contextRepository = dataSource.getContextRepository();
+
+    await contextRepository.addContext('Context1');
+    await contextRepository.addContext('Context2');
 
     renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
 
@@ -78,7 +83,7 @@ describe('NewTaskForm', () => {
       expect(handleClose).toHaveBeenCalled();
     });
 
-    const tasks = await dataSource.getTasks({
+    const tasks = await taskRepository.getTasks({
       statuses: [TaskStatus.Done],
     });
     expect(tasks).toHaveLength(1);
@@ -92,7 +97,9 @@ describe('NewTaskForm', () => {
 
   it('Uses the last selected context as the default value', async () => {
     const dataSource = getDataSource();
-    await dataSource.addContext('Context2');
+    const contextRepository = dataSource.getContextRepository();
+
+    await contextRepository.addContext('Context2');
     await dataSource.setPreferences({
       _id: 'preferences',
       type: 'preferences',
@@ -109,13 +116,15 @@ describe('NewTaskForm', () => {
   it('Blurs the active element when the form is submitted', async () => {
     const handleClose = jest.fn();
     const dataSource = getDataSource();
-    await dataSource.addContext('Context1');
+    const contextRepository = dataSource.getContextRepository();
+
+    await contextRepository.addContext('Context1');
 
     renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
 
-    await waitFor(async () => {
-      await userEvent.click(screen.getByRole('textbox', { name: 'Context' }));
-      await userEvent.click(screen.getByRole('option', { name: 'Context1' }));
+    await waitFor(() => {
+      userEvent.click(screen.getByRole('textbox', { name: 'Context' }));
+      userEvent.click(screen.getByRole('option', { name: 'Context1' }));
     });
 
     const titleInput = screen.getByRole('textbox', { name: 'Title' });
