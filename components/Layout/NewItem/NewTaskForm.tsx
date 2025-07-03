@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import {
   Button,
   FocusTrap,
@@ -11,11 +10,7 @@ import {
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
-import {
-  useContextRepository,
-  useDataSource,
-  useTaskRepository,
-} from '@/contexts/DataSourceContext';
+import { useTaskRepository } from '@/contexts/DataSourceContext';
 import {
   NewTask,
   taskPrioritySelectOptions,
@@ -25,18 +20,11 @@ import {
 import { Logger } from '@/helpers/Logger';
 
 export default function NewTaskForm({ handleClose }: { handleClose: () => void }) {
-  const dataSource = useDataSource();
-  const contextRepository = useContextRepository();
   const taskRepository = useTaskRepository();
-
-  // use to force an update of the contexts dropdown
-  const [contextKey, setContextKey] = useState<number>(0);
-  const [contexts, setContexts] = useState<string[]>([]);
 
   const form = useForm<NewTask>({
     mode: 'uncontrolled',
     initialValues: {
-      context: '',
       title: '',
       description: '',
       tags: [],
@@ -47,24 +35,9 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
     },
     validate: {
       title: (value) => (value ? null : 'Title is required'),
-      context: (value) => (value ? null : 'Context is required'),
       status: (value) => (value ? null : 'Status is required'),
     },
   });
-
-  useEffect(() => {
-    const initialize = async () => {
-      const [contexts, preferences] = await Promise.all([
-        contextRepository.getContexts(),
-        dataSource.getPreferences(),
-      ]);
-
-      setContexts(contexts);
-      form.setFieldValue('context', preferences.lastSelectedContext);
-      setContextKey((prev) => prev + 1);
-    };
-    initialize();
-  }, []);
 
   const handleSave = async () => {
     try {
@@ -118,14 +91,6 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
           </Group>
 
           <Group justify="space-between" grow>
-            <Select
-              label="Context"
-              data={contexts}
-              {...form.getInputProps('context')}
-              key={`context-${contextKey}`} // Force re-render when contexts change
-              withAsterisk
-              size="xs"
-            />
             <Select
               label="Status"
               data={taskStatusSelectOptions}

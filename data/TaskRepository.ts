@@ -5,7 +5,6 @@ import { Logger } from '@/helpers/Logger';
 import { NewTask, Task, TaskStatus } from './documentTypes/Task';
 
 export type getTasksParams = {
-  context?: string;
   statuses?: TaskStatus[];
 };
 
@@ -167,9 +166,6 @@ export class TaskRepository implements Repository {
    */
   filterTasksByParams(tasks: Task[], params: getTasksParams): Task[] {
     return tasks.filter((task) => {
-      if (params.context && task.context !== params.context) {
-        return false;
-      }
       return !(params.statuses && !params.statuses.includes(task.status));
     });
   }

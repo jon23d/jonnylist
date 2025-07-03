@@ -11,7 +11,6 @@ export const taskFactory = (data: Partial<Task> = {}): Task => {
     tags: data.tags || [],
     project: data.project || 'a project',
     status: data.status || TaskStatus.Ready,
-    context: data.context || 'Work',
     priority: data.priority || TaskPriority.Medium,
     dueDate: data.dueDate || undefined,
     createdAt: data.createdAt || new Date(),

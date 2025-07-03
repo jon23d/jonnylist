@@ -5,7 +5,7 @@ import { taskFactory } from '@/test-utils/factories/TaskFactory';
 import { DocumentTypes } from '../documentTypes';
 import { Task, TaskPriority, TaskStatus } from '../documentTypes/Task';
 
-describe('DataSource', () => {
+describe('TaskRepository', () => {
   const { getDb } = setupTestDatabase();
 
   test('addTask should add a task to the database', async () => {
@@ -24,7 +24,6 @@ describe('DataSource', () => {
 
     const returnedTask = tasks.rows[0].doc as Task;
 
-    expect(returnedTask.context).toEqual(task.context);
     expect(returnedTask._id.startsWith('task-')).toBe(true);
     expect(returnedTask.priority).toBe(TaskPriority.High);
     expect(returnedTask.project).toBe('a project');
@@ -33,16 +32,14 @@ describe('DataSource', () => {
   test('addTask should append the _rev to the task', async () => {
     const database = getDb();
     const repository = new TaskRepository(database);
-    const task = taskFactory({
-      context: 'context1',
-    });
+    const task = taskFactory({});
 
     const addedTask = await repository.addTask(task);
 
     expect(addedTask._rev).toBeDefined();
     expect(addedTask._id.startsWith('task-')).toBe(true);
 
-    const tasks = await repository.getTasks({ context: 'context1' });
+    const tasks = await repository.getTasks({});
     expect(tasks).toHaveLength(1);
     expect(tasks[0]._rev).toBe(addedTask._rev);
   });
@@ -52,7 +49,6 @@ describe('DataSource', () => {
     const repository = new TaskRepository(database);
 
     const newTask = taskFactory({
-      context: 'context1',
       tags: ['#tag1'], // no # allowed at start of string
     });
 
@@ -77,7 +73,6 @@ describe('DataSource', () => {
     const database = getDb();
     const repository = new TaskRepository(database);
     const newTask = taskFactory({
-      context: 'context1',
       project: 'world domination',
     });
 
@@ -86,7 +81,7 @@ describe('DataSource', () => {
 
     await repository.updateTask({ ...task, project: 'county domination' });
 
-    const tasks = await repository.getTasks({ context: 'context1' });
+    const tasks = await repository.getTasks({});
     expect(tasks).toHaveLength(1);
     expect(tasks[0].project).toBe('county domination');
     expect(tasks[0].updatedAt.getTime()).toBeGreaterThanOrEqual(timeAfterUpdate.getTime());
@@ -139,14 +134,13 @@ describe('DataSource', () => {
     const database = getDb();
     const repository = new TaskRepository(database);
 
-    const task1 = taskFactory({ context: 'context1' });
+    const task1 = taskFactory({});
 
     await repository.addTask(task1);
 
     const filterMock = jest.spyOn(repository, 'filterTasksByParams').mockReturnValue([]);
 
     const tasks = await repository.getTasks({
-      context: 'context1',
       statuses: [],
     });
 
@@ -155,34 +149,31 @@ describe('DataSource', () => {
       expect.arrayContaining([
         expect.objectContaining({
           type: 'task',
-          context: 'context1',
         }),
       ]),
       {
-        context: 'context1',
         statuses: [],
       }
     );
   });
 
   describe('filterTasksByParams', () => {
-    it('Should filter tasks by context and statuses', () => {
+    it('Should filter tasks statuses', () => {
       const database = getDb();
       const repository = new TaskRepository(database);
 
       const tasks: Task[] = [
-        taskFactory({ context: 'context1', status: TaskStatus.Ready }),
-        taskFactory({ context: 'context1', status: TaskStatus.Started }),
-        taskFactory({ context: 'context2', status: TaskStatus.Waiting }),
-        taskFactory({ context: 'context2', status: TaskStatus.Done }),
+        taskFactory({ status: TaskStatus.Ready }),
+        taskFactory({ status: TaskStatus.Started }),
+        taskFactory({ status: TaskStatus.Waiting }),
+        taskFactory({ status: TaskStatus.Done }),
       ];
 
       const filteredTasks = repository.filterTasksByParams(tasks, {
-        context: 'context1',
         statuses: [TaskStatus.Started, TaskStatus.Waiting],
       });
 
-      expect(filteredTasks).toHaveLength(1);
+      expect(filteredTasks).toHaveLength(2);
       expect(filteredTasks[0].status).toBe(TaskStatus.Started);
     });
 
@@ -240,7 +231,7 @@ describe('DataSource', () => {
 
     const subscriber = jest.fn();
 
-    taskRepository.subscribeToTasks({ context: 'context1' }, subscriber);
+    taskRepository.subscribeToTasks({}, subscriber);
 
     // The subscriber should be called with the tasks right away
     await waitFor(() => {
@@ -254,8 +245,8 @@ describe('DataSource', () => {
     const subscriber = jest.fn();
     const subscriber2 = jest.fn();
 
-    const unsubscribe = taskRepository.subscribeToTasks({ context: 'context1' }, subscriber);
-    taskRepository.subscribeToTasks({ context: 'context1' }, subscriber2);
+    const unsubscribe = taskRepository.subscribeToTasks({}, subscriber);
+    taskRepository.subscribeToTasks({}, subscriber2);
 
     await waitFor(() => {
       // The subscriber should be called with the tasks right away
@@ -265,7 +256,7 @@ describe('DataSource', () => {
     unsubscribe();
     subscriber.mockReset();
 
-    await taskRepository.addTask(taskFactory({ context: 'context1' }));
+    await taskRepository.addTask(taskFactory({}));
 
     await waitFor(() => {
       expect(subscriber).not.toHaveBeenCalled();

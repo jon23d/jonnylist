@@ -1,18 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/router';
-import { IconManualGearboxFilled, IconSearch, IconSettings } from '@tabler/icons-react';
+import { IconSearch } from '@tabler/icons-react';
 import { Modal } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { Spotlight, SpotlightActionData, SpotlightActionGroupData } from '@mantine/spotlight';
 import TaskEditor from '@/components/Tasks/TaskEditor';
-import { useContextRepository, useTaskRepository } from '@/contexts/DataSourceContext';
+import { useTaskRepository } from '@/contexts/DataSourceContext';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
 
 export default function CommandPalette() {
-  const router = useRouter();
-  const contextRepository = useContextRepository();
   const taskRepository = useTaskRepository();
-  const [contexts, setContexts] = useState<string[]>([]);
   const [openTasks, setOpenTasks] = useState<Task[]>([]);
   const [taskOpened, { open, close }] = useDisclosure(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -23,31 +19,7 @@ export default function CommandPalette() {
   };
 
   const actions = useMemo(() => {
-    const actionsArray: (SpotlightActionGroupData | SpotlightActionData)[] = [
-      {
-        id: 'settings',
-        label: 'Settings',
-        description: 'Open settings',
-        onClick: () => router.push('/settings'),
-        leftSection: <IconSettings size={24} stroke={1.5} />,
-      },
-    ];
-
-    // Contexts actions
-    const contextActions = contexts.map((context) => ({
-      id: `context-${context}`,
-      label: context,
-      description: `View context: ${context}`,
-      onClick: () => router.push(`/contexts/view?name=${context}`),
-      leftSection: <IconManualGearboxFilled size={24} stroke={1.5} />,
-    }));
-
-    if (contextActions.length > 0) {
-      actionsArray.push({
-        group: `Contexts`,
-        actions: contextActions,
-      });
-    }
+    const actionsArray: (SpotlightActionGroupData | SpotlightActionData)[] = [];
 
     // Open tasks actions
     const openTaskActions = openTasks.map((task) => ({
@@ -68,16 +40,7 @@ export default function CommandPalette() {
     }
 
     return actionsArray;
-  }, [contexts, openTasks]);
-
-  // Subscribe to contexts
-  useEffect(() => {
-    const unsubscribe = contextRepository.subscribeToContexts(setContexts);
-
-    return () => {
-      unsubscribe();
-    };
-  }, []);
+  }, [openTasks]);
 
   // Subscribe to open tasks
   useEffect(() => {

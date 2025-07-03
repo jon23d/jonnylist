@@ -1,22 +1,17 @@
 import TaskEditor from '@/components/Tasks/TaskEditor';
 import { TaskPriority, TaskStatus } from '@/data/documentTypes/Task';
-import { renderWithDataSource, screen, userEvent, waitFor } from '@/test-utils';
+import { renderWithDataSource, screen, userEvent } from '@/test-utils';
 import { setupTestDatabase } from '@/test-utils/db';
 import { taskFactory } from '@/test-utils/factories/TaskFactory';
 
 const updateTaskMock = jest.fn();
-const getContextsMock = jest.fn().mockResolvedValue(['context1', 'context2']);
 
-const mockContextRepository = {
-  getContexts: getContextsMock,
-};
 const mockTaskRepository = {
   updateTask: updateTaskMock,
 };
 jest.mock('@/contexts/DataSourceContext', () => ({
   ...jest.requireActual('@/contexts/DataSourceContext'),
   useTaskRepository: () => mockTaskRepository,
-  useContextRepository: () => mockContextRepository,
 }));
 
 describe('TaskEditor', () => {
@@ -27,19 +22,12 @@ describe('TaskEditor', () => {
 
     const task = taskFactory({
       status: TaskStatus.Ready,
-      context: 'context1',
+
       dueDate: '2023-08-30',
       priority: TaskPriority.High,
     });
 
     renderWithDataSource(<TaskEditor task={task} handleClose={() => {}} />, dataSource);
-
-    // We must wait for the contexts to be fetched before we can check the form
-    await waitFor(() => {
-      const contextInput = screen.getByRole('textbox', { name: 'Context' });
-      expect(contextInput).toBeInTheDocument();
-      expect(contextInput).toHaveValue(task.context);
-    });
 
     const titleInput = screen.getByRole('textbox', { name: 'Title' });
     expect(titleInput).toBeInTheDocument();
@@ -62,24 +50,10 @@ describe('TaskEditor', () => {
     expect(statusInput).toHaveValue('Ready');
   });
 
-  it('fetches contexts and populates the Context select input', async () => {
-    const dataSource = getDataSource();
-    const task = taskFactory(); // Context value doesn't matter for this test
-    renderWithDataSource(<TaskEditor task={task} handleClose={() => {}} />, dataSource);
-
-    // Assert that getContexts was called when the component mounted
-    expect(getContextsMock).toHaveBeenCalledTimes(1);
-  });
-
   it('Saves the task when the form is submitted', async () => {
     const task = taskFactory();
     const dataSource = getDataSource();
     renderWithDataSource(<TaskEditor task={task} handleClose={() => {}} />, dataSource);
-
-    // Wait for contexts to be fetched
-    await waitFor(() => {
-      expect(screen.getByRole('textbox', { name: 'Context' })).toBeInTheDocument();
-    });
 
     const titleInput = screen.getByRole('textbox', { name: 'Title' });
     await userEvent.clear(titleInput);
@@ -114,7 +88,6 @@ describe('TaskEditor', () => {
     expect(updateTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({
         _id: task._id,
-        context: task.context,
         title: 'Updated Task Title',
         description: 'Updated Task Description',
         priority: TaskPriority.Medium,
@@ -130,11 +103,6 @@ describe('TaskEditor', () => {
     const task = taskFactory();
     const dataSource = getDataSource();
     renderWithDataSource(<TaskEditor task={task} handleClose={() => {}} />, dataSource);
-
-    // Wait for contexts to be fetched
-    await waitFor(() => {
-      expect(screen.getByRole('textbox', { name: 'Context' })).toBeInTheDocument();
-    });
 
     const saveButton = screen.getByRole('button', { name: /save/i });
     await userEvent.click(saveButton);

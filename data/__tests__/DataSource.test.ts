@@ -2,11 +2,10 @@ import { waitFor } from '@testing-library/dom';
 import { DataSource } from '@/data/DataSource';
 import { Preferences } from '@/data/documentTypes/Preferences';
 import { createTestDataSource, setupTestDatabase } from '@/test-utils/db';
-import { contextFactory } from '@/test-utils/factories/ContextFactory';
 import { localSettingsFactory } from '@/test-utils/factories/LocalSettingsFactory';
 import { preferencesFactory } from '@/test-utils/factories/PreferencesFactory';
 import { taskFactory } from '@/test-utils/factories/TaskFactory';
-import { Task, TaskStatus } from '../documentTypes/Task';
+import { Task } from '../documentTypes/Task';
 import { MigrationManager } from '../migrations/MigrationManager';
 
 jest.mock('@/data/documentTypes/Preferences', () => ({
@@ -20,10 +19,10 @@ describe('DataSource', () => {
 
   it('should initialize with an empty database', async () => {
     const dataSource = getDataSource();
-    const contextRepository = dataSource.getContextRepository();
+    const taskRepository = dataSource.getTaskRepository();
 
-    const contexts = await contextRepository.getContexts();
-    expect(contexts).toEqual([]);
+    const tasks = await taskRepository.getTasks({});
+    expect(tasks).toEqual([]);
   });
 
   describe('initializeSync', () => {
@@ -225,77 +224,23 @@ describe('DataSource', () => {
     });
   });
 
-  describe('archiveContext', () => {
-    it('Moves tasks with status of ready, waiting, and started to a new context', async () => {
-      const dataSource = getDataSource();
-      const contextRepository = dataSource.getContextRepository();
-      const taskRepository = dataSource.getTaskRepository();
-
-      await Promise.all([
-        contextRepository.addContext('old-context'),
-        contextRepository.addContext('new-context'),
-        taskRepository.addTask(taskFactory({ status: TaskStatus.Ready, context: 'old-context' })),
-        taskRepository.addTask(taskFactory({ status: TaskStatus.Waiting, context: 'old-context' })),
-        taskRepository.addTask(taskFactory({ status: TaskStatus.Started, context: 'old-context' })),
-        taskRepository.addTask(taskFactory({ status: TaskStatus.Done, context: 'old-context' })),
-        taskRepository.addTask(
-          taskFactory({ status: TaskStatus.Cancelled, context: 'old-context' })
-        ),
-      ]);
-
-      await dataSource.archiveContext('old-context', 'new-context');
-
-      const newContextTasks = await taskRepository.getTasks({
-        context: 'new-context',
-      });
-      const oldContextTasks = await taskRepository.getTasks({
-        context: 'old-context',
-      });
-
-      expect(newContextTasks.map((t) => t.status)).toEqual(
-        expect.arrayContaining([TaskStatus.Ready, TaskStatus.Waiting, TaskStatus.Started])
-      );
-      expect(oldContextTasks.map((t) => t.status)).toEqual(
-        expect.arrayContaining([TaskStatus.Done, TaskStatus.Cancelled])
-      );
-    });
-
-    it('Archives the source context', async () => {
-      const dataSource = getDataSource();
-      const contextRepository = dataSource.getContextRepository();
-
-      await contextRepository.addContext('old-context');
-      await contextRepository.addContext('new-context');
-
-      await dataSource.archiveContext('old-context', 'new-context');
-
-      const contexts = await contextRepository.getContexts();
-      expect(contexts).toEqual(['new-context']);
-    });
-  });
-
   describe('exportAllData', () => {
     it('should export all documents from the database, except for _local', async () => {
       const dataSource = getDataSource();
-      const contextRepository = dataSource.getContextRepository();
-
       const taskRepository = dataSource.getTaskRepository();
 
       await Promise.all([
-        contextRepository.addContext('a-context'),
         dataSource.setLocalSettings(localSettingsFactory()),
         dataSource.setPreferences(preferencesFactory()),
-        taskRepository.addTask(taskFactory({ context: 'a-context' })),
+        taskRepository.addTask(taskFactory({})),
       ]);
 
       const exportedData = await dataSource.exportAllData();
 
-      const exportedContext = exportedData.find((doc) => doc._id === 'context-a-context');
       const exportedLocalSettings = exportedData.find((doc) => doc._id === 'local-settings');
       const exportedPreferences = exportedData.find((doc) => doc._id === 'preferences');
       const exportedTask = exportedData.find((doc) => doc._id.startsWith('task-'));
 
-      expect(exportedContext).toBeDefined();
       expect(exportedLocalSettings).not.toBeDefined();
       expect(exportedPreferences).toBeDefined();
       expect(exportedTask).toBeDefined();
@@ -306,25 +251,18 @@ describe('DataSource', () => {
     it('should import data into the database', async () => {
       const dataSource = getDataSource();
       const taskRepository = dataSource.getTaskRepository();
-      const contextRepository = dataSource.getContextRepository();
-
-      const context = contextFactory({ name: 'imported-context', _rev: 'abc-123' });
-      const task = taskFactory({ context: 'imported-context' });
+      const task = taskFactory();
       const localSettings = localSettingsFactory({
         syncServerUrl: 'https://imported.local/db',
         syncServerAccessToken: 'foof',
       });
 
-      const importedData = [context, task, localSettings];
+      const importedData = [task, localSettings];
 
       await dataSource.importData(importedData);
 
-      const contexts = await contextRepository.getContexts();
-      expect(contexts).toContain('imported-context');
-
-      const tasks = await taskRepository.getTasks({ context: 'imported-context' });
+      const tasks = await taskRepository.getTasks({});
       expect(tasks).toHaveLength(1);
-      expect(tasks[0].context).toBe('imported-context');
       expect(tasks[0]._rev).not.toBe('abc-123'); // this should have been replaced
 
       const settings = await dataSource.getLocalSettings();

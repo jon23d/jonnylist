@@ -7,27 +7,6 @@ import NewTaskForm from '../NewTaskForm';
 describe('NewTaskForm', () => {
   const { getDataSource } = setupTestDatabase();
 
-  it('Renders the context select with available contexts', async () => {
-    const dataSource = getDataSource();
-    const contextRepository = dataSource.getContextRepository();
-
-    await contextRepository.addContext('Context1');
-    await contextRepository.addContext('Context2');
-
-    renderWithDataSource(<NewTaskForm handleClose={() => {}} />, dataSource);
-
-    // Wait for the component to load contexts
-    const contextSelect = screen.getByRole('textbox', { name: 'Context' });
-    await userEvent.click(contextSelect);
-
-    // Mantine Select options appear as text elements, not role="option"
-    await waitFor(() => {
-      expect(screen.getByText('Context1')).toBeInTheDocument();
-    });
-
-    expect(screen.getByText('Context2')).toBeInTheDocument();
-  });
-
   it('Renders the status select with task status options', async () => {
     renderWithDataSource(<NewTaskForm handleClose={() => {}} />, getDataSource());
 
@@ -42,19 +21,8 @@ describe('NewTaskForm', () => {
     const handleClose = jest.fn();
     const dataSource = getDataSource();
     const taskRepository = dataSource.getTaskRepository();
-    const contextRepository = dataSource.getContextRepository();
-
-    await contextRepository.addContext('Context1');
-    await contextRepository.addContext('Context2');
 
     renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
-
-    const contextSelect = screen.getByRole('textbox', { name: 'Context' });
-    await userEvent.click(contextSelect);
-
-    await waitFor(() => {
-      userEvent.click(screen.getByText('Context2'));
-    });
 
     const titleInput = screen.getByRole('textbox', { name: 'Title' });
     await userEvent.type(titleInput, 'Test Task');
@@ -99,24 +67,6 @@ describe('NewTaskForm', () => {
     expect(tasks[0].project).toBe('Test Project');
   });
 
-  it('Uses the last selected context as the default value', async () => {
-    const dataSource = getDataSource();
-    const contextRepository = dataSource.getContextRepository();
-
-    await contextRepository.addContext('Context2');
-    await dataSource.setPreferences({
-      _id: 'preferences',
-      type: 'preferences',
-      lastSelectedContext: 'Context2',
-    });
-
-    renderWithDataSource(<NewTaskForm handleClose={() => {}} />, dataSource);
-
-    await waitFor(() => {
-      expect(screen.getByRole('textbox', { name: 'Context' })).toHaveDisplayValue('Context2');
-    });
-  });
-
   it('Blurs the active element when the form is submitted', async () => {
     const handleClose = jest.fn();
     const dataSource = getDataSource();
@@ -125,14 +75,6 @@ describe('NewTaskForm', () => {
     await contextRepository.addContext('Context1');
 
     renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
-
-    await waitFor(
-      () => {
-        userEvent.click(screen.getByRole('textbox', { name: 'Context' }));
-        userEvent.click(screen.getByRole('option', { name: 'Context1' }));
-      },
-      { timeout: 5000 }
-    );
 
     const titleInput = screen.getByRole('textbox', { name: 'Title' });
     await userEvent.type(titleInput, 'Test Task');

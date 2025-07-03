@@ -1,25 +1,11 @@
-import { lazy, Suspense } from 'react';
-import { IconSettings } from '@tabler/icons-react';
-import { Flex, Modal, Paper, Table, Title, Tooltip } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
-
-const LazyModal = lazy(() => import('./Settings/Settings'));
+import { Flex, Paper, Table, Title } from '@mantine/core';
 
 export default function ContextSummaryCard({ contextName }: { contextName: string }) {
-  const [opened, { open, close }] = useDisclosure(false);
-
-  const handleClickSettings = () => {
-    open();
-  };
-
   return (
     <>
       <Paper shadow="md" withBorder p={20}>
         <Flex justify="space-between" align="center">
           <Title order={3}>{contextName}</Title>
-          <Tooltip label="Settings" withArrow>
-            <IconSettings size={17} color="gray" onClick={handleClickSettings} cursor="pointer" />
-          </Tooltip>
         </Flex>
 
         <Table variant="vertical">
@@ -47,12 +33,6 @@ export default function ContextSummaryCard({ contextName }: { contextName: strin
           </Table.Thead>
         </Table>
       </Paper>
-
-      <Modal opened={opened} onClose={close} title={`${contextName} Settings`}>
-        <Suspense fallback={<div>Loading...</div>}>
-          <LazyModal contextName={contextName} onClose={close} />
-        </Suspense>
-      </Modal>
     </>
   );
 }

@@ -1,28 +1,20 @@
-import { useRouter } from 'next/router';
 import { waitFor } from '@testing-library/react';
+import { spotlight } from '@mantine/spotlight';
 import CommandPalette from '@/components/Layout/CommandPalette';
 import { TaskStatus } from '@/data/documentTypes/Task';
 import { renderWithDataSource, screen, userEvent } from '@/test-utils';
 import { setupTestDatabase } from '@/test-utils/db';
 import { taskFactory } from '@/test-utils/factories/TaskFactory';
 
-jest.mock('next/router', () => ({
-  useRouter: jest.fn(),
-}));
-
 describe('CommandPalette', () => {
   const { getDataSource } = setupTestDatabase();
 
+  afterEach(async () => {
+    spotlight.close();
+  });
+
   it('Opens the command palette when modifier-k is pressed', async () => {
-    const mockPush = jest.fn();
-    (useRouter as jest.Mock).mockReturnValue({
-      push: mockPush,
-    });
-
     const dataSource = getDataSource();
-    const contextRepository = dataSource.getContextRepository();
-
-    await contextRepository.addContext('the circus');
 
     renderWithDataSource(<CommandPalette />, dataSource);
 
@@ -31,14 +23,7 @@ describe('CommandPalette', () => {
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText('Search...')).toBeInTheDocument();
-      expect(screen.getByText('View context: the circus')).toBeInTheDocument();
     });
-
-    // Choose the View context action
-    await userEvent.click(screen.getByText('View context: the circus'));
-
-    // Did we navigate to the context view?
-    expect(mockPush).toHaveBeenCalledWith('/contexts/view?name=the circus');
   });
 
   it('Adds open tasks to the command palette', async () => {
@@ -48,7 +33,6 @@ describe('CommandPalette', () => {
         title: 'Test Task',
         description: 'This is a test task.',
         status: TaskStatus.Ready,
-        context: 'General',
       })
     );
 

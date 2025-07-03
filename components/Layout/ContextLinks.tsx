@@ -1,42 +1,31 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useRouter } from 'next/router';
 import { IconManualGearboxFilled } from '@tabler/icons-react';
 import { NavLink } from '@mantine/core';
-import { useContextRepository } from '@/contexts/DataSourceContext';
 
 export default function ContextLinks({
   handleNavLinkClick,
 }: {
   handleNavLinkClick: (url: string) => void;
 }) {
-  const contextRepository = useContextRepository();
   const router = useRouter();
   const query = router.query;
-  const [contexts, setContexts] = useState<string[]>([]);
 
-  useEffect(() => {
-    const unsubscribe = contextRepository.subscribeToContexts(setContexts);
-
-    return () => {
-      unsubscribe();
-    };
-  }, []);
-
-  const links = contexts.map((context) => (
+  const links = [
     <NavLink
-      key={context}
-      onClick={() => handleNavLinkClick(`/contexts/view?name=${context}`)}
-      label={context}
-      active={query?.name === context && router.pathname === '/contexts/view'}
+      key="None"
+      onClick={() => handleNavLinkClick(`/contexts/view?name=None`)}
+      label="None"
+      active={query?.name === 'None' && router.pathname === '/contexts/view'}
       pl={40}
-      data-testid={`context-link-${context}`}
-    />
-  ));
+      data-testid="context-link-none"
+    />,
+  ];
 
   return (
     <>
       <NavLink
-        onClick={() => handleNavLinkClick('/contexts')}
+        href="#"
         label="Contexts"
         active={router.pathname === '/contexts' && !query?.context}
         leftSection={<IconManualGearboxFilled />}

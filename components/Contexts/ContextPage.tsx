@@ -46,7 +46,6 @@ export default function ContextPage({ contextName }: { contextName: string }) {
     const unsubscribe = taskRepository.subscribeToTasks(
       {
         statuses: selectedTaskStatuses,
-        context: contextName,
       },
       setTasks
     );
