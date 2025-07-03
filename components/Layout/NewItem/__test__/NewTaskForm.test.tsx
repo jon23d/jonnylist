@@ -122,9 +122,9 @@ describe('NewTaskForm', () => {
 
     renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
 
-    await waitFor(async () => {
-      await userEvent.click(screen.getByRole('textbox', { name: 'Context' }));
-      await userEvent.click(screen.getByRole('option', { name: 'Context1' }));
+    await waitFor(() => {
+      userEvent.click(screen.getByRole('textbox', { name: 'Context' }));
+      userEvent.click(screen.getByRole('option', { name: 'Context1' }));
     });
 
     const titleInput = screen.getByRole('textbox', { name: 'Title' });

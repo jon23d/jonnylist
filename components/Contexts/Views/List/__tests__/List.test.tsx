@@ -140,7 +140,7 @@ describe('Task list view component', () => {
       reason: 'DROP',
     };
 
-    await waitFor(async () => {
+    await waitFor(() => {
       onDragEndSpy(mockDropResult);
     });
 
@@ -188,7 +188,7 @@ describe('Task list view component', () => {
       reason: 'DROP',
     };
 
-    await waitFor(async () => {
+    await waitFor(() => {
       onDragEndSpy(mockDropResult);
     });
 
@@ -240,7 +240,7 @@ describe('Task list view component', () => {
       reason: 'DROP',
     };
 
-    await waitFor(async () => {
+    await waitFor(() => {
       onDragEndSpy(mockDropResult);
     });
 
@@ -300,7 +300,7 @@ describe('Task list view component', () => {
       reason: 'DROP',
     };
 
-    await waitFor(async () => {
+    await waitFor(() => {
       onDragEndSpy(mockDropResult);
     });
 
@@ -343,7 +343,7 @@ describe('Task list view component', () => {
       reason: 'DROP',
     };
 
-    await waitFor(async () => {
+    await waitFor(() => {
       onDragEndSpy(mockDropResult);
     });
 
@@ -390,7 +390,7 @@ describe('Task list view component', () => {
       reason: 'DROP',
     };
 
-    await waitFor(async () => {
+    await waitFor(() => {
       onDragEndSpy(mockDropResult);
     });
 
@@ -438,7 +438,7 @@ describe('Task list view component', () => {
       reason: 'DROP',
     };
 
-    await waitFor(async () => {
+    await waitFor(() => {
       onDragEndSpy(mockDropResult);
     });
 
