@@ -36,6 +36,7 @@ export interface Task extends Common {
   sortOrder: string;
   description?: string;
   tags?: string[];
+  project?: string;
   status: TaskStatus;
   priority?: TaskPriority;
   dueDate?: string;
@@ -43,18 +44,10 @@ export interface Task extends Common {
   updatedAt: Date;
 }
 
-export interface NewTask {
-  context: string;
-  title: string;
-  description?: string;
-  tags?: string[];
-  status: TaskStatus;
-  priority?: TaskPriority;
-  dueDate?: string;
-}
+export type NewTask = Omit<Task, keyof Common | 'type' | 'sortOrder' | 'createdAt' | 'updatedAt'>;
 
 export function sortedTasks(tasks: Task[]): Task[] {
-  // We cannot use a local-aware sort because we need a consistent
+  // We cannot use a locale-aware sort because we need a consistent
   // lexicographical comparison order across different locales.
   return [...tasks].sort((a, b) => {
     const sortA = a.sortOrder.toString();

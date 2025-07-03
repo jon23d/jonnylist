@@ -84,8 +84,8 @@ export default function ListRow({
                 <Box size="xs" style={{ whiteSpace: 'nowrap' }}>
                   {priorityBadge(task.priority)}
                 </Box>
-                <Text size="xs" c="green" style={{ whiteSpace: 'nowrap' }}>
-                  {/* project would go here if available*/}
+                <Text size="xs" style={{ whiteSpace: 'nowrap' }}>
+                  {task.project ? `${task.project}` : ''}
                 </Text>
               </Flex>
             </Flex>

@@ -16,6 +16,7 @@ describe('DataSource', () => {
     const task = taskFactory({
       sortOrder: 'a',
       priority: TaskPriority.High,
+      project: 'a project',
     });
 
     await repository.addTask(task);
@@ -31,6 +32,7 @@ describe('DataSource', () => {
     expect(returnedTask._id.startsWith('task-')).toBe(true);
     expect(returnedTask.priority).toBe(TaskPriority.High);
     expect(returnedTask.sortOrder).toBe(expectedSort);
+    expect(returnedTask.project).toBe('a project');
   });
 
   test('addTask should append the _rev to the task', async () => {
@@ -82,6 +84,7 @@ describe('DataSource', () => {
     const newTask = taskFactory({
       context: 'context1',
       sortOrder: 'a',
+      project: 'world domination',
     });
 
     const task = await repository.addTask(newTask);
@@ -94,6 +97,7 @@ describe('DataSource', () => {
     const tasks = await repository.getTasks({ context: 'context1' });
     expect(tasks).toHaveLength(1);
     expect(tasks[0].sortOrder).toBe('z');
+    expect(tasks[0].project).toBe('world domination');
     expect(tasks[0].updatedAt.getTime()).toBeGreaterThanOrEqual(timeAfterUpdate.getTime());
   });
 

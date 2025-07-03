@@ -1,5 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Button, FocusTrap, Select, Stack, TagsInput, TextInput } from '@mantine/core';
+import {
+  Button,
+  FocusTrap,
+  Group,
+  Select,
+  Stack,
+  TagsInput,
+  Textarea,
+  TextInput,
+} from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
 import {
@@ -31,6 +40,7 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
       title: '',
       description: '',
       tags: [],
+      project: '',
       priority: undefined,
       dueDate: undefined,
       status: TaskStatus.Ready,
@@ -80,54 +90,53 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
 
   return (
     <form onSubmit={form.onSubmit(handleSave)}>
-      <Stack>
+      <Stack gap="xs">
         <FocusTrap>
-          <Select
-            label="Context"
-            placeholder="Select a context"
-            data={contexts}
-            {...form.getInputProps('context')}
-            key={`context-${contextKey}`} // Force re-render when contexts change
-            withAsterisk
-          />
-          <TextInput
-            label="Title"
-            placeholder="Task title"
-            {...form.getInputProps('title')}
-            withAsterisk
-            data-autofocus
-          />
-          <Select
-            label="Status"
-            placeholder="Select task status"
-            data={taskStatusSelectOptions}
-            {...form.getInputProps('status')}
-            withAsterisk
-            allowDeselect={false}
-          />
-          <TextInput
+          <TextInput label="Title" {...form.getInputProps('title')} withAsterisk data-autofocus />
+
+          <Textarea
             label="Description"
-            placeholder="Task description"
+            autosize
+            minRows={3}
+            size="xs"
             {...form.getInputProps('description')}
           />
-          <TagsInput label="Tags" {...form.getInputProps('tags')} />
-          <Select
-            label="Priority"
-            placeholder="Select relative priority"
-            data={taskPrioritySelectOptions}
-            {...form.getInputProps('priority')}
-          />
-          <DateInput
-            label="Due Date"
-            placeholder="Select a due date"
-            {...form.getInputProps('dueDate')}
-            clearable
-          />
+
+          <Group justify="space-between" grow>
+            <TagsInput label="Tags" {...form.getInputProps('tags')} size="xs" />
+            <TextInput label="Project" {...form.getInputProps('project')} size="xs" />
+          </Group>
+
+          <Group justify="space-between" grow>
+            <Select
+              label="Priority"
+              data={taskPrioritySelectOptions}
+              {...form.getInputProps('priority')}
+              size="xs"
+            />
+            <DateInput label="Due Date" {...form.getInputProps('dueDate')} clearable size="xs" />
+          </Group>
+
+          <Group justify="space-between" grow>
+            <Select
+              label="Context"
+              data={contexts}
+              {...form.getInputProps('context')}
+              key={`context-${contextKey}`} // Force re-render when contexts change
+              withAsterisk
+              size="xs"
+            />
+            <Select
+              label="Status"
+              data={taskStatusSelectOptions}
+              {...form.getInputProps('status')}
+              withAsterisk
+              allowDeselect={false}
+              size="xs"
+            />
+          </Group>
 
           <Button type="submit">Save</Button>
-          <Button type="button" onClick={() => form.reset()} variant="outline">
-            Reset
-          </Button>
         </FocusTrap>
       </Stack>
     </form>

@@ -57,23 +57,18 @@ export class TaskRepository implements Repository {
     const tags = newTask.tags || [];
 
     const task: Task = {
+      ...newTask,
       _id: `task-${new Date().toISOString()}-${Math.random().toString(36).substring(2, 15)}`,
       type: 'task',
-      context: newTask.context,
-      title: newTask.title,
       sortOrder,
-      description: newTask.description,
       tags: tags.map((tag) => this.cleanTag(tag)),
-      status: newTask.status,
-      priority: newTask.priority,
-      dueDate: newTask.dueDate,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
     try {
       const response = await this.db.put(task);
-      return { _rev: response.rev, ...task }; // Return the task with the revision ID
+      return { ...task, _rev: response.rev }; // Return the task with the revision ID
     } catch (error) {
       Logger.error('Error adding task:', error);
       throw error; // Re-throw to handle it in the calling code
