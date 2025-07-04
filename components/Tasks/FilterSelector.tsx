@@ -34,8 +34,24 @@ export default function FilterSelector({
     setOpened(false);
   };
 
+  const handleClear = () => {
+    const clearedValues = {
+      requireTags: [],
+      excludeTags: [],
+      requireProjects: [],
+      excludeProjects: [],
+    };
+
+    form.setValues(clearedValues);
+    setTaskFilter(clearedValues);
+    setOpened(false);
+  };
+
   const filterApplied =
-    requireTags.length || excludeTags.length || requireProjects.length || excludeProjects.length;
+    form.values.requireTags.length ||
+    form.values.excludeTags.length ||
+    form.values.requireProjects.length ||
+    form.values.excludeProjects.length;
 
   const targetLabel = filterApplied ? 'Filters (!)' : 'Filters';
 
@@ -67,12 +83,13 @@ export default function FilterSelector({
               comboboxProps={{ withinPortal: false }}
             />
             <TagsInput
-              label="Exclude projexcts"
+              label="Exclude projects"
               {...form.getInputProps('excludeProjects')}
               size="xs"
               comboboxProps={{ withinPortal: false }}
             />
             <Button type="submit">Apply</Button>
+            <Button onClick={handleClear}>Clear</Button>
             <Button>Save as Context</Button>
           </Stack>
         </form>
