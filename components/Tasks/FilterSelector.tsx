@@ -3,16 +3,16 @@ import { Button, Popover, Stack, TagsInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 
 export interface TaskFilter {
-  includeTags: string[];
+  requireTags: string[];
   excludeTags: string[];
-  includeProjects: string[];
+  requireProjects: string[];
   excludeProjects: string[];
 }
 
 export default function FilterSelector({
-  includeTags,
+  requireTags,
   excludeTags,
-  includeProjects,
+  requireProjects,
   excludeProjects,
   setTaskFilter,
 }: TaskFilter & {
@@ -22,9 +22,9 @@ export default function FilterSelector({
 
   const form = useForm<TaskFilter>({
     initialValues: {
-      includeTags,
+      requireTags,
       excludeTags,
-      includeProjects,
+      requireProjects,
       excludeProjects,
     },
   });
@@ -35,7 +35,7 @@ export default function FilterSelector({
   };
 
   const filterApplied =
-    includeTags.length || excludeTags.length || includeProjects.length || excludeProjects.length;
+    requireTags.length || excludeTags.length || requireProjects.length || excludeProjects.length;
 
   const targetLabel = filterApplied ? 'Filters (!)' : 'Filters';
 
@@ -49,8 +49,8 @@ export default function FilterSelector({
         <form onSubmit={form.onSubmit(handleSubmit)}>
           <Stack gap="xs">
             <TagsInput
-              label="Include tags"
-              {...form.getInputProps('includeTags')}
+              label="Require tags"
+              {...form.getInputProps('requireTags')}
               size="xs"
               comboboxProps={{ withinPortal: false }} // required for use in popover
             />
@@ -61,8 +61,8 @@ export default function FilterSelector({
               comboboxProps={{ withinPortal: false }}
             />
             <TagsInput
-              label="Include projects"
-              {...form.getInputProps('includeProjects')}
+              label="Require projects"
+              {...form.getInputProps('requireProjects')}
               size="xs"
               comboboxProps={{ withinPortal: false }}
             />

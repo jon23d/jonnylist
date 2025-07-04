@@ -34,9 +34,9 @@ export default function Page() {
     'Due Date',
   ]);
   const [taskFilter, setTaskFilter] = useState<TaskFilter>({
-    includeTags: [],
+    requireTags: [],
     excludeTags: [],
-    includeProjects: [],
+    requireProjects: [],
     excludeProjects: [],
   });
 
@@ -46,22 +46,34 @@ export default function Page() {
   const filterTasks = (tasks: Task[]): Task[] => {
     return tasks.filter((task) => {
       // filter by tags
-      const includesTags = taskFilter.includeTags.length
-        ? taskFilter.includeTags.some((tag) => task.tags?.includes(tag))
+      const includesTags = taskFilter.requireTags.length
+        ? taskFilter.requireTags.some((tag) => task.tags?.includes(tag))
         : true;
       const excludesTags = taskFilter.excludeTags.length
         ? !taskFilter.excludeTags.some((tag) => task.tags?.includes(tag))
         : true;
 
-      // filter by projects
-      const includesProjects =
-        taskFilter.includeProjects.length && task.project
-          ? taskFilter.includeProjects.includes(task.project)
-          : true;
-      const excludesProjects =
-        taskFilter.excludeProjects.length && task.project
-          ? !taskFilter.excludeProjects.includes(task.project)
-          : true;
+      // filter by projects. Projects are hierarchical, separated by dots,
+      // so we will look for projects that start with what is provided
+      // in the filter. This allows for filtering by parent projects as well.
+      let includesProjects = !taskFilter.requireProjects.length;
+      if (taskFilter.requireProjects.length && task.project) {
+        for (const project of taskFilter.requireProjects) {
+          if (task.project.startsWith(project)) {
+            includesProjects = true;
+            break;
+          }
+        }
+      }
+      let excludesProjects = !taskFilter.excludeProjects.length;
+      if (taskFilter.excludeProjects.length && task.project) {
+        for (const project of taskFilter.excludeProjects) {
+          if (task.project.startsWith(project)) {
+            excludesProjects = false;
+            break;
+          }
+        }
+      }
 
       return includesTags && excludesTags && includesProjects && excludesProjects;
     });
