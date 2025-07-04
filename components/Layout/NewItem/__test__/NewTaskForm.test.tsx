@@ -70,9 +70,6 @@ describe('NewTaskForm', () => {
   it('Blurs the active element when the form is submitted', async () => {
     const handleClose = jest.fn();
     const dataSource = getDataSource();
-    const contextRepository = dataSource.getContextRepository();
-
-    await contextRepository.addContext('Context1');
 
     renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
 

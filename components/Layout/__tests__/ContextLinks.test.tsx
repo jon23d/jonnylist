@@ -1,12 +1,14 @@
 import { useRouter } from 'next/router';
 import ContextLinks from '@/components/Layout/ContextLinks';
-import { render, screen, waitFor } from '@/test-utils';
+import { renderWithDataSource, screen, waitFor } from '@/test-utils';
+import { setupTestDatabase } from '@/test-utils/db';
 
 jest.mock('next/router', () => ({
   useRouter: jest.fn(),
 }));
 
 describe('ContextLinks', () => {
+  const { getDataSource } = setupTestDatabase();
   const handleNavLinkClick = jest.fn();
 
   beforeEach(() => {
@@ -14,7 +16,7 @@ describe('ContextLinks', () => {
   });
 
   it('Renders no active context when no context is selected', async () => {
-    render(<ContextLinks handleNavLinkClick={handleNavLinkClick} />);
+    renderWithDataSource(<ContextLinks handleNavLinkClick={handleNavLinkClick} />, getDataSource());
 
     await waitFor(() => {
       expect(screen.getByTestId('context-link-none')).not.toHaveAttribute('data-active');
@@ -27,7 +29,7 @@ describe('ContextLinks', () => {
       pathname: '/tasks',
     });
 
-    render(<ContextLinks handleNavLinkClick={handleNavLinkClick} />);
+    renderWithDataSource(<ContextLinks handleNavLinkClick={handleNavLinkClick} />, getDataSource());
 
     await waitFor(() => {
       expect(screen.getByTestId('context-link-none')).toHaveAttribute('data-active');

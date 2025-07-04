@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import { Badge, Group, Modal, SegmentedControl, Table } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import ColumnSelector from '@/components/Tasks/ColumnSelector';
-import FilterSelector, { TaskFilter } from '@/components/Tasks/FilterSelector';
+import FilterSelector from '@/components/Tasks/FilterSelector';
 import TaskEditor from '@/components/Tasks/TaskEditor';
-import { useTaskRepository } from '@/contexts/DataSourceContext';
-import { Task, TaskPriority, TaskStatus } from '@/data/documentTypes/Task';
+import { useContextRepository, useTaskRepository } from '@/contexts/DataSourceContext';
+import { Task, TaskFilter, TaskPriority, TaskStatus } from '@/data/documentTypes/Task';
+import { Notifications } from '@/helpers/Notifications';
 import { getAgeInDays, getUrgency } from '@/helpers/Tasks';
 
 const priorityBadge = (priority?: TaskPriority) => {
@@ -22,7 +24,9 @@ const priorityBadge = (priority?: TaskPriority) => {
 };
 
 export default function Page() {
+  const router = useRouter();
   const taskRepository = useTaskRepository();
+  const contextRepository = useContextRepository();
   const [editorOpened, { open, close }] = useDisclosure(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [visibleColumns, setVisibleColumns] = useState<string[]>([
@@ -89,6 +93,31 @@ export default function Page() {
   };
 
   useEffect(() => {
+    if (router.query.context) {
+      const fetchContext = async () => {
+        try {
+          const contextName = router.query.context as string;
+          const context = await contextRepository.getContext(contextName);
+          setTaskFilter(context.filter);
+        } catch {
+          Notifications.showError({
+            title: 'Error',
+            message: 'Unable to load context',
+          });
+        }
+      };
+      fetchContext();
+    } else {
+      setTaskFilter({
+        requireTags: [],
+        excludeTags: [],
+        requireProjects: [],
+        excludeProjects: [],
+      });
+    }
+  }, [router.query]);
+
+  useEffect(() => {
     let statuses: TaskStatus[] = [];
     if (status === 'pending') {
       statuses = [TaskStatus.Ready, TaskStatus.Started];
@@ -119,6 +148,8 @@ export default function Page() {
     close();
   };
 
+  const showFilters = !router.query.context;
+
   return (
     <>
       <Group justify="space-between">
@@ -128,6 +159,8 @@ export default function Page() {
           onChange={setStatus}
         />
         <Group>
+          {showFilters && <FilterSelector {...taskFilter} setTaskFilter={setTaskFilter} />}
+
           <ColumnSelector
             choices={[
               'Active',
@@ -142,7 +175,6 @@ export default function Page() {
             selected={visibleColumns}
             onChange={setVisibleColumns}
           />
-          <FilterSelector {...taskFilter} setTaskFilter={setTaskFilter} />
         </Group>
       </Group>
       <Table striped highlightOnHover>

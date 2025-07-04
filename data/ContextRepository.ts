@@ -1,10 +1,10 @@
 import { DocumentTypes } from '@/data/documentTypes';
-import { Context } from '@/data/documentTypes/Context';
+import { Context, NewContext } from '@/data/documentTypes/Context';
 import { Repository } from '@/data/Repository';
 import { Logger } from '@/helpers/Logger';
 
 export type UnsubscribeFunction = () => void;
-export type ContextSubscriber = (contexts: string[]) => void;
+export type ContextSubscriber = (contexts: Context[]) => void;
 
 export class ContextRepository implements Repository {
   protected db: PouchDB.Database<DocumentTypes>;
@@ -29,21 +29,24 @@ export class ContextRepository implements Repository {
   /**
    * Fetch all context names from the database.
    */
-  async getContexts(includeDeleted?: boolean): Promise<string[]> {
-    const _includeDeleted = includeDeleted ?? false;
-
+  async getContexts(): Promise<Context[]> {
     const result = await this.db.allDocs<Context>({
       include_docs: true,
       startkey: 'context-',
       endkey: 'context-\ufff0',
     });
 
-    // Filter out archived contexts if not requested
-    if (!_includeDeleted) {
-      result.rows = result.rows.filter((row) => !row.doc?.deletedAt);
-    }
+    return result.rows.map((row) => row.doc!);
+  }
 
-    return result.rows.map((row) => row.doc!.name);
+  async getContext(id: string): Promise<Context> {
+    try {
+      const doc = await this.db.get<Context>(id);
+      return doc;
+    } catch (error) {
+      Logger.error(`Error fetching context with ID ${id}:`, error);
+      throw error; // Re-throw the error for the caller to handle
+    }
   }
 
   /**
@@ -52,11 +55,11 @@ export class ContextRepository implements Repository {
    *
    * @param context
    */
-  async addContext(context: string): Promise<void> {
+  async addContext(context: NewContext): Promise<void> {
     const doc: Context = {
-      _id: `context-${context}`,
+      _id: `context-${Math.random().toString(36).substring(2, 15)}`,
       type: 'context',
-      name: context,
+      ...context,
     };
     await this.db.put(doc);
   }
@@ -131,7 +134,7 @@ export class ContextRepository implements Repository {
    * @param contexts
    * @private
    */
-  private notifyContextSubscribers(contexts: string[]): void {
+  private notifyContextSubscribers(contexts: Context[]): void {
     Logger.info('Notifying context change subscribers');
     this.contextChangeSubscribers.forEach((callback) => {
       try {

@@ -2,13 +2,7 @@ import { useState } from 'react';
 import { Button, Popover, Stack, TagsInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import SaveContextModal from '@/components/Contexts/SaveContextModal';
-
-export interface TaskFilter {
-  requireTags: string[];
-  excludeTags: string[];
-  requireProjects: string[];
-  excludeProjects: string[];
-}
+import { TaskFilter } from '@/data/documentTypes/Task';
 
 export default function FilterSelector({
   requireTags,

@@ -29,6 +29,13 @@ export const taskPrioritySelectOptions = [
   { value: TaskPriority.High, label: 'High' },
 ];
 
+export interface TaskFilter {
+  requireTags: string[];
+  excludeTags: string[];
+  requireProjects: string[];
+  excludeProjects: string[];
+}
+
 export interface Task extends Common {
   type: 'task';
   title: string;

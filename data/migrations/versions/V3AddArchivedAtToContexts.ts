@@ -20,7 +20,6 @@ class V3AddArchivedAtToContexts implements Migration {
 
     const updatedContexts = contexts.rows.map((row) => {
       const context = row.doc as Context;
-      context.deletedAt = null;
       return context;
     });
 
