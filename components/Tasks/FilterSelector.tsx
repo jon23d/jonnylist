@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button, Popover, Stack, TagsInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
+import SaveContextModal from '@/components/Contexts/SaveContextModal';
 
 export interface TaskFilter {
   requireTags: string[];
@@ -18,7 +19,8 @@ export default function FilterSelector({
 }: TaskFilter & {
   setTaskFilter: (taskFilter: TaskFilter) => void;
 }) {
-  const [opened, setOpened] = useState(false);
+  const [popoverOpened, setPopoverOpened] = useState(false);
+  const [saveModalOpened, setSaveModalOpened] = useState(false);
 
   const form = useForm<TaskFilter>({
     initialValues: {
@@ -31,7 +33,7 @@ export default function FilterSelector({
 
   const handleSubmit = () => {
     setTaskFilter(form.values);
-    setOpened(false);
+    setPopoverOpened(false);
   };
 
   const handleClear = () => {
@@ -44,7 +46,7 @@ export default function FilterSelector({
 
     form.setValues(clearedValues);
     setTaskFilter(clearedValues);
-    setOpened(false);
+    setPopoverOpened(false);
   };
 
   const filterApplied =
@@ -56,44 +58,59 @@ export default function FilterSelector({
   const targetLabel = filterApplied ? 'Filters (!)' : 'Filters';
 
   return (
-    <Popover shadow="md" width={200} opened={opened} onDismiss={() => setOpened(false)}>
-      <Popover.Target>
-        <Button onClick={() => setOpened((prev) => !prev)}>{targetLabel}</Button>
-      </Popover.Target>
+    <>
+      <Popover
+        shadow="md"
+        width={200}
+        opened={popoverOpened}
+        onDismiss={() => setPopoverOpened(false)}
+      >
+        <Popover.Target>
+          <Button onClick={() => setPopoverOpened((prev) => !prev)}>{targetLabel}</Button>
+        </Popover.Target>
 
-      <Popover.Dropdown>
-        <form onSubmit={form.onSubmit(handleSubmit)}>
-          <Stack gap="xs">
-            <TagsInput
-              label="Require tags"
-              {...form.getInputProps('requireTags')}
-              size="xs"
-              comboboxProps={{ withinPortal: false }} // required for use in popover
-            />
-            <TagsInput
-              label="Exclude tags"
-              {...form.getInputProps('excludeTags')}
-              size="xs"
-              comboboxProps={{ withinPortal: false }}
-            />
-            <TagsInput
-              label="Require projects"
-              {...form.getInputProps('requireProjects')}
-              size="xs"
-              comboboxProps={{ withinPortal: false }}
-            />
-            <TagsInput
-              label="Exclude projects"
-              {...form.getInputProps('excludeProjects')}
-              size="xs"
-              comboboxProps={{ withinPortal: false }}
-            />
-            <Button type="submit">Apply</Button>
-            <Button onClick={handleClear}>Clear</Button>
-            <Button>Save as Context</Button>
-          </Stack>
-        </form>
-      </Popover.Dropdown>
-    </Popover>
+        <Popover.Dropdown>
+          <form onSubmit={form.onSubmit(handleSubmit)}>
+            <Stack gap="xs">
+              <TagsInput
+                label="Require tags"
+                {...form.getInputProps('requireTags')}
+                size="xs"
+                comboboxProps={{ withinPortal: false }} // required for use in popover
+              />
+              <TagsInput
+                label="Exclude tags"
+                {...form.getInputProps('excludeTags')}
+                size="xs"
+                comboboxProps={{ withinPortal: false }}
+              />
+              <TagsInput
+                label="Require projects"
+                {...form.getInputProps('requireProjects')}
+                size="xs"
+                comboboxProps={{ withinPortal: false }}
+              />
+              <TagsInput
+                label="Exclude projects"
+                {...form.getInputProps('excludeProjects')}
+                size="xs"
+                comboboxProps={{ withinPortal: false }}
+              />
+              <Button type="submit">Apply</Button>
+              <Button onClick={handleClear}>Clear</Button>
+              <Button disabled={!filterApplied} onClick={() => setSaveModalOpened(true)}>
+                Save as Context
+              </Button>
+            </Stack>
+          </form>
+        </Popover.Dropdown>
+
+        <SaveContextModal
+          filter={form.values}
+          opened={saveModalOpened}
+          onClose={() => setSaveModalOpened(false)}
+        />
+      </Popover>
+    </>
   );
 }
