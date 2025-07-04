@@ -12,7 +12,7 @@ const coefficients: Coefficient[] = [
   // Is the task medium priority?
   (task) => (task.priority === TaskPriority.Medium ? 3.9 : 0),
   // Is the task low priority?
-  (task) => (task.priority === TaskPriority.Low ? 6.0 : 0),
+  (task) => (task.priority === TaskPriority.Low ? 1.8 : 0),
   // Has the task begun?
   (task) => (task.status === TaskStatus.Started ? 4.0 : 0),
   // Does it have a description?

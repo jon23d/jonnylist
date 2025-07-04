@@ -65,7 +65,7 @@ export default function TaskEditor({ task, handleClose }: { task: Task; handleCl
     <form onSubmit={form.onSubmit(handleSave)}>
       <FocusTrap>
         <Stack gap="xs">
-          <TextInput label="Title" {...form.getInputProps('title')} withAsterisk />
+          <TextInput label="Title" {...form.getInputProps('title')} withAsterisk data-autoFocus />
 
           <Textarea
             label="Description"
@@ -87,6 +87,7 @@ export default function TaskEditor({ task, handleClose }: { task: Task; handleCl
               data={taskPrioritySelectOptions}
               {...form.getInputProps('priority')}
               size="xs"
+              searchable
             />
             <DateInput label="Due Date" {...form.getInputProps('dueDate')} clearable size="xs" />
           </Group>
@@ -96,11 +97,11 @@ export default function TaskEditor({ task, handleClose }: { task: Task; handleCl
               label="Status"
               data={taskStatusSelectOptions}
               {...form.getInputProps('status')}
-              data-autofocus
               clearable={false}
               allowDeselect={false}
               withAsterisk
               size="xs"
+              searchable
             />
           </Group>
 

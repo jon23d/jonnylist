@@ -86,6 +86,7 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
               data={taskPrioritySelectOptions}
               {...form.getInputProps('priority')}
               size="xs"
+              searchable
             />
             <DateInput label="Due Date" {...form.getInputProps('dueDate')} clearable size="xs" />
           </Group>
@@ -98,6 +99,7 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
               withAsterisk
               allowDeselect={false}
               size="xs"
+              searchable
             />
           </Group>
 
