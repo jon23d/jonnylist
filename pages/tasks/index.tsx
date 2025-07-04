@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { IconCalendarFilled, IconLayoutKanbanFilled, IconList } from '@tabler/icons-react';
-import { Badge, Center, Modal, SegmentedControl, Table } from '@mantine/core';
+import { Badge, Group, Modal, SegmentedControl, Table } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { ViewType } from '@/components/Contexts/Views/ViewSelector';
+import ColumnSelector from '@/components/Tasks/ColumnSelector';
+import FilterSelector, { TaskFilter } from '@/components/Tasks/FilterSelector';
 import TaskEditor from '@/components/Tasks/TaskEditor';
 import { useTaskRepository } from '@/contexts/DataSourceContext';
 import { Task, TaskPriority, TaskStatus } from '@/data/documentTypes/Task';
@@ -25,11 +25,53 @@ export default function Page() {
   const taskRepository = useTaskRepository();
   const [editorOpened, { open, close }] = useDisclosure(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [visibleColumns, setVisibleColumns] = useState<string[]>([
+    'Active',
+    'Description',
+    'Tags',
+    'Project',
+    'Priority',
+    'Due Date',
+  ]);
+  const [taskFilter, setTaskFilter] = useState<TaskFilter>({
+    includeTags: [],
+    excludeTags: [],
+    includeProjects: [],
+    excludeProjects: [],
+  });
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [status, setStatus] = useState('pending');
 
+  const filterTasks = (tasks: Task[]): Task[] => {
+    return tasks.filter((task) => {
+      // filter by tags
+      const includesTags = taskFilter.includeTags.length
+        ? taskFilter.includeTags.some((tag) => task.tags?.includes(tag))
+        : true;
+      const excludesTags = taskFilter.excludeTags.length
+        ? !taskFilter.excludeTags.some((tag) => task.tags?.includes(tag))
+        : true;
+
+      // filter by projects
+      const includesProjects =
+        taskFilter.includeProjects.length && task.project
+          ? taskFilter.includeProjects.includes(task.project)
+          : true;
+      const excludesProjects =
+        taskFilter.excludeProjects.length && task.project
+          ? !taskFilter.excludeProjects.includes(task.project)
+          : true;
+
+      return includesTags && excludesTags && includesProjects && excludesProjects;
+    });
+  };
+
   const sortTasks = (tasks: Task[]): Task[] => {
+    if (status === 'completed' || status === 'cancelled') {
+      // sort by updatedAt desc
+      return tasks.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    }
     // sort by task urgency
     return tasks.sort((a, b) => getUrgency(b) - getUrgency(a));
   };
@@ -51,9 +93,9 @@ export default function Page() {
       {
         statuses,
       },
-      (tasks) => setTasks(sortTasks(tasks))
+      (tasks) => setTasks(filterTasks(sortTasks(tasks)))
     );
-  }, [status]);
+  }, [status, taskFilter]);
 
   const showEditDialog = (task: Task) => {
     setSelectedTask(task);
@@ -67,41 +109,78 @@ export default function Page() {
 
   return (
     <>
-      <SegmentedControl
-        data={['pending', 'completed', 'cancelled', 'recurring', 'waiting']}
-        value={status}
-        onChange={setStatus}
-      />
+      <Group justify="space-between">
+        <SegmentedControl
+          data={['pending', 'completed', 'cancelled', 'recurring', 'waiting']}
+          value={status}
+          onChange={setStatus}
+        />
+        <Group>
+          <ColumnSelector
+            choices={[
+              'Active',
+              'Description',
+              'Tags',
+              'Project',
+              'Priority',
+              'Due Date',
+              'Age',
+              'Urgency',
+            ]}
+            selected={visibleColumns}
+            onChange={setVisibleColumns}
+          />
+          <FilterSelector {...taskFilter} setTaskFilter={setTaskFilter} />
+        </Group>
+      </Group>
       <Table striped highlightOnHover>
         <Table.Thead>
           <Table.Tr>
-            <Table.Th />
+            {visibleColumns.includes('Active') ? <Table.Th /> : null}
             <Table.Th>Title</Table.Th>
-            <Table.Th>Description</Table.Th>
-            <Table.Th>Tags</Table.Th>
-            <Table.Th>Project</Table.Th>
-            <Table.Th>Priority</Table.Th>
-            <Table.Th>Due</Table.Th>
-            <Table.Th>Age</Table.Th>
-            <Table.Th>Urgency</Table.Th>
+            {visibleColumns.includes('Description') ? <Table.Th>Description</Table.Th> : null}
+            {visibleColumns.includes('Tags') ? <Table.Th>Tags</Table.Th> : null}
+            {visibleColumns.includes('Project') ? <Table.Th>Project</Table.Th> : null}
+            {visibleColumns.includes('Priority') ? <Table.Th>Priority</Table.Th> : null}
+            {visibleColumns.includes('Due Date') ? <Table.Th>Due</Table.Th> : null}
+            {visibleColumns.includes('Age') ? <Table.Th>Age</Table.Th> : null}
+            {visibleColumns.includes('Urgency') ? <Table.Th>Urgency</Table.Th> : null}
+            {status === 'completed' || status === 'cancelled' ? (
+              <Table.Th>Completed</Table.Th>
+            ) : null}
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
           {tasks.map((task) => (
             <Table.Tr key={task._id} onClick={() => showEditDialog(task)}>
-              <Table.Td>{task.status === TaskStatus.Started ? '⏳' : ''}</Table.Td>
+              {visibleColumns.includes('Active') ? (
+                <Table.Td>{task.status === TaskStatus.Started ? '⏳' : ''}</Table.Td>
+              ) : null}
               <Table.Td>{task.title}</Table.Td>
-              <Table.Td>{task.description}</Table.Td>
-              <Table.Td>
-                {task.tags?.map((tag, index) => (
-                  <Badge key={index} size="xs" mr={3} variant="light">{`#${tag}`}</Badge>
-                ))}
-              </Table.Td>
-              <Table.Td>{task.project}</Table.Td>
-              <Table.Td>{priorityBadge(task.priority)}</Table.Td>
-              <Table.Td c="orange.5">{task.dueDate}</Table.Td>
-              <Table.Td>{getAgeInDays(task.createdAt)}</Table.Td>
-              <Table.Td>{getUrgency(task)}</Table.Td>
+              {visibleColumns.includes('Description') ? (
+                <Table.Td>{task.description}</Table.Td>
+              ) : null}
+              {visibleColumns.includes('Tags') ? (
+                <Table.Td>
+                  {task.tags?.map((tag, index) => (
+                    <Badge key={index} size="xs" mr={3} variant="light">{`#${tag}`}</Badge>
+                  ))}
+                </Table.Td>
+              ) : null}
+              {visibleColumns.includes('Project') ? <Table.Td>{task.project}</Table.Td> : null}
+              {visibleColumns.includes('Priority') ? (
+                <Table.Td>{priorityBadge(task.priority)}</Table.Td>
+              ) : null}
+              {visibleColumns.includes('Due Date') ? (
+                <Table.Td c="orange.5">{task.dueDate}</Table.Td>
+              ) : null}
+              {visibleColumns.includes('Age') ? (
+                <Table.Td>{getAgeInDays(task.createdAt)}</Table.Td>
+              ) : null}
+              {visibleColumns.includes('Urgency') ? <Table.Td>{getUrgency(task)}</Table.Td> : null}
+              {status === 'completed' || status === 'cancelled' ? (
+                <Table.Td>{task.updatedAt.toLocaleDateString()}</Table.Td>
+              ) : null}
             </Table.Tr>
           ))}
         </Table.Tbody>
