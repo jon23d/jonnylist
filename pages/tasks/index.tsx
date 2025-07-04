@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Badge, Modal, Table } from '@mantine/core';
+import { IconCalendarFilled, IconLayoutKanbanFilled, IconList } from '@tabler/icons-react';
+import { Badge, Center, Modal, SegmentedControl, Table } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { ViewType } from '@/components/Contexts/Views/ViewSelector';
 import TaskEditor from '@/components/Tasks/TaskEditor';
 import { useTaskRepository } from '@/contexts/DataSourceContext';
 import { Task, TaskPriority, TaskStatus } from '@/data/documentTypes/Task';
@@ -25,6 +27,7 @@ export default function Page() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [status, setStatus] = useState('pending');
 
   const sortTasks = (tasks: Task[]): Task[] => {
     // sort by task urgency
@@ -32,14 +35,25 @@ export default function Page() {
   };
 
   useEffect(() => {
+    let statuses: TaskStatus[] = [];
+    if (status === 'pending') {
+      statuses = [TaskStatus.Ready, TaskStatus.Started];
+    } else if (status === 'completed') {
+      statuses = [TaskStatus.Done];
+    } else if (status === 'cancelled') {
+      statuses = [TaskStatus.Cancelled];
+    } else if (status === 'waiting') {
+      statuses = [TaskStatus.Waiting];
+    }
+
     // subscribe to tasks
     taskRepository.subscribeToTasks(
       {
-        statuses: [TaskStatus.Ready, TaskStatus.Started],
+        statuses,
       },
       (tasks) => setTasks(sortTasks(tasks))
     );
-  }, []);
+  }, [status]);
 
   const showEditDialog = (task: Task) => {
     setSelectedTask(task);
@@ -53,6 +67,11 @@ export default function Page() {
 
   return (
     <>
+      <SegmentedControl
+        data={['pending', 'completed', 'cancelled', 'recurring', 'waiting']}
+        value={status}
+        onChange={setStatus}
+      />
       <Table striped highlightOnHover>
         <Table.Thead>
           <Table.Tr>
