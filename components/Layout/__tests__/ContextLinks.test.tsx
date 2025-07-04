@@ -24,7 +24,7 @@ describe('ContextLinks', () => {
   it('Marks the active context', async () => {
     (useRouter as jest.Mock).mockReturnValue({
       query: { name: 'None' },
-      pathname: '/contexts/view',
+      pathname: '/tasks',
     });
 
     render(<ContextLinks handleNavLinkClick={handleNavLinkClick} />);

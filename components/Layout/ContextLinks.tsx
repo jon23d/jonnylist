@@ -9,14 +9,13 @@ export default function ContextLinks({
   handleNavLinkClick: (url: string) => void;
 }) {
   const router = useRouter();
-  const query = router.query;
 
   const links = [
     <NavLink
       key="None"
-      onClick={() => handleNavLinkClick(`/contexts/view?name=None`)}
+      onClick={() => handleNavLinkClick(`/tasks`)}
       label="None"
-      active={query?.name === 'None' && router.pathname === '/contexts/view'}
+      active={router.pathname === '/tasks'}
       pl={40}
       data-testid="context-link-none"
     />,
@@ -24,12 +23,7 @@ export default function ContextLinks({
 
   return (
     <>
-      <NavLink
-        href="#"
-        label="Contexts"
-        active={router.pathname === '/contexts' && !query?.context}
-        leftSection={<IconManualGearboxFilled />}
-      />
+      <NavLink href="#" label="Contexts" leftSection={<IconManualGearboxFilled />} />
       {links}
     </>
   );
