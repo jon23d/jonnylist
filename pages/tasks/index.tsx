@@ -44,7 +44,6 @@ export default function Page() {
     requireProjects: [],
     excludeProjects: [],
   });
-  const [context, setContext] = useState<Context | null>(null);
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [status, setStatus] = useState('pending');
@@ -100,7 +99,6 @@ export default function Page() {
         try {
           const contextName = router.query.context as string;
           const context = await contextRepository.getContext(contextName);
-          setContext(context);
           setTaskFilter(context.filter);
         } catch {
           Notifications.showError({
@@ -110,6 +108,13 @@ export default function Page() {
         }
       };
       fetchContext();
+    } else {
+      setTaskFilter({
+        requireTags: [],
+        excludeTags: [],
+        requireProjects: [],
+        excludeProjects: [],
+      });
     }
   }, [router.query]);
 
