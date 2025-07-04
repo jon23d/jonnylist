@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button, Modal, Text, TextInput } from '@mantine/core';
-import { TaskFilter } from '@/components/Tasks/FilterSelector';
+import { useContextRepository } from '@/contexts/DataSourceContext';
+import { TaskFilter } from '@/data/documentTypes/Task';
 import { Logger } from '@/helpers/Logger';
 import { Notifications } from '@/helpers/Notifications';
 
@@ -13,16 +14,22 @@ export default function SaveContextModal({
   opened: boolean;
   onClose: () => void;
 }) {
-  const handleSave = () => {
+  const contextRepository = useContextRepository();
+  const [contextName, setContextName] = useState<string>('');
+
+  const handleSave = async () => {
     Logger.info('Saving context', filter);
-    Notifications.show({
-      title: 'Coming soon',
-      message: 'This feature is not yet implemented. Stay tuned!',
-      color: 'orange',
+    await contextRepository.addContext({
+      name: contextName,
+      filter,
     });
+    Notifications.showSuccess({
+      title: 'Success!',
+      message: 'Your context was created',
+    });
+    onClose();
   };
 
-  const [contextName, setContextName] = useState<string>('');
   return (
     <Modal title="Save Context?" opened={opened} onClose={onClose}>
       <Text>This will save the filter as a context and make it available for future use</Text>
