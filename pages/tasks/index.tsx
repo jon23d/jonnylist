@@ -6,7 +6,6 @@ import ColumnSelector from '@/components/Tasks/ColumnSelector';
 import FilterSelector from '@/components/Tasks/FilterSelector';
 import TaskEditor from '@/components/Tasks/TaskEditor';
 import { useContextRepository, useTaskRepository } from '@/contexts/DataSourceContext';
-import { Context } from '@/data/documentTypes/Context';
 import { Task, TaskFilter, TaskPriority, TaskStatus } from '@/data/documentTypes/Task';
 import { Notifications } from '@/helpers/Notifications';
 import { getAgeInDays, getUrgency } from '@/helpers/Tasks';

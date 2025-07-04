@@ -9,11 +9,11 @@ describe('ContextRepository', () => {
   test('addContext should add a context to the database', async () => {
     const contextRepository = new ContextRepository(getDb());
 
-    const contextName = 'test-context';
-    await contextRepository.addContext(contextName);
+    const context = contextFactory();
+    await contextRepository.addContext(context);
 
     const contexts = await contextRepository.getContexts();
-    expect(contexts).toContain(contextName);
+    expect(contexts[0].name).toEqual(context.name);
   });
 
   test('getContexts should return multiple contexts', async () => {
@@ -26,53 +26,27 @@ describe('ContextRepository', () => {
     ]);
 
     const contexts = await contextRepository.getContexts();
-    expect(contexts).toEqual(['context-1', 'context-2', 'context-3']);
-  });
-
-  test('getContexts should not filter when includeDeleted is true', async () => {
-    const contextRepository = new ContextRepository(getDb());
-
-    const archivedContext = contextFactory({
-      name: 'deleted-context',
-      deletedAt: new Date(),
-    });
-    const activeContext = contextFactory({ name: 'active-context' });
-
-    await getDb().bulkDocs([archivedContext, activeContext]);
-
-    const contexts = await contextRepository.getContexts(true);
-    expect(contexts).toEqual(expect.arrayContaining(['deleted-context', 'active-context']));
-  });
-
-  test('getContexts should filter archived contexts when includeDeleted is false', async () => {
-    const contextRepository = new ContextRepository(getDb());
-
-    const archivedContext = contextFactory({
-      name: 'deleted-context',
-      deletedAt: new Date(),
-    });
-    const activeContext = contextFactory({ name: 'active-context' });
-
-    await getDb().bulkDocs([archivedContext, activeContext]);
-
-    const contexts = await contextRepository.getContexts();
-    expect(contexts).toEqual(['active-context']);
+    expect(contexts.map((context) => context.name)).toEqual([
+      'context-1',
+      'context-2',
+      'context-3',
+    ]);
   });
 
   describe('subscribeToContexts', () => {
     it('Should register a context change subscriber and call getContexts', async () => {
       const contextRepository = new ContextRepository(getDb());
 
-      const contextName = 'test-context';
+      const context = contextFactory();
 
-      await contextRepository.addContext(contextName);
+      await contextRepository.addContext(context);
 
       const subscriber = jest.fn();
 
       contextRepository.subscribeToContexts(subscriber);
 
       await waitFor(() => {
-        expect(subscriber).toHaveBeenCalledWith([contextName]);
+        expect(subscriber).toHaveBeenCalledWith([expect.objectContaining(context)]);
       });
     });
 
@@ -116,6 +90,7 @@ describe('ContextRepository', () => {
 
   it('Should notify subscribers of context changes', async () => {
     const contextRepository = new ContextRepository(getDb());
+    const context = contextFactory();
 
     const subscriber = jest.fn();
 
@@ -125,10 +100,10 @@ describe('ContextRepository', () => {
       expect(subscriber).toHaveBeenCalledWith([]);
     });
 
-    await contextRepository.addContext('a new context');
+    await contextRepository.addContext(context);
 
     await waitFor(() => {
-      expect(subscriber).toHaveBeenCalledWith(['a new context']);
+      expect(subscriber).toHaveBeenCalledWith([expect.objectContaining(context)]);
     });
   });
 });

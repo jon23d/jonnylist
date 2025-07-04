@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Modal, Text, TextInput } from '@mantine/core';
+import { Button, Group, Modal, Stack, Text, TextInput } from '@mantine/core';
 import { useContextRepository } from '@/contexts/DataSourceContext';
 import { TaskFilter } from '@/data/documentTypes/Task';
 import { Logger } from '@/helpers/Logger';
@@ -32,14 +32,18 @@ export default function SaveContextModal({
 
   return (
     <Modal title="Save Context?" opened={opened} onClose={onClose}>
-      <Text>This will save the filter as a context and make it available for future use</Text>
-      <TextInput
-        label="Context Name"
-        value={contextName}
-        onChange={(e) => setContextName(e.currentTarget.value)}
-      />
-      <Button onClick={handleSave}>Save</Button>
-      <Button onClick={onClose}>Cancel</Button>
+      <Stack>
+        <Text>This will save the filter as a context and make it available for future use</Text>
+        <TextInput
+          label="Context Name"
+          value={contextName}
+          onChange={(e) => setContextName(e.currentTarget.value)}
+        />
+        <Group>
+          <Button onClick={handleSave}>Save</Button>
+          <Button onClick={onClose}>Cancel</Button>
+        </Group>
+      </Stack>
     </Modal>
   );
 }
