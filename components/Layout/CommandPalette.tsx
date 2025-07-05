@@ -3,7 +3,7 @@ import { IconSearch } from '@tabler/icons-react';
 import { Modal } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { Spotlight, SpotlightActionData, SpotlightActionGroupData } from '@mantine/spotlight';
-import TaskEditor from '@/components/Tasks/TaskEditor';
+import EditTaskForm from '@/components/Tasks/EditTaskForm';
 import { useTaskRepository } from '@/contexts/DataSourceContext';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
 
@@ -68,7 +68,7 @@ export default function CommandPalette() {
         }}
       />
       <Modal opened={taskOpened} onClose={close} title="Edit Task" size="lg">
-        {selectedTask && <TaskEditor task={selectedTask} handleClose={cancelEditing} />}
+        {selectedTask && <EditTaskForm task={selectedTask} handleClose={cancelEditing} />}
       </Modal>
     </>
   );

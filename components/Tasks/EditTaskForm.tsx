@@ -19,7 +19,13 @@ import {
 } from '@/data/documentTypes/Task';
 import { Logger } from '@/helpers/Logger';
 
-export default function TaskEditor({ task, handleClose }: { task: Task; handleClose: () => void }) {
+export default function EditTaskForm({
+  task,
+  handleClose,
+}: {
+  task: Task;
+  handleClose: () => void;
+}) {
   const taskRepository = useTaskRepository();
 
   const form = useForm<NewTask>({

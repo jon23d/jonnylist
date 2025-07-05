@@ -3,8 +3,10 @@ import { useRouter } from 'next/router';
 import { Badge, Group, Modal, SegmentedControl, Table } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import ColumnSelector from '@/components/Tasks/ColumnSelector';
+import EditTaskForm from '@/components/Tasks/EditTaskForm';
 import FilterSelector from '@/components/Tasks/FilterSelector';
-import TaskEditor from '@/components/Tasks/TaskEditor';
+import StatusChanger from '@/components/Tasks/StatusChanger';
+import classes from '@/components/Tasks/Tasks.module.css';
 import { useContextRepository, useTaskRepository } from '@/contexts/DataSourceContext';
 import { Task, TaskFilter, TaskPriority, TaskStatus } from '@/data/documentTypes/Task';
 import { Notifications } from '@/helpers/Notifications';
@@ -203,16 +205,18 @@ export default function Page() {
         </Table.Thead>
         <Table.Tbody>
           {tasks.map((task) => (
-            <Table.Tr key={task._id} onClick={() => showEditDialog(task)}>
+            <Table.Tr key={task._id} className={classes.hasHoverControls}>
               {visibleColumns.includes('Active') ? (
-                <Table.Td>{task.status === TaskStatus.Started ? '⏳' : ''}</Table.Td>
+                <Table.Td>
+                  <StatusChanger task={task} />
+                </Table.Td>
               ) : null}
-              <Table.Td>{task.title}</Table.Td>
+              <Table.Td onClick={() => showEditDialog(task)}>{task.title}</Table.Td>
               {visibleColumns.includes('Description') ? (
-                <Table.Td>{task.description}</Table.Td>
+                <Table.Td onClick={() => showEditDialog(task)}>{task.description}</Table.Td>
               ) : null}
               {visibleColumns.includes('Tags') ? (
-                <Table.Td>
+                <Table.Td onClick={() => showEditDialog(task)}>
                   {task.tags?.map((tag, index) => (
                     <Badge key={index} size="xs" mr={3} variant="light">{`#${tag}`}</Badge>
                   ))}
@@ -220,17 +224,25 @@ export default function Page() {
               ) : null}
               {visibleColumns.includes('Project') ? <Table.Td>{task.project}</Table.Td> : null}
               {visibleColumns.includes('Priority') ? (
-                <Table.Td>{priorityBadge(task.priority)}</Table.Td>
+                <Table.Td onClick={() => showEditDialog(task)}>
+                  {priorityBadge(task.priority)}
+                </Table.Td>
               ) : null}
               {visibleColumns.includes('Due Date') ? (
-                <Table.Td c="orange.5">{task.dueDate}</Table.Td>
+                <Table.Td c="orange.5" onClick={() => showEditDialog(task)}>
+                  {task.dueDate}
+                </Table.Td>
               ) : null}
               {visibleColumns.includes('Age') ? (
-                <Table.Td>{getAgeInDays(task.createdAt)}</Table.Td>
+                <Table.Td onClick={() => showEditDialog(task)}>
+                  {getAgeInDays(task.createdAt)}
+                </Table.Td>
               ) : null}
               {visibleColumns.includes('Urgency') ? <Table.Td>{getUrgency(task)}</Table.Td> : null}
               {status === 'completed' || status === 'cancelled' ? (
-                <Table.Td>{task.updatedAt.toLocaleDateString()}</Table.Td>
+                <Table.Td onClick={() => showEditDialog(task)}>
+                  {task.updatedAt.toLocaleDateString()}
+                </Table.Td>
               ) : null}
             </Table.Tr>
           ))}
@@ -238,7 +250,7 @@ export default function Page() {
       </Table>
 
       <Modal opened={editorOpened} onClose={close} title="Edit Task" size="lg">
-        {selectedTask && <TaskEditor task={selectedTask} handleClose={cancelEditing} />}
+        {selectedTask && <EditTaskForm task={selectedTask} handleClose={cancelEditing} />}
       </Modal>
     </>
   );
