@@ -30,10 +30,12 @@ export const taskPrioritySelectOptions = [
 ];
 
 export interface TaskFilter {
-  requireTags: string[];
-  excludeTags: string[];
-  requireProjects: string[];
-  excludeProjects: string[];
+  requireTags?: string[];
+  excludeTags?: string[];
+  requireProjects?: string[];
+  excludeProjects?: string[];
+  requirePriority?: TaskPriority[];
+  excludePriority?: TaskPriority[];
 }
 
 export interface Task extends Common {
