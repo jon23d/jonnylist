@@ -199,7 +199,7 @@ export default function FilterSelector({
                 </Stack>
               </Tabs.Panel>
               <Tabs.Panel value="dates" p={5}>
-                Settings tab content
+                Comming soon!
               </Tabs.Panel>
             </Tabs>
             <Box ml={100}>
