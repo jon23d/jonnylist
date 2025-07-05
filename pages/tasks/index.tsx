@@ -37,12 +37,7 @@ export default function Page() {
     'Priority',
     'Due Date',
   ]);
-  const [taskFilter, setTaskFilter] = useState<TaskFilter>({
-    requireTags: [],
-    excludeTags: [],
-    requireProjects: [],
-    excludeProjects: [],
-  });
+  const [taskFilter, setTaskFilter] = useState<TaskFilter>({});
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [status, setStatus] = useState('pending');
@@ -50,18 +45,18 @@ export default function Page() {
   const filterTasks = (tasks: Task[]): Task[] => {
     return tasks.filter((task) => {
       // filter by tags
-      const includesTags = taskFilter.requireTags.length
+      const includesTags = taskFilter.requireTags?.length
         ? taskFilter.requireTags.some((tag) => task.tags?.includes(tag))
         : true;
-      const excludesTags = taskFilter.excludeTags.length
+      const excludesTags = taskFilter.excludeTags?.length
         ? !taskFilter.excludeTags.some((tag) => task.tags?.includes(tag))
         : true;
 
       // filter by projects. Projects are hierarchical, separated by dots,
       // so we will look for projects that start with what is provided
       // in the filter. This allows for filtering by parent projects as well.
-      let includesProjects = !taskFilter.requireProjects.length;
-      if (taskFilter.requireProjects.length && task.project) {
+      let includesProjects = !taskFilter.requireProjects?.length;
+      if (taskFilter.requireProjects?.length && task.project) {
         for (const project of taskFilter.requireProjects) {
           if (task.project.startsWith(project)) {
             includesProjects = true;
@@ -69,8 +64,8 @@ export default function Page() {
           }
         }
       }
-      let excludesProjects = !taskFilter.excludeProjects.length;
-      if (taskFilter.excludeProjects.length && task.project) {
+      let excludesProjects = true;
+      if (taskFilter.excludeProjects?.length && task.project) {
         for (const project of taskFilter.excludeProjects) {
           if (task.project.startsWith(project)) {
             excludesProjects = false;
@@ -79,7 +74,22 @@ export default function Page() {
         }
       }
 
-      return includesTags && excludesTags && includesProjects && excludesProjects;
+      // Filter by status
+      const includesPriority = taskFilter.requirePriority?.length
+        ? taskFilter.requirePriority.some((priority) => priority === task.priority)
+        : true;
+      const excludesPriority = taskFilter.excludePriority?.length
+        ? !taskFilter.excludePriority.some((priority) => priority === task.priority)
+        : true;
+
+      return (
+        includesTags &&
+        excludesTags &&
+        includesProjects &&
+        excludesProjects &&
+        includesPriority &&
+        excludesPriority
+      );
     });
   };
 
@@ -108,12 +118,7 @@ export default function Page() {
       };
       fetchContext();
     } else {
-      setTaskFilter({
-        requireTags: [],
-        excludeTags: [],
-        requireProjects: [],
-        excludeProjects: [],
-      });
+      setTaskFilter({});
     }
   }, [router.query]);
 
@@ -148,8 +153,6 @@ export default function Page() {
     close();
   };
 
-  const showFilters = !router.query.context;
-
   return (
     <>
       <Group justify="space-between">
@@ -159,7 +162,11 @@ export default function Page() {
           onChange={setStatus}
         />
         <Group>
-          {showFilters && <FilterSelector {...taskFilter} setTaskFilter={setTaskFilter} />}
+          <FilterSelector
+            {...taskFilter}
+            setTaskFilter={setTaskFilter}
+            key={JSON.stringify(taskFilter)}
+          />
 
           <ColumnSelector
             choices={[

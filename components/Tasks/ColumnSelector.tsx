@@ -20,7 +20,7 @@ export default function ColumnSelector({
         <Switch.Group onChange={onChange} value={selected}>
           <Stack gap="xs">
             {choices.map((choice) => (
-              <Switch label={choice} value={choice} size="sm" />
+              <Switch label={choice} value={choice} key={choice} size="sm" />
             ))}
           </Stack>
         </Switch.Group>
