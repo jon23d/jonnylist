@@ -74,7 +74,22 @@ export default function Page() {
         }
       }
 
-      return includesTags && excludesTags && includesProjects && excludesProjects;
+      // Filter by status
+      const includesPriority = taskFilter.requirePriority?.length
+        ? taskFilter.requirePriority.some((priority) => priority === task.priority)
+        : true;
+      const excludesPriority = taskFilter.excludePriority?.length
+        ? !taskFilter.excludePriority.some((priority) => priority === task.priority)
+        : true;
+
+      return (
+        includesTags &&
+        excludesTags &&
+        includesProjects &&
+        excludesProjects &&
+        includesPriority &&
+        excludesPriority
+      );
     });
   };
 
@@ -138,8 +153,6 @@ export default function Page() {
     close();
   };
 
-  const showFilters = !router.query.context;
-
   return (
     <>
       <Group justify="space-between">
@@ -149,13 +162,11 @@ export default function Page() {
           onChange={setStatus}
         />
         <Group>
-          {showFilters && (
-            <FilterSelector
-              {...taskFilter}
-              setTaskFilter={setTaskFilter}
-              key={JSON.stringify(taskFilter)}
-            />
-          )}
+          <FilterSelector
+            {...taskFilter}
+            setTaskFilter={setTaskFilter}
+            key={JSON.stringify(taskFilter)}
+          />
 
           <ColumnSelector
             choices={[

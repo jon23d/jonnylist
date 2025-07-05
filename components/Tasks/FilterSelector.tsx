@@ -1,8 +1,19 @@
 import { useState } from 'react';
-import { Button, Chip, Group, Input, Popover, Stack, Tabs, TagsInput, Text } from '@mantine/core';
+import {
+  Box,
+  Button,
+  Chip,
+  Group,
+  Input,
+  Popover,
+  Stack,
+  Tabs,
+  TagsInput,
+  Text,
+} from '@mantine/core';
 import { useForm } from '@mantine/form';
 import SaveContextModal from '@/components/Contexts/SaveContextModal';
-import { TaskFilter } from '@/data/documentTypes/Task';
+import { TaskFilter, TaskPriority } from '@/data/documentTypes/Task';
 
 export default function FilterSelector({
   setTaskFilter,
@@ -32,9 +43,60 @@ export default function FilterSelector({
   const hasProjects = form.values.requireProjects?.length || form.values.excludeProjects?.length;
   const hasPriority = form.values.requirePriority?.length || form.values.excludePriority?.length;
 
-  const filterApplied = hasTags || hasProjects;
+  const filterApplied = hasTags || hasProjects || hasPriority;
 
   const targetLabel = filterApplied ? 'Filters (!)' : 'Filters';
+
+  // override onChange for the priority chip groups so that we do not allow both groups to select the same priority
+  // after all, we can't both require and exclude a given priority
+  const { onChange: onRequirePriorityChange, ..._requireProps } =
+    form.getInputProps('requirePriority');
+  const { onChange: onExcludePriorityChange, ..._excludeProps } =
+    form.getInputProps('excludePriority');
+
+  const requirePriorityInputProps = {
+    ..._requireProps,
+    onChange: (value: string[]) => {
+      onRequirePriorityChange(value);
+
+      // Is any of the values in this group in the other?
+      if (value.some((v) => form.values.excludePriority?.includes(v as TaskPriority))) {
+        // If so, remove it from the other group
+        const newExcludePriority = form.values.excludePriority?.filter((v) => !value.includes(v));
+        form.setFieldValue('excludePriority', newExcludePriority);
+      }
+    },
+  };
+  const excludePriorityInputProps = {
+    ..._excludeProps,
+    onChange: (value: string[]) => {
+      onExcludePriorityChange(value);
+
+      // Is any of the values in this group in the other?
+      if (value.some((v) => form.values.requirePriority?.includes(v as TaskPriority))) {
+        // If so, remove it from the other group
+        const newRequirePriority = form.values.requirePriority?.filter((v) => !value.includes(v));
+        form.setFieldValue('requirePriority', newRequirePriority);
+      }
+    },
+  };
+
+  let defaultTab = '';
+
+  if (hasPriority) {
+    defaultTab = 'priority';
+  }
+  if (hasProjects) {
+    defaultTab = 'projects';
+  }
+  if (!defaultTab || hasTags) {
+    defaultTab = 'tags';
+  }
+
+  const tagWithDataProps = {
+    fs: 'italic',
+    fw: 600,
+  };
 
   return (
     <>
@@ -50,20 +112,20 @@ export default function FilterSelector({
 
         <Popover.Dropdown>
           <form onSubmit={form.onSubmit(handleSubmit)}>
-            <Tabs defaultValue="gallery" orientation="vertical">
+            <Tabs defaultValue={defaultTab} orientation="vertical">
               <Tabs.List>
                 <Tabs.Tab value="tags">
-                  <Text size="sm" fw={hasTags ? 800 : undefined}>
+                  <Text size="sm" {...(hasTags && tagWithDataProps)}>
                     Tags
                   </Text>
                 </Tabs.Tab>
                 <Tabs.Tab value="projects">
-                  <Text size="sm" fw={hasProjects ? 800 : undefined}>
+                  <Text size="sm" {...(hasProjects && tagWithDataProps)}>
                     Projects
                   </Text>
                 </Tabs.Tab>
                 <Tabs.Tab value="priority">
-                  <Text size="sm" fw={hasPriority ? 800 : undefined}>
+                  <Text size="sm" {...(hasPriority && tagWithDataProps)}>
                     Priority
                   </Text>
                 </Tabs.Tab>
@@ -105,20 +167,32 @@ export default function FilterSelector({
               <Tabs.Panel value="priority" p={5}>
                 <Stack gap="xs">
                   <Input.Wrapper label="Require priority" size="xs">
-                    <Chip.Group multiple>
-                      <Group justify="space-between">
-                        <Chip value="1">Low</Chip>
-                        <Chip value="2">Medium</Chip>
-                        <Chip value="3">High</Chip>
+                    <Chip.Group multiple {...requirePriorityInputProps}>
+                      <Group justify="space-evenly">
+                        <Chip value={TaskPriority.Low} size="xs">
+                          Low
+                        </Chip>
+                        <Chip value={TaskPriority.Medium} size="xs">
+                          Medium
+                        </Chip>
+                        <Chip value={TaskPriority.High} size="xs">
+                          High
+                        </Chip>
                       </Group>
                     </Chip.Group>
                   </Input.Wrapper>
-                  <Input.Wrapper label="Require priority" size="xs">
-                    <Chip.Group multiple>
-                      <Group justify="space-between">
-                        <Chip value="1">Low</Chip>
-                        <Chip value="2">Medium</Chip>
-                        <Chip value="3">High</Chip>
+                  <Input.Wrapper label="Require priority" size="xs" mt=".3em">
+                    <Chip.Group multiple {...excludePriorityInputProps}>
+                      <Group justify="space-evenly">
+                        <Chip value={TaskPriority.Low} size="xs">
+                          Low
+                        </Chip>
+                        <Chip value={TaskPriority.Medium} size="xs">
+                          Medium
+                        </Chip>
+                        <Chip value={TaskPriority.High} size="xs">
+                          High
+                        </Chip>
                       </Group>
                     </Chip.Group>
                   </Input.Wrapper>
@@ -128,13 +202,17 @@ export default function FilterSelector({
                 Settings tab content
               </Tabs.Panel>
             </Tabs>
-            <Stack gap="xs">
-              <Button type="submit">Apply</Button>
-              <Button onClick={handleClear}>Clear</Button>
-              <Button disabled={!filterApplied} onClick={() => setSaveModalOpened(true)}>
-                Save as Context
-              </Button>
-            </Stack>
+            <Box ml={100}>
+              <Stack gap="xs">
+                <Group justify="space-between" grow>
+                  <Button type="submit">Apply</Button>
+                  <Button onClick={handleClear}>Clear</Button>
+                </Group>
+                <Button disabled={!filterApplied} onClick={() => setSaveModalOpened(true)}>
+                  Save as Context
+                </Button>
+              </Stack>
+            </Box>
           </form>
         </Popover.Dropdown>
 
