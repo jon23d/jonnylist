@@ -1,5 +1,6 @@
 import { waitFor } from '@testing-library/dom';
 import { ContextRepository } from '@/data/ContextRepository';
+import { TaskPriority } from '@/data/documentTypes/Task';
 import { setupTestDatabase } from '@/test-utils/db';
 import { contextFactory } from '@/test-utils/factories/ContextFactory';
 
@@ -105,5 +106,41 @@ describe('ContextRepository', () => {
     await waitFor(() => {
       expect(subscriber).toHaveBeenCalledWith([expect.objectContaining(context)]);
     });
+  });
+
+  it('Should update a context', async () => {
+    const contextRepository = new ContextRepository(getDb());
+    const context = await contextRepository.addContext(
+      contextFactory({
+        name: 'Old Name',
+        filter: {
+          requirePriority: [TaskPriority.High],
+        },
+      })
+    );
+
+    const updatedContext = {
+      ...context,
+      filter: {
+        requireTags: ['urgent'],
+      },
+      name: 'New Name',
+    };
+    await contextRepository.updateContext(updatedContext);
+
+    const contexts = await contextRepository.getContexts();
+    expect(contexts[0].name).toEqual('New Name');
+    expect(contexts[0].filter.requirePriority).toBeUndefined();
+    expect(contexts[0].filter.requireTags).toEqual(['urgent']);
+  });
+
+  it('Should delete a context', async () => {
+    const contextRepository = new ContextRepository(getDb());
+    const context = await contextRepository.addContext(contextFactory());
+
+    await contextRepository.deleteContext(context);
+
+    const contexts = await contextRepository.getContexts();
+    expect(contexts).toHaveLength(0);
   });
 });
