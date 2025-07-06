@@ -71,7 +71,7 @@ export default function EditTaskForm({
     <form onSubmit={form.onSubmit(handleSave)}>
       <FocusTrap>
         <Stack gap="xs">
-          <TextInput label="Title" {...form.getInputProps('title')} withAsterisk data-autoFocus />
+          <TextInput label="Title" {...form.getInputProps('title')} withAsterisk data-autofocus />
 
           <Textarea
             label="Description"

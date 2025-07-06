@@ -1,4 +1,5 @@
 import { waitFor } from '@testing-library/dom';
+import PouchDB from 'pouchdb';
 import { DataSource } from '@/data/DataSource';
 import { Preferences } from '@/data/documentTypes/Preferences';
 import { createTestDataSource, setupTestDatabase } from '@/test-utils/db';
@@ -268,5 +269,11 @@ describe('DataSource', () => {
       const settings = await dataSource.getLocalSettings();
       expect(settings).not.toEqual(expect.objectContaining(localSettings));
     });
+  });
+
+  test('getDatabase returns the implicitly-created database instance', () => {
+    const dataSource = getDataSource();
+    const db = dataSource.getDatabase();
+    expect(db).toBeInstanceOf(PouchDB);
   });
 });
