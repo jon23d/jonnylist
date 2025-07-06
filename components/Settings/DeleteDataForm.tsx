@@ -4,7 +4,7 @@ import { Alert, Button, Stack, Text, TextInput } from '@mantine/core';
 import { useDataSource } from '@/contexts/DataSourceContext';
 import { Notifications } from '@/helpers/Notifications';
 
-export default function DeleteForm() {
+export default function DeleteDataForm() {
   const router = useRouter();
   const dataSource = useDataSource();
 

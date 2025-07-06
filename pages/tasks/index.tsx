@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Badge, Group, Modal, SegmentedControl, Table } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import ContextModifier from '@/components/Contexts/ContextModifier';
 import ColumnSelector from '@/components/Tasks/ColumnSelector';
 import EditTaskForm from '@/components/Tasks/EditTaskForm';
 import FilterSelector from '@/components/Tasks/FilterSelector';
 import StatusChanger from '@/components/Tasks/StatusChanger';
 import classes from '@/components/Tasks/Tasks.module.css';
 import { useContextRepository, useTaskRepository } from '@/contexts/DataSourceContext';
+import { Context } from '@/data/documentTypes/Context';
 import { Task, TaskFilter, TaskPriority, TaskStatus } from '@/data/documentTypes/Task';
 import { Notifications } from '@/helpers/Notifications';
 import { getAgeInDays, getUrgency } from '@/helpers/Tasks';
@@ -40,6 +42,7 @@ export default function Page() {
     'Due Date',
   ]);
   const [taskFilter, setTaskFilter] = useState<TaskFilter>({});
+  const [context, setContext] = useState<Context | null>(null);
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [status, setStatus] = useState('pending');
@@ -111,6 +114,7 @@ export default function Page() {
           const contextName = router.query.context as string;
           const context = await contextRepository.getContext(contextName);
           setTaskFilter(context.filter);
+          setContext(context);
         } catch {
           Notifications.showError({
             title: 'Error',
@@ -120,6 +124,7 @@ export default function Page() {
       };
       fetchContext();
     } else {
+      setContext(null);
       setTaskFilter({});
     }
   }, [router.query]);
@@ -164,6 +169,7 @@ export default function Page() {
           onChange={setStatus}
         />
         <Group>
+          {context && <ContextModifier context={context} />}
           <FilterSelector
             {...taskFilter}
             setTaskFilter={setTaskFilter}

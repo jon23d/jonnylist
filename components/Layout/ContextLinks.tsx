@@ -39,7 +39,6 @@ export default function ContextLinks({
         label={context.name}
         active={router.query.context === context._id}
         pl={40}
-        data-testid={`context-link-${context._id}`}
       />
     );
   });

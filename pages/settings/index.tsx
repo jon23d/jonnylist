@@ -1,5 +1,5 @@
 import { Fieldset, Stack, Title } from '@mantine/core';
-import DeleteForm from '@/components/Settings/DeleteForm';
+import DeleteDataForm from '@/components/Settings/DeleteDataForm';
 import ExportForm from '@/components/Settings/ExportForm';
 import ImportForm from '@/components/Settings/ImportForm';
 import SyncServerForm from '@/components/Settings/SyncServerForm';
@@ -24,7 +24,7 @@ export default function Page() {
       </Fieldset>
 
       <Fieldset legend="Delete data" mb="md">
-        <DeleteForm />
+        <DeleteDataForm />
       </Fieldset>
     </Stack>
   );

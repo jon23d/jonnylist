@@ -55,13 +55,44 @@ export class ContextRepository implements Repository {
    *
    * @param context
    */
-  async addContext(context: NewContext): Promise<void> {
+  async addContext(context: NewContext): Promise<Context> {
     const doc: Context = {
       _id: `context-${Math.random().toString(36).substring(2, 15)}`,
       type: 'context',
       ...context,
     };
-    await this.db.put(doc);
+    const result = await this.db.put(doc);
+    return { ...doc, _rev: result.rev };
+  }
+
+  /**
+   * Update an existing context in the database.
+   *
+   * @param context
+   */
+  async updateContext(context: Context): Promise<void> {
+    try {
+      await this.db.put(context);
+    } catch (error) {
+      Logger.error(`Error updating context with ID ${context._id}:`, error);
+      throw error; // Re-throw the error for the caller to handle
+    }
+  }
+
+  /**
+   * Delete a context from the database.
+   * @param context
+   */
+  async deleteContext(context: Context): Promise<void> {
+    try {
+      await this.db.put({
+        ...context,
+        _deleted: true,
+      });
+    } catch (error) {
+      Logger.error(`Error deleting context with ID ${context._id}:`, error);
+      throw error; // Re-throw the error for the caller to handle
+    }
   }
 
   /**

@@ -17,7 +17,8 @@ export default function SaveContextModal({
   const contextRepository = useContextRepository();
   const [contextName, setContextName] = useState<string>('');
 
-  const handleSave = async () => {
+  const handleSave = async (event: React.FormEvent) => {
+    event.preventDefault();
     Logger.info('Saving context', filter);
     await contextRepository.addContext({
       name: contextName,
@@ -27,26 +28,31 @@ export default function SaveContextModal({
       title: 'Success!',
       message: 'Your context was created',
     });
+    setContextName('');
     onClose();
   };
 
   return (
     <Modal title="Save Context?" opened={opened} onClose={onClose}>
-      <FocusTrap>
-        <Stack>
-          <Text>This will save the filter as a context and make it available for future use</Text>
-          <TextInput
-            label="Context Name"
-            value={contextName}
-            onChange={(e) => setContextName(e.currentTarget.value)}
-            data-autofocus
-          />
-          <Group>
-            <Button onClick={handleSave}>Save</Button>
-            <Button onClick={onClose}>Cancel</Button>
-          </Group>
-        </Stack>
-      </FocusTrap>
+      <form onSubmit={handleSave}>
+        <FocusTrap>
+          <Stack>
+            <Text>This will save the filter as a context and make it available for future use</Text>
+            <TextInput
+              label="Context Name"
+              value={contextName}
+              onChange={(e) => setContextName(e.currentTarget.value)}
+              data-autofocus
+            />
+            <Group>
+              <Button onClick={handleSave} disabled={!contextName}>
+                Save
+              </Button>
+              <Button onClick={onClose}>Cancel</Button>
+            </Group>
+          </Stack>
+        </FocusTrap>
+      </form>
     </Modal>
   );
 }
