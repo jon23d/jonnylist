@@ -1,4 +1,4 @@
-import TaskEditor from '@/components/Tasks/TaskEditor';
+import EditTaskForm from '@/components/Tasks/EditTaskForm';
 import { TaskPriority, TaskStatus } from '@/data/documentTypes/Task';
 import { renderWithDataSource, screen, userEvent } from '@/test-utils';
 import { setupTestDatabase } from '@/test-utils/db';
@@ -27,7 +27,7 @@ describe('TaskEditor', () => {
       priority: TaskPriority.High,
     });
 
-    renderWithDataSource(<TaskEditor task={task} handleClose={() => {}} />, dataSource);
+    renderWithDataSource(<EditTaskForm task={task} handleClose={() => {}} />, dataSource);
 
     const titleInput = screen.getByRole('textbox', { name: 'Title' });
     expect(titleInput).toBeInTheDocument();
@@ -53,7 +53,7 @@ describe('TaskEditor', () => {
   it('Saves the task when the form is submitted', async () => {
     const task = taskFactory();
     const dataSource = getDataSource();
-    renderWithDataSource(<TaskEditor task={task} handleClose={() => {}} />, dataSource);
+    renderWithDataSource(<EditTaskForm task={task} handleClose={() => {}} />, dataSource);
 
     const titleInput = screen.getByRole('textbox', { name: 'Title' });
     await userEvent.clear(titleInput);
@@ -102,7 +102,7 @@ describe('TaskEditor', () => {
   it('blurs the active element after saving', async () => {
     const task = taskFactory();
     const dataSource = getDataSource();
-    renderWithDataSource(<TaskEditor task={task} handleClose={() => {}} />, dataSource);
+    renderWithDataSource(<EditTaskForm task={task} handleClose={() => {}} />, dataSource);
 
     const saveButton = screen.getByRole('button', { name: /save/i });
     await userEvent.click(saveButton);
