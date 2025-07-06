@@ -39,6 +39,10 @@ export class DataSource {
     }
   }
 
+  getDatabase(): PouchDB.Database<DocumentTypes> {
+    return this.db;
+  }
+
   /**
    * Cleanup all active subscriptions and resources.
    * This should be called when the DataSource instance is no longer needed
