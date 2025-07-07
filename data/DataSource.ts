@@ -39,6 +39,9 @@ export class DataSource {
     }
   }
 
+  /**
+   * Get the PouchDB database instance.
+   */
   getDatabase(): PouchDB.Database<DocumentTypes> {
     return this.db;
   }
@@ -128,6 +131,11 @@ export class DataSource {
     }
   }
 
+  /**
+   * Create a new PouchDB database for syncing with a couchdb server.
+   *
+   * @param settings
+   */
   createSyncDb(settings: LocalSettings): PouchDB.Database {
     Logger.info('Creating sync database');
     return new PouchDB(settings.syncServerUrl, {

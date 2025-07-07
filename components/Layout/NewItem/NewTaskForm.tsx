@@ -1,9 +1,9 @@
 import {
   Button,
   FocusTrap,
-  Group,
   Select,
   Stack,
+  Tabs,
   TagsInput,
   Textarea,
   TextInput,
@@ -11,18 +11,13 @@ import {
 import { DateInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
 import { useTaskRepository } from '@/contexts/DataSourceContext';
-import {
-  NewTask,
-  taskPrioritySelectOptions,
-  TaskStatus,
-  taskStatusSelectOptions,
-} from '@/data/documentTypes/Task';
+import { NewTask, taskPrioritySelectOptions, TaskStatus } from '@/data/documentTypes/Task';
 import { Logger } from '@/helpers/Logger';
 
 export default function NewTaskForm({ handleClose }: { handleClose: () => void }) {
   const taskRepository = useTaskRepository();
 
-  const form = useForm<NewTask>({
+  const form = useForm<Omit<NewTask, 'status'>>({
     mode: 'uncontrolled',
     initialValues: {
       title: '',
@@ -31,18 +26,20 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
       project: '',
       priority: undefined,
       dueDate: undefined,
-      status: TaskStatus.Ready,
+      waitUntil: undefined,
     },
     validate: {
       title: (value) => (value ? null : 'Title is required'),
-      status: (value) => (value ? null : 'Status is required'),
     },
   });
 
   const handleSave = async () => {
     try {
+      const status = form.values.waitUntil ? TaskStatus.Waiting : TaskStatus.Ready;
+
       const newTask: NewTask = {
         ...form.getValues(),
+        status,
       };
 
       await taskRepository.addTask(newTask);
@@ -63,49 +60,58 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
 
   return (
     <form onSubmit={form.onSubmit(handleSave)}>
-      <Stack gap="xs">
-        <FocusTrap>
-          <TextInput label="Title" {...form.getInputProps('title')} withAsterisk data-autofocus />
+      <FocusTrap>
+        <Tabs defaultValue="basics">
+          <Tabs.List mb={10}>
+            <Tabs.Tab value="basics">Basics</Tabs.Tab>
+            <Tabs.Tab value="advanced">Advanced</Tabs.Tab>
+          </Tabs.List>
 
-          <Textarea
-            label="Description"
-            autosize
-            minRows={3}
-            size="xs"
-            {...form.getInputProps('description')}
-          />
+          <Tabs.Panel value="basics">
+            <Stack gap="xs">
+              <TextInput
+                label="Title"
+                {...form.getInputProps('title')}
+                withAsterisk
+                data-autofocus
+              />
 
-          <Group justify="space-between" grow>
-            <TagsInput label="Tags" {...form.getInputProps('tags')} size="xs" />
-            <TextInput label="Project" {...form.getInputProps('project')} size="xs" />
-          </Group>
+              <TagsInput label="Tags" {...form.getInputProps('tags')} />
+              <TextInput label="Project" {...form.getInputProps('project')} />
 
-          <Group justify="space-between" grow>
-            <Select
-              label="Priority"
-              data={taskPrioritySelectOptions}
-              {...form.getInputProps('priority')}
-              size="xs"
-              searchable
-            />
-            <DateInput label="Due Date" {...form.getInputProps('dueDate')} clearable size="xs" />
-          </Group>
+              <Select
+                label="Priority"
+                data={taskPrioritySelectOptions}
+                {...form.getInputProps('priority')}
+                searchable
+              />
+              <DateInput label="Due Date" {...form.getInputProps('dueDate')} clearable />
+            </Stack>
+          </Tabs.Panel>
 
-          <Group justify="space-between" grow>
-            <Select
-              label="Status"
-              data={taskStatusSelectOptions}
-              {...form.getInputProps('status')}
-              withAsterisk
-              allowDeselect={false}
-              size="xs"
-              searchable
-            />
-          </Group>
+          <Tabs.Panel value="advanced">
+            <Stack gap="xs">
+              <Textarea
+                label="Description"
+                autosize
+                minRows={3}
+                {...form.getInputProps('description')}
+              />
 
-          <Button type="submit">Save</Button>
-        </FocusTrap>
-      </Stack>
+              <DateInput
+                label="Wait Until"
+                description="On this date, the task will be moved from waiting to pending"
+                {...form.getInputProps('waitUntil')}
+                clearable
+              />
+            </Stack>
+          </Tabs.Panel>
+        </Tabs>
+
+        <Button type="submit" mt={20}>
+          Create Task
+        </Button>
+      </FocusTrap>
     </form>
   );
 }

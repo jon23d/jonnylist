@@ -39,12 +39,6 @@ jest.mock('@/components/Layout/HeaderLinks', () => {
   };
 });
 
-jest.mock('@/components/Layout/ListLinks', () => {
-  return function ListLinks() {
-    return <div data-testid="list-links">List Links</div>;
-  };
-});
-
 jest.mock('@/components/Layout/CommandPalette');
 
 describe('Layout', () => {

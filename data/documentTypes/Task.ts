@@ -47,6 +47,7 @@ export interface Task extends Common {
   status: TaskStatus;
   priority?: TaskPriority;
   dueDate?: string;
+  waitUntil?: string;
   createdAt: Date;
   updatedAt: Date;
 }

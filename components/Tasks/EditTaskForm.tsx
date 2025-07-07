@@ -1,9 +1,9 @@
 import {
   Button,
   FocusTrap,
-  Group,
   Select,
   Stack,
+  Tabs,
   TagsInput,
   Textarea,
   TextInput,
@@ -39,6 +39,7 @@ export default function EditTaskForm({
       priority: task.priority,
       dueDate: task.dueDate,
       status: task.status,
+      waitUntil: task.waitUntil,
     },
     validate: {
       title: (value) => (value ? null : 'Title is required'),
@@ -70,49 +71,68 @@ export default function EditTaskForm({
   return (
     <form onSubmit={form.onSubmit(handleSave)}>
       <FocusTrap>
-        <Stack gap="xs">
-          <TextInput label="Title" {...form.getInputProps('title')} withAsterisk data-autofocus />
+        <Tabs defaultValue="basics">
+          <Tabs.List mb={10}>
+            <Tabs.Tab value="basics">Basics</Tabs.Tab>
+            <Tabs.Tab value="advanced">Advanced</Tabs.Tab>
+          </Tabs.List>
 
-          <Textarea
-            label="Description"
-            autosize
-            minRows={3}
-            size="xs"
-            {...form.getInputProps('description')}
-          />
+          <Tabs.Panel value="basics">
+            <Stack gap="xs">
+              <TextInput
+                label="Title"
+                {...form.getInputProps('title')}
+                withAsterisk
+                data-autofocus
+              />
 
-          <Group justify="space-between" grow>
-            <TagsInput label="Tags" {...form.getInputProps('tags')} size="xs" />
-            <TextInput label="Project" {...form.getInputProps('project')} size="xs" />
-          </Group>
+              <TagsInput label="Tags" {...form.getInputProps('tags')} />
+              <TextInput label="Project" {...form.getInputProps('project')} />
 
-          <Group justify="space-between" grow>
-            <Select
-              label="Priority"
-              clearable
-              data={taskPrioritySelectOptions}
-              {...form.getInputProps('priority')}
-              size="xs"
-              searchable
-            />
-            <DateInput label="Due Date" {...form.getInputProps('dueDate')} clearable size="xs" />
-          </Group>
+              <Select
+                label="Priority"
+                clearable
+                data={taskPrioritySelectOptions}
+                {...form.getInputProps('priority')}
+                searchable
+              />
+              <DateInput label="Due Date" {...form.getInputProps('dueDate')} clearable />
 
-          <Group justify="space-between" grow>
-            <Select
-              label="Status"
-              data={taskStatusSelectOptions}
-              {...form.getInputProps('status')}
-              clearable={false}
-              allowDeselect={false}
-              withAsterisk
-              size="xs"
-              searchable
-            />
-          </Group>
+              <Select
+                label="Status"
+                data={taskStatusSelectOptions}
+                {...form.getInputProps('status')}
+                clearable={false}
+                allowDeselect={false}
+                withAsterisk
+                size="xs"
+                searchable
+              />
+            </Stack>
+          </Tabs.Panel>
 
-          <Button type="submit">Save</Button>
-        </Stack>
+          <Tabs.Panel value="advanced">
+            <Stack gap="xs">
+              <Textarea
+                label="Description"
+                autosize
+                minRows={3}
+                {...form.getInputProps('description')}
+              />
+
+              <DateInput
+                label="Wait Until"
+                description="On this date, the task will be moved from waiting to pending"
+                {...form.getInputProps('waitUntil')}
+                clearable
+              />
+            </Stack>
+          </Tabs.Panel>
+        </Tabs>
+
+        <Button type="submit" mt={20}>
+          Update Task
+        </Button>
       </FocusTrap>
     </form>
   );

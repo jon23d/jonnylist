@@ -96,4 +96,19 @@ describe('DataSourceContext', () => {
     // Ensure initializeSync was called
     expect(initializeSyncSpy).toHaveBeenCalled();
   });
+
+  it('Calls checkWaitingTasks when initialized', async () => {
+    const dataSource = getDataSource();
+    const taskRepository = dataSource.getTaskRepository();
+    const checkWaitingTasksSpy = jest
+      .spyOn(taskRepository, 'checkWaitingTasks')
+      .mockResolvedValue();
+
+    renderWithDataSource(<TestComponent />, dataSource);
+
+    // Wait for the useEffect to run
+    await waitFor(() => {
+      expect(checkWaitingTasksSpy).toHaveBeenCalled();
+    });
+  });
 });
