@@ -7,16 +7,6 @@ import NewTaskForm from '../NewTaskForm';
 describe('NewTaskForm', () => {
   const { getDataSource } = setupTestDatabase();
 
-  it('Renders the status select with task status options', async () => {
-    renderWithDataSource(<NewTaskForm handleClose={() => {}} />, getDataSource());
-
-    const statusSelect = screen.getByRole('textbox', { name: 'Status' });
-    await userEvent.click(statusSelect);
-
-    expect(screen.getByText('Ready')).toBeInTheDocument();
-    expect(screen.getByText('Done')).toBeInTheDocument();
-  });
-
   it('Saves a new task when the form is submitted', async () => {
     const handleClose = jest.fn();
     const dataSource = getDataSource();
@@ -26,9 +16,6 @@ describe('NewTaskForm', () => {
 
     const titleInput = screen.getByRole('textbox', { name: 'Title' });
     await userEvent.type(titleInput, 'Test Task');
-
-    const descriptionInput = screen.getByRole('textbox', { name: 'Description' });
-    await userEvent.type(descriptionInput, 'This is a test task description.');
 
     const tagsInput = screen.getByRole('textbox', { name: 'Tags' });
     await userEvent.type(tagsInput, 'test-tag{enter}');
@@ -40,31 +27,62 @@ describe('NewTaskForm', () => {
     const dueDateInput = screen.getByRole('textbox', { name: 'Due Date' });
     await userEvent.type(dueDateInput, '01/15/2026');
 
-    const statusSelect = screen.getByRole('textbox', { name: 'Status' });
-    await userEvent.click(statusSelect);
-    await userEvent.click(screen.getByText('Done'));
-
     const projectInput = screen.getByRole('textbox', { name: 'Project' });
     await userEvent.type(projectInput, 'Test Project');
 
-    const submitButton = screen.getByRole('button', { name: 'Save' });
+    // Go to the advanced tab as well
+    const advancedTab = screen.getByRole('tab', { name: 'Advanced' });
+    await userEvent.click(advancedTab);
+
+    const descriptionInput = screen.getByRole('textbox', { name: 'Description' });
+    await userEvent.type(descriptionInput, 'This is a test task description.');
+
+    const submitButton = screen.getByRole('button', { name: 'Create Task' });
     await userEvent.click(submitButton);
 
     await waitFor(() => {
       expect(handleClose).toHaveBeenCalled();
     });
 
-    const tasks = await taskRepository.getTasks({
-      statuses: [TaskStatus.Done],
-    });
+    const tasks = await taskRepository.getTasks({});
     expect(tasks).toHaveLength(1);
     expect(tasks[0].title).toBe('Test Task');
     expect(tasks[0].description).toBe('This is a test task description.');
     expect(tasks[0].tags).toStrictEqual(['test-tag', 'another-tag']);
     expect(tasks[0].priority).toBe(TaskPriority.Low);
     expect(tasks[0].dueDate).toBe('2026-01-15');
-    expect(tasks[0].status).toBe(TaskStatus.Done);
+    expect(tasks[0].status).toBe(TaskStatus.Ready);
     expect(tasks[0].project).toBe('Test Project');
+  });
+
+  it('Sets the status to waiting when the waitUntil date is present', async () => {
+    const handleClose = jest.fn();
+    const dataSource = getDataSource();
+    const taskRepository = dataSource.getTaskRepository();
+
+    renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
+
+    const titleInput = screen.getByRole('textbox', { name: 'Title' });
+    await userEvent.type(titleInput, 'Test Task');
+
+    const advancedTab = screen.getByRole('tab', { name: 'Advanced' });
+    await userEvent.click(advancedTab);
+
+    const dueDateInput = screen.getByRole('textbox', { name: 'Wait Until' });
+    await userEvent.type(dueDateInput, '03/15/2026');
+
+    const submitButton = screen.getByRole('button', { name: 'Create Task' });
+    await userEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(handleClose).toHaveBeenCalled();
+    });
+
+    const tasks = await taskRepository.getTasks({});
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].title).toBe('Test Task');
+    expect(tasks[0].status).toBe(TaskStatus.Waiting);
+    expect(tasks[0].waitUntil).toBe('2026-03-15');
   });
 
   it('Blurs the active element when the form is submitted', async () => {

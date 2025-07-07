@@ -46,11 +46,23 @@ export const DataSourceContextProvider = ({
       });
     });
 
+    // Every five minutes, we need to run checkWaitingTasks so that waiting tasks are moved
+    // to ready tasks.
+    const taskRepository = currentDataSource.getTaskRepository();
+    taskRepository.checkWaitingTasks();
+    const intervalId = setInterval(
+      () => {
+        taskRepository.checkWaitingTasks();
+      },
+      5 * 60 * 1000
+    );
+
     // Cleanup function
     return () => {
       currentDataSource.cleanup().catch((error) => {
         Logger.error('Failed to cleanup DataSource:', error);
       });
+      clearInterval(intervalId);
     };
   }, [currentDataSource]);
 

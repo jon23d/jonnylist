@@ -217,6 +217,35 @@ export class TaskRepository implements Repository {
   }
 
   /**
+   * This function will look for tasks that have a waitUntil date that is today or in the past,
+   * and then update their status to TaskStatus.Ready if they are not already.
+   */
+  checkWaitingTasks(): Promise<void> {
+    Logger.info('Checking for waiting tasks to update to ready status');
+    this.getTasks({ statuses: [TaskStatus.Waiting] })
+      .then((waitingTasks) => {
+        const now = new Date();
+        const tasksToUpdate = waitingTasks.filter((task) => {
+          return (
+            task.waitUntil && new Date(task.waitUntil) <= now && task.status !== TaskStatus.Ready
+          );
+        });
+
+        if (tasksToUpdate.length > 0) {
+          Logger.info(`Updating ${tasksToUpdate.length} waiting tasks to ready status`);
+          return this.updateTasks(
+            tasksToUpdate.map((task) => ({ ...task, status: TaskStatus.Ready }))
+          );
+        }
+      })
+      .catch((error) => {
+        Logger.error('Error checking waiting tasks:', error);
+      });
+
+    return Promise.resolve();
+  }
+
+  /**
    * Initialize the PouchDB changes feed to listen for changes to task documents.
    *
    * @private

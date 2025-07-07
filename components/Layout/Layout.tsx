@@ -9,7 +9,6 @@ import ContextLinks from '@/components/Layout/ContextLinks';
 import DataMigrationOverlay from '@/components/Layout/DataMigrationOverlay';
 import Footer from '@/components/Layout/Footer';
 import HeaderLinks from '@/components/Layout/HeaderLinks';
-import ListLinks from '@/components/Layout/ListLinks';
 import { useBulkOperationOverlay } from '@/contexts/BulkOperationOverlayContext';
 import { useIsMigrating } from '@/contexts/DataSourceContext';
 
@@ -74,7 +73,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <AppShell.Navbar p="md">
           <AppShell.Section grow my="md" component={ScrollArea}>
             <ContextLinks handleNavLinkClick={handleNavLinkClick} />
-            <ListLinks handleNavLinkClick={handleNavLinkClick} />
+
             <CommandPalette />
           </AppShell.Section>
           <AppShell.Section>

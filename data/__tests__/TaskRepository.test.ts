@@ -263,4 +263,34 @@ describe('TaskRepository', () => {
       expect(subscriber2).toHaveBeenCalled();
     });
   });
+
+  test('checkWaitingTasks should update waiting tasks to ready status', async () => {
+    const taskRepository = new TaskRepository(getDb());
+
+    // Create a waiting task with a waitUntil date in the past
+    const waitingTask = taskFactory({
+      status: TaskStatus.Waiting,
+      title: 'Waiting task',
+      waitUntil: new Date(Date.now() - 1000).toISOString(), // 1 second in the past
+    });
+    // Create one a day in the future
+    const futureTask = taskFactory({
+      status: TaskStatus.Waiting,
+      title: 'Future task',
+      waitUntil: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 1 day in the future
+    });
+
+    await taskRepository.addTask(waitingTask);
+    await taskRepository.addTask(futureTask);
+
+    // Check waiting tasks and update them
+    taskRepository.checkWaitingTasks().then(async () => {
+      // Fetch tasks to verify the update
+      const tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
+
+      expect(tasks).toHaveLength(1);
+      expect(tasks[0].status).toBe(TaskStatus.Ready);
+      expect(tasks[0].title).toBe('Waiting task');
+    });
+  });
 });
