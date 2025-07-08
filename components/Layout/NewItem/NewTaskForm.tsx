@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { useRouter } from 'next/router';
 import {
   Button,
   FocusTrap,
@@ -10,15 +12,16 @@ import {
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
-import { useTaskRepository } from '@/contexts/DataSourceContext';
+import { useContextRepository, useTaskRepository } from '@/contexts/DataSourceContext';
 import { NewTask, taskPrioritySelectOptions, TaskStatus } from '@/data/documentTypes/Task';
 import { Logger } from '@/helpers/Logger';
 
 export default function NewTaskForm({ handleClose }: { handleClose: () => void }) {
+  const router = useRouter();
   const taskRepository = useTaskRepository();
+  const contextRepository = useContextRepository();
 
   const form = useForm<Omit<NewTask, 'status'>>({
-    mode: 'uncontrolled',
     initialValues: {
       title: '',
       description: '',
@@ -32,6 +35,21 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
       title: (value) => (value ? null : 'Title is required'),
     },
   });
+
+  useEffect(() => {
+    // If a context is set, we may be able to grab some data from it
+    const contextId = router.query.context;
+    if (contextId) {
+      contextRepository.getContext(contextId as string).then((context) => {
+        if (context?.filter.requireProjects && context.filter.requireProjects.length === 1) {
+          form.setFieldValue('project', context.filter.requireProjects[0]);
+        }
+        if (context?.filter.requireTags) {
+          form.setFieldValue('tags', context.filter.requireTags);
+        }
+      });
+    }
+  }, [router.query]);
 
   const handleSave = async () => {
     try {

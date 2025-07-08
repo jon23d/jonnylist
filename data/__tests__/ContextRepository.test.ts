@@ -143,4 +143,34 @@ describe('ContextRepository', () => {
     const contexts = await contextRepository.getContexts();
     expect(contexts).toHaveLength(0);
   });
+
+  it('Should get a context by ID', async () => {
+    const contextRepository = new ContextRepository(getDb());
+    const context = await contextRepository.addContext(contextFactory());
+
+    const fetchedContext = await contextRepository.getContext(context._id);
+    expect(fetchedContext).toEqual(expect.objectContaining(context));
+  });
+
+  it('Should throw an error if trying to get a context that does not exist', async () => {
+    const contextRepository = new ContextRepository(getDb());
+
+    await expect(contextRepository.getContext('non-existent-id')).rejects.toThrow('missing');
+  });
+
+  it('getContext should return an error if the document is not a context', async () => {
+    const contextRepository = new ContextRepository(getDb());
+    const nonContextDoc = {
+      _id: 'non-context-id',
+      type: 'task',
+      name: 'Not a context',
+    };
+
+    // @ts-ignore
+    getDb().put(nonContextDoc);
+
+    await expect(contextRepository.getContext(nonContextDoc._id)).rejects.toThrow(
+      `Document with ID ${nonContextDoc._id} is not a context.`
+    );
+  });
 });

@@ -39,9 +39,19 @@ export class ContextRepository implements Repository {
     return result.rows.map((row) => row.doc!);
   }
 
+  /**
+   * Fetch a specific context by its ID.
+   *
+   * @param id
+   */
   async getContext(id: string): Promise<Context> {
     try {
       const doc = await this.db.get<Context>(id);
+
+      if (doc.type !== 'context') {
+        throw new Error(`Document with ID ${id} is not a context.`);
+      }
+
       return doc;
     } catch (error) {
       Logger.error(`Error fetching context with ID ${id}:`, error);

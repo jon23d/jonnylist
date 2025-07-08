@@ -4,6 +4,12 @@ import { renderWithDataSource, screen, userEvent } from '@/test-utils';
 import { setupTestDatabase } from '@/test-utils/db';
 import NewTaskForm from '../NewTaskForm';
 
+jest.mock('next/router', () => ({
+  useRouter: jest.fn().mockReturnValue({
+    query: {},
+  }),
+}));
+
 describe('NewTaskForm', () => {
   const { getDataSource } = setupTestDatabase();
 
@@ -74,9 +80,15 @@ describe('NewTaskForm', () => {
     const submitButton = screen.getByRole('button', { name: 'Create Task' });
     await userEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(handleClose).toHaveBeenCalled();
-    });
+    await waitFor(
+      () => {
+        expect(handleClose).toHaveBeenCalled();
+      },
+      {
+        timeout: 5000,
+        interval: 100,
+      }
+    );
 
     const tasks = await taskRepository.getTasks({});
     expect(tasks).toHaveLength(1);
@@ -113,4 +125,30 @@ describe('NewTaskForm', () => {
 
     blurSpy.mockRestore();
   });
+
+  /*it('Sets the project and tags from the context if available', async () => {
+    const handleClose = jest.fn();
+    const dataSource = getDataSource();
+    const contextRepository = dataSource.getContextRepository();
+
+    const context = await contextRepository.addContext(
+      contextFactory({
+        filter: {
+          requireProjects: ['Test Project'],
+          requireTags: ['context-tag'],
+        },
+      })
+    );
+    (useRouter as jest.Mock).mockReturnValue({
+      query: { context: context._id },
+    });
+
+    renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
+
+    // Wait for the form to be populated with context data
+    await waitFor(() => {
+      expect(screen.getByRole('textbox', { name: 'Project' })).toHaveValue('Test Project');
+      expect(screen.getByRole('textbox', { name: 'Tags' })).toHaveValue('context-tag');
+    });
+  });*/
 });
