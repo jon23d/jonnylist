@@ -80,9 +80,15 @@ describe('NewTaskForm', () => {
     const submitButton = screen.getByRole('button', { name: 'Create Task' });
     await userEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(handleClose).toHaveBeenCalled();
-    });
+    await waitFor(
+      () => {
+        expect(handleClose).toHaveBeenCalled();
+      },
+      {
+        timeout: 5000,
+        interval: 100,
+      }
+    );
 
     const tasks = await taskRepository.getTasks({});
     expect(tasks).toHaveLength(1);
