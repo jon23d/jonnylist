@@ -12,13 +12,14 @@ export default function RenameContextForm({
   onClose: () => void;
 }) {
   const contextRepository = useContextRepository();
+  const [formError, setFormError] = useState('');
 
-  const [contextName, setContextName] = useState<string>('');
+  const [contextName, setContextName] = useState<string>(context.name);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (contextName.trim() === '') {
-      Notifications.showError({ title: 'Error', message: 'Context name cannot be empty.' });
+      setFormError('Context name cannot be empty.');
       return;
     }
 
@@ -27,15 +28,15 @@ export default function RenameContextForm({
         ...context,
         name: contextName,
       });
+
+      setContextName('');
+      onClose();
     } catch (error) {
       Notifications.showError({
         title: 'Error',
         message: `Failed to rename context: ${error}`,
       });
     }
-
-    setContextName('');
-    onClose();
   };
 
   const handleCancel = async () => {
@@ -52,8 +53,13 @@ export default function RenameContextForm({
             value={contextName}
             onChange={(e) => setContextName(e.currentTarget.value)}
             data-autofocus
+            error={formError}
           />
-          <Button type="submit" onClick={handleSubmit}>
+          <Button
+            type="submit"
+            onClick={handleSubmit}
+            disabled={contextName.length === 0 || contextName === context.name}
+          >
             Rename Context
           </Button>
           <Button onClick={handleCancel}>Cancel</Button>
