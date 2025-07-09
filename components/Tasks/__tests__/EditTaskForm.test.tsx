@@ -1,3 +1,4 @@
+import { DateInput } from '@mantine/dates';
 import EditTaskForm from '@/components/Tasks/EditTaskForm';
 import { TaskPriority, TaskStatus } from '@/data/documentTypes/Task';
 import { renderWithDataSource, screen, userEvent } from '@/test-utils';
@@ -12,6 +13,12 @@ const mockTaskRepository = {
 jest.mock('@/contexts/DataSourceContext', () => ({
   ...jest.requireActual('@/contexts/DataSourceContext'),
   useTaskRepository: () => mockTaskRepository,
+}));
+
+// The DatePickerInput is not very testable, so we are going to use the DatePicker input in test instead
+jest.mock('@mantine/dates', () => ({
+  ...jest.requireActual('@mantine/dates'),
+  DatePickerInput: jest.fn(({ ...props }) => <DateInput {...props} />),
 }));
 
 describe('TaskEditor', () => {

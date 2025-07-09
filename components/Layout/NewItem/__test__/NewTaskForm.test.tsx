@@ -1,4 +1,5 @@
 import { waitFor } from '@testing-library/react';
+import { DateInput } from '@mantine/dates';
 import { TaskPriority, TaskStatus } from '@/data/documentTypes/Task';
 import { renderWithDataSource, screen, userEvent } from '@/test-utils';
 import { setupTestDatabase } from '@/test-utils/db';
@@ -8,6 +9,12 @@ jest.mock('next/router', () => ({
   useRouter: jest.fn().mockReturnValue({
     query: {},
   }),
+}));
+
+// The DatePickerInput is not very testable, so we are going to use the DatePicker input in test instead
+jest.mock('@mantine/dates', () => ({
+  ...jest.requireActual('@mantine/dates'),
+  DatePickerInput: jest.fn(({ ...props }) => <DateInput {...props} />),
 }));
 
 describe('NewTaskForm', () => {

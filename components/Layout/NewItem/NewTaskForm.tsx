@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import {
   Button,
@@ -7,19 +7,36 @@ import {
   Stack,
   Tabs,
   TagsInput,
+  Text,
   Textarea,
   TextInput,
 } from '@mantine/core';
-import { DateInput } from '@mantine/dates';
+import { DatePickerInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
+import { useHotkeys } from '@mantine/hooks';
 import { useContextRepository, useTaskRepository } from '@/contexts/DataSourceContext';
 import { NewTask, taskPrioritySelectOptions, TaskStatus } from '@/data/documentTypes/Task';
+import { datePickerPresets } from '@/helpers/datePicker';
 import { Logger } from '@/helpers/Logger';
 
 export default function NewTaskForm({ handleClose }: { handleClose: () => void }) {
   const router = useRouter();
   const taskRepository = useTaskRepository();
   const contextRepository = useContextRepository();
+  const [activeTab, setActiveTab] = useState<string | null>('basics');
+
+  // When the user changes tabs, we are going to focus on the first input in that tab
+  const basicsPanelRef = useRef<HTMLDivElement>(null);
+  const advancedPanelRef = useRef<HTMLDivElement>(null);
+
+  // Hotkeys for tab navigation
+  useHotkeys(
+    [
+      ['mod+shift+1', () => setActiveTab('basics')],
+      ['mod+shift+2', () => setActiveTab('advanced')],
+    ],
+    []
+  );
 
   const form = useForm<Omit<NewTask, 'status'>>({
     initialValues: {
@@ -51,6 +68,20 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
     }
   }, [router.query]);
 
+  // Focus on the first input of the active tab when it changes
+  useEffect(() => {
+    const panelRef = activeTab === 'basics' ? basicsPanelRef : advancedPanelRef;
+
+    if (panelRef.current) {
+      // Find the first focusable element within the active panel.
+      const firstInput = panelRef.current.querySelector<HTMLElement>(
+        'input:not([disabled]), textarea:not([disabled]), select:not([disabled])'
+      );
+      // If an input is found, focus it.
+      firstInput?.focus();
+    }
+  }, [activeTab]);
+
   const handleSave = async () => {
     try {
       const status = form.values.waitUntil ? TaskStatus.Waiting : TaskStatus.Ready;
@@ -76,16 +107,26 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
     }
   };
 
+  // If the advanced tab has data on it, we want for the user to be able to tell at a glance
+  const advancedHasData = form.values.waitUntil || form.values.description;
+  const hasDataProps = { fs: 'italic', fw: 600 };
+
   return (
     <form onSubmit={form.onSubmit(handleSave)}>
       <FocusTrap>
-        <Tabs defaultValue="basics">
+        <Tabs value={activeTab} onChange={setActiveTab}>
           <Tabs.List mb={10}>
-            <Tabs.Tab value="basics">Basics</Tabs.Tab>
-            <Tabs.Tab value="advanced">Advanced</Tabs.Tab>
+            <Tabs.Tab value="basics">
+              <Text size="sm">Basics</Text>
+            </Tabs.Tab>
+            <Tabs.Tab value="advanced">
+              <Text size="sm" {...(advancedHasData && hasDataProps)}>
+                Advanced
+              </Text>
+            </Tabs.Tab>
           </Tabs.List>
 
-          <Tabs.Panel value="basics">
+          <Tabs.Panel value="basics" ref={basicsPanelRef}>
             <Stack gap="xs">
               <TextInput
                 label="Title"
@@ -103,11 +144,17 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
                 {...form.getInputProps('priority')}
                 searchable
               />
-              <DateInput label="Due Date" {...form.getInputProps('dueDate')} clearable />
+              <DatePickerInput
+                label="Due Date"
+                {...form.getInputProps('dueDate')}
+                clearable
+                highlightToday
+                presets={datePickerPresets}
+              />
             </Stack>
           </Tabs.Panel>
 
-          <Tabs.Panel value="advanced">
+          <Tabs.Panel value="advanced" ref={advancedPanelRef}>
             <Stack gap="xs">
               <Textarea
                 label="Description"
@@ -116,11 +163,13 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
                 {...form.getInputProps('description')}
               />
 
-              <DateInput
+              <DatePickerInput
                 label="Wait Until"
                 description="On this date, the task will be moved from waiting to pending"
                 {...form.getInputProps('waitUntil')}
                 clearable
+                highlightToday
+                presets={datePickerPresets}
               />
             </Stack>
           </Tabs.Panel>
