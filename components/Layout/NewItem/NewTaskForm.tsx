@@ -18,6 +18,7 @@ import { useContextRepository, useTaskRepository } from '@/contexts/DataSourceCo
 import { NewTask, taskPrioritySelectOptions, TaskStatus } from '@/data/documentTypes/Task';
 import { datePickerPresets } from '@/helpers/datePicker';
 import { Logger } from '@/helpers/Logger';
+import { Notifications } from '@/helpers/Notifications';
 
 export default function NewTaskForm({ handleClose }: { handleClose: () => void }) {
   const router = useRouter();
@@ -92,6 +93,8 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
       };
 
       await taskRepository.addTask(newTask);
+
+      Notifications.showQuickSuccess('Task added');
 
       form.reset();
 

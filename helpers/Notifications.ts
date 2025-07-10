@@ -16,6 +16,16 @@ export class Notifications {
     });
   }
 
+  static showQuickSuccess(message: string = 'Success'): void {
+    mantineNotifications.show({
+      message,
+      position: 'top-center',
+      autoClose: 1000,
+      color: 'green',
+      withCloseButton: false,
+    });
+  }
+
   static showSuccess(params: NotificationParams): void {
     this.show({
       ...params,
