@@ -8,7 +8,11 @@ import EditTaskForm from '@/components/Tasks/EditTaskForm';
 import FilterSelector from '@/components/Tasks/FilterSelector';
 import StatusChanger from '@/components/Tasks/StatusChanger';
 import classes from '@/components/Tasks/Tasks.module.css';
-import { useContextRepository, useTaskRepository } from '@/contexts/DataSourceContext';
+import {
+  useContextRepository,
+  useDataSource,
+  useTaskRepository,
+} from '@/contexts/DataSourceContext';
 import { Context } from '@/data/documentTypes/Context';
 import { Task, TaskFilter, TaskPriority, TaskStatus } from '@/data/documentTypes/Task';
 import { Notifications } from '@/helpers/Notifications';
@@ -29,13 +33,13 @@ const priorityBadge = (priority?: TaskPriority) => {
 
 export default function Page() {
   const router = useRouter();
+  const dataSource = useDataSource();
   const taskRepository = useTaskRepository();
   const contextRepository = useContextRepository();
   const [editorOpened, { open, close }] = useDisclosure(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [visibleColumns, setVisibleColumns] = useState<string[]>([
     'Active',
-    'Description',
     'Tags',
     'Project',
     'Priority',
@@ -107,6 +111,7 @@ export default function Page() {
     return tasks.sort((a, b) => getUrgency(b) - getUrgency(a));
   };
 
+  // If there is a context in the URL, fetch it and set the task filter
   useEffect(() => {
     if (router.query.context) {
       const fetchContext = async () => {
@@ -129,6 +134,7 @@ export default function Page() {
     }
   }, [router.query]);
 
+  // Subscribe to tasks based on the current status and task filter
   useEffect(() => {
     let statuses: TaskStatus[] = [];
     if (status === 'pending') {
@@ -149,6 +155,24 @@ export default function Page() {
       (tasks) => setTasks(filterTasks(sortTasks(tasks)))
     );
   }, [status, taskFilter]);
+
+  // Load any default visible columns from local settings
+  useEffect(() => {
+    const setColumnVisibility = async () => {
+      const localSettings = await dataSource.getLocalSettings();
+      if (localSettings.visibleTaskColumns && localSettings.visibleTaskColumns.length > 0) {
+        setVisibleColumns(localSettings.visibleTaskColumns);
+      }
+    };
+    setColumnVisibility();
+  }, []);
+
+  const updateColumnVisibility = async (columns: string[]) => {
+    setVisibleColumns(columns);
+    const localSettings = await dataSource.getLocalSettings();
+    localSettings.visibleTaskColumns = columns;
+    await dataSource.setLocalSettings(localSettings);
+  };
 
   const showEditDialog = (task: Task) => {
     setSelectedTask(task);
@@ -188,7 +212,7 @@ export default function Page() {
               'Urgency',
             ]}
             selected={visibleColumns}
-            onChange={setVisibleColumns}
+            onChange={updateColumnVisibility}
           />
         </Group>
       </Group>
