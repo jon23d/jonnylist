@@ -109,6 +109,19 @@ describe('TaskRepository', () => {
     expect(updatedTasks[1]._rev).not.toBe(rev2);
   });
 
+  test('UpdateTask should return the task with the new revision', async () => {
+    const database = getDb();
+    const repository = new TaskRepository(database);
+    const newTask = taskFactory({});
+
+    const task = await repository.addTask(newTask);
+    const updatedTask = await repository.updateTask({ ...task, title: 'Updated Task' });
+
+    expect(task._rev).not.toEqual(updatedTask._rev);
+    expect(updatedTask.title).toBe('Updated Task');
+    expect(updatedTask._rev).toBeDefined();
+  });
+
   test('getTasks should use a high unicode value for the endkey', async () => {
     const database = getDb();
     const repository = new TaskRepository(database);

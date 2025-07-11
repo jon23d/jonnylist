@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import {
+  Box,
   Button,
   FocusTrap,
+  ScrollArea,
   Select,
   Stack,
   Tabs,
@@ -22,6 +24,7 @@ import {
 } from '@/data/documentTypes/Task';
 import { datePickerPresets } from '@/helpers/datePicker';
 import { Logger } from '@/helpers/Logger';
+import { Notifications } from '@/helpers/Notifications';
 
 export default function EditTaskForm({
   task,
@@ -32,22 +35,25 @@ export default function EditTaskForm({
 }) {
   const taskRepository = useTaskRepository();
   const [activeTab, setActiveTab] = useState<string | null>('basics');
+  const [newNoteText, setNewNoteText] = useState<string>('');
 
   // When the user changes tabs, we are going to focus on the first input in that tab
   const basicsPanelRef = useRef<HTMLDivElement>(null);
   const advancedPanelRef = useRef<HTMLDivElement>(null);
+  const notesPanelRef = useRef<HTMLDivElement>(null);
 
   // Hotkeys for tab navigation
   useHotkeys(
     [
       ['mod+shift+1', () => setActiveTab('basics')],
       ['mod+shift+2', () => setActiveTab('advanced')],
+      ['mod+shift+3', () => setActiveTab('notes')],
     ],
     []
   );
 
   const form = useForm<NewTask>({
-    // NewTask is a task without metadata
+    // NewTask is a task without metadata, INCLUDING notes. These are updated separately.
     mode: 'uncontrolled',
     initialValues: {
       title: task.title,
@@ -67,14 +73,24 @@ export default function EditTaskForm({
 
   // Focus on the first input of the active tab when it changes
   useEffect(() => {
-    const panelRef = activeTab === 'basics' ? basicsPanelRef : advancedPanelRef;
+    let panelRef;
+    switch (activeTab) {
+      case 'basics':
+        panelRef = basicsPanelRef;
+        break;
+      case 'advanced':
+        panelRef = advancedPanelRef;
+        break;
+      case 'notes':
+        panelRef = notesPanelRef;
+        break;
+      default:
+        return;
+    }
 
+    // Find the first focusable element within the active panel.
     if (panelRef.current) {
-      // Find the first focusable element within the active panel.
-      const firstInput = panelRef.current.querySelector<HTMLElement>(
-        'input:not([disabled]), textarea:not([disabled]), select:not([disabled])'
-      );
-      // If an input is found, focus it.
+      const firstInput = panelRef.current.querySelector<HTMLElement>('input, textarea');
       firstInput?.focus();
     }
   }, [activeTab]);
@@ -100,9 +116,34 @@ export default function EditTaskForm({
     }
   };
 
+  const handleAddNote = async () => {
+    try {
+      const { _rev, notes } = await taskRepository.addNote(task._id, newNoteText);
+      setNewNoteText(''); // Clear the note input after adding
+      // Update the task with the new note and revision
+      task.notes = notes;
+      task._rev = _rev;
+    } catch (error) {
+      Notifications.showError({ message: 'Unable to add note to task', title: 'Error' });
+    }
+  };
+
   // If the advanced tab has data on it, we want for the user to be able to tell at a glance
   const advancedHasData = form.values.waitUntil || form.values.description;
+  const notesHasData = task.notes && task.notes.length > 0;
   const hasDataProps = { fs: 'italic', fw: 600 };
+
+  const notesDisplay =
+    task.notes && task.notes.length > 0
+      ? task.notes.map((note, index) => (
+          <Box key={index} mb={10}>
+            <Text span size="xs" fw={700} c="dimmed">
+              {new Date(note.createdAt).toLocaleString()}
+            </Text>
+            <Text>{note.noteText} </Text>
+          </Box>
+        ))
+      : null;
 
   return (
     <form onSubmit={form.onSubmit(handleSave)}>
@@ -115,6 +156,11 @@ export default function EditTaskForm({
             <Tabs.Tab value="advanced">
               <Text size="sm" {...(advancedHasData && hasDataProps)}>
                 Advanced
+              </Text>
+            </Tabs.Tab>
+            <Tabs.Tab value="notes">
+              <Text size="sm" {...(notesHasData && hasDataProps)}>
+                Notes
               </Text>
             </Tabs.Tab>
           </Tabs.List>
@@ -156,6 +202,10 @@ export default function EditTaskForm({
                 size="xs"
                 searchable
               />
+
+              <Button type="submit" mt={20}>
+                Update Task
+              </Button>
             </Stack>
           </Tabs.Panel>
 
@@ -176,13 +226,29 @@ export default function EditTaskForm({
                 highlightToday
                 presets={datePickerPresets}
               />
+
+              <Button type="submit" mt={20}>
+                Update Task
+              </Button>
+            </Stack>
+          </Tabs.Panel>
+
+          <Tabs.Panel value="notes" ref={notesPanelRef}>
+            <Stack gap="xs">
+              <Textarea
+                label="New Note"
+                autosize
+                minRows={3}
+                value={newNoteText}
+                onChange={(e) => setNewNoteText(e.currentTarget.value)}
+              />
+              <Button onClick={handleAddNote}>Add Note</Button>
+              <ScrollArea.Autosize mah={300} type="auto">
+                {notesDisplay}
+              </ScrollArea.Autosize>
             </Stack>
           </Tabs.Panel>
         </Tabs>
-
-        <Button type="submit" mt={20}>
-          Update Task
-        </Button>
       </FocusTrap>
     </form>
   );

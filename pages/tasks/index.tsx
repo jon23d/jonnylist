@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Badge, Group, Modal, SegmentedControl, Table } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
+import { useDisclosure, useViewportSize } from '@mantine/hooks';
 import ContextModifier from '@/components/Contexts/ContextModifier';
 import ColumnSelector from '@/components/Tasks/ColumnSelector';
 import EditTaskForm from '@/components/Tasks/EditTaskForm';
@@ -47,6 +47,7 @@ export default function Page() {
   ]);
   const [taskFilter, setTaskFilter] = useState<TaskFilter>({});
   const [context, setContext] = useState<Context | null>(null);
+  const { height: viewportHeight, width: viewportWidth } = useViewportSize();
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [status, setStatus] = useState('pending');
@@ -219,7 +220,7 @@ export default function Page() {
       <Table striped highlightOnHover>
         <Table.Thead>
           <Table.Tr>
-            {visibleColumns.includes('Active') ? <Table.Th /> : null}
+            {visibleColumns.includes('Active') ? <Table.Th w="25px" /> : null}
             <Table.Th>Title</Table.Th>
             {visibleColumns.includes('Description') ? <Table.Th>Description</Table.Th> : null}
             {visibleColumns.includes('Tags') ? <Table.Th>Tags</Table.Th> : null}
@@ -279,7 +280,13 @@ export default function Page() {
         </Table.Tbody>
       </Table>
 
-      <Modal opened={editorOpened} onClose={close} title="Edit Task" size="lg">
+      <Modal
+        opened={editorOpened}
+        onClose={close}
+        title="Edit Task"
+        size="lg"
+        fullScreen={viewportWidth < 768 || viewportHeight < 500}
+      >
         {selectedTask && <EditTaskForm task={selectedTask} handleClose={cancelEditing} />}
       </Modal>
     </>

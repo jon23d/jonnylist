@@ -1,6 +1,6 @@
 import RenameContextForm from '@/components/Contexts/RenameContextForm';
 import { Notifications } from '@/helpers/Notifications';
-import { renderWithDataSource, screen, userEvent } from '@/test-utils';
+import { renderWithDataSource, screen, userEvent, waitFor } from '@/test-utils';
 import { setupTestDatabase } from '@/test-utils/db';
 import { contextFactory } from '@/test-utils/factories/ContextFactory';
 
@@ -47,7 +47,9 @@ describe('RenameContextForm', () => {
     const submitButton = screen.getByRole('button', { name: 'Rename Context' });
     await userEvent.click(submitButton);
 
-    expect(onClose).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(onClose).toHaveBeenCalled();
+    });
 
     const updatedContext = await dataSource.getContextRepository().getContext(context._id);
 
