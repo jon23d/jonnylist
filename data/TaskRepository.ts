@@ -1,4 +1,3 @@
-import PouchDB from 'pouchdb';
 import { DocumentTypes } from '@/data/documentTypes';
 import { Repository } from '@/data/Repository';
 import { Logger } from '@/helpers/Logger';
@@ -6,6 +5,7 @@ import { NewTask, Task, TaskStatus } from './documentTypes/Task';
 
 export type getTasksParams = {
   statuses?: TaskStatus[];
+  due?: true;
 };
 
 type TaskSubscriberWithFilterParams = {
@@ -189,7 +189,10 @@ export class TaskRepository implements Repository {
    */
   filterTasksByParams(tasks: Task[], params: getTasksParams): Task[] {
     return tasks.filter((task) => {
-      return !(params.statuses && !params.statuses.includes(task.status));
+      const matchesStatus = !params.statuses || params.statuses.includes(task.status);
+      const matchesDue = !params.due || (task.dueDate && new Date() >= new Date(task.dueDate));
+
+      return matchesStatus && matchesDue;
     });
   }
 

@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   FocusTrap,
+  Paper,
   ScrollArea,
   Select,
   Stack,
@@ -136,12 +137,12 @@ export default function EditTaskForm({
   const notesDisplay =
     task.notes && task.notes.length > 0
       ? task.notes.map((note, index) => (
-          <Box key={index} mb={10}>
+          <Paper key={index} mb={10} shadow="xs" p={10} mr={20}>
             <Text span size="xs" fw={700} c="dimmed">
               {new Date(note.createdAt).toLocaleString()}
             </Text>
-            <Text>{note.noteText} </Text>
-          </Box>
+            <Text mt={10}>{note.noteText}</Text>
+          </Paper>
         ))
       : null;
 
