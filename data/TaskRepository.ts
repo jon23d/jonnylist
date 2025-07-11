@@ -88,7 +88,7 @@ export class TaskRepository implements Repository {
     }
 
     if (response.ok) {
-      return updatedTask;
+      return { ...updatedTask, _rev: response.rev };
     }
 
     throw new Error('Failed to update task');
@@ -125,6 +125,29 @@ export class TaskRepository implements Repository {
       return updatedTasks;
     } catch (error) {
       Logger.error('Error updating tasks:', error);
+      throw error; // Re-throw to handle it in the calling code
+    }
+  }
+
+  async addNote(taskId: string, noteText: string): Promise<Task> {
+    Logger.info('Adding note to task', taskId);
+
+    try {
+      const task = await this.db.get<Task>(taskId);
+      const newNote = {
+        noteText,
+        createdAt: new Date().toISOString(),
+      };
+
+      // Ensure notes is initialized
+      if (!task.notes) {
+        task.notes = [];
+      }
+
+      task.notes.push(newNote);
+      return await this.updateTask(task);
+    } catch (error) {
+      Logger.error('Error adding note to task:', error);
       throw error; // Re-throw to handle it in the calling code
     }
   }

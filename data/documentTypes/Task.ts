@@ -38,6 +38,11 @@ export interface TaskFilter {
   excludePriority?: TaskPriority[];
 }
 
+export interface Note {
+  noteText: string;
+  createdAt: string;
+}
+
 export interface Task extends Common {
   type: 'task';
   title: string;
@@ -48,8 +53,9 @@ export interface Task extends Common {
   priority?: TaskPriority;
   dueDate?: string;
   waitUntil?: string;
+  notes?: Note[];
   createdAt: Date;
   updatedAt: Date;
 }
 
-export type NewTask = Omit<Task, keyof Common | 'type' | 'createdAt' | 'updatedAt'>;
+export type NewTask = Omit<Task, keyof Common | 'type' | 'createdAt' | 'updatedAt' | 'notes'>;

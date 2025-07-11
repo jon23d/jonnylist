@@ -21,7 +21,7 @@ jest.mock('@mantine/dates', () => ({
   DatePickerInput: jest.fn(({ ...props }) => <DateInput {...props} />),
 }));
 
-describe('TaskEditor', () => {
+describe('EditTaskForm', () => {
   const { getDataSource } = setupTestDatabase();
 
   it('Saves the task when the form is submitted', async () => {
