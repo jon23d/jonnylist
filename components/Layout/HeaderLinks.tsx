@@ -24,36 +24,36 @@ export default function HeaderLinks() {
 
   useEffect(() => {
     // Get the number of tasks due today
-    const dueTodaySubscription = taskRepository.subscribeToTasks(
+    const unsubscribe = taskRepository.subscribeToTasks(
       {
         statuses: [TaskStatus.Ready, TaskStatus.Started],
         due: true,
       },
       setTasksDue
     );
-    return dueTodaySubscription;
+    return unsubscribe;
   }, []);
 
   useEffect(() => {
     // Get the number of tasks due today
-    const inProgressSubscription = taskRepository.subscribeToTasks(
+    const unsubscribe = taskRepository.subscribeToTasks(
       {
         statuses: [TaskStatus.Started],
       },
       setTasksInProgress
     );
-    return inProgressSubscription;
+    return unsubscribe;
   }, []);
 
   useEffect(() => {
     // Get the number of projects in progress
-    const projectsInProgressSubscription = taskRepository.subscribeToTasks(
+    const unsubscribe = taskRepository.subscribeToTasks(
       {
         statuses: [TaskStatus.Started, TaskStatus.Ready, TaskStatus.Waiting],
       },
       extractProjectsFromTasks
     );
-    return projectsInProgressSubscription;
+    return unsubscribe;
   }, []);
 
   return (
@@ -68,10 +68,14 @@ export default function HeaderLinks() {
       <AddNewItemButton />
       <div className={classes.withSeparators}>
         <Text size="xs" c="gray.6">
-          <Anchor href="#">{tasksDue.length} tasks due</Anchor>
-          <Anchor href="#">{tasksInProgress.length} tasks in progress</Anchor>
-          <Anchor href="#" visibleFrom="xs">
-            3 open projects
+          <Anchor href="/reports/due" component={Link}>
+            {tasksDue.length} tasks due
+          </Anchor>
+          <Anchor href="/reports/in-progress" component={Link}>
+            {tasksInProgress.length} tasks in progress
+          </Anchor>
+          <Anchor href="/reports/open-projects" visibleFrom="xs" component={Link}>
+            {projectsInProgress} open projects
           </Anchor>
         </Text>
       </div>

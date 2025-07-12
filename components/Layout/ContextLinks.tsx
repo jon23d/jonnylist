@@ -26,7 +26,6 @@ export default function ContextLinks({
       onClick={() => handleNavLinkClick(`/tasks`)}
       label="None"
       active={router.pathname === '/tasks' && !router.query.context}
-      pl={40}
       data-testid="context-link-none"
     />,
   ];
@@ -38,15 +37,15 @@ export default function ContextLinks({
         onClick={() => handleNavLinkClick(`/tasks?context=${context._id}`)}
         label={context.name}
         active={router.query.context === context._id}
-        pl={40}
       />
     );
   });
 
   return (
     <>
-      <NavLink href="#" label="Contexts" leftSection={<IconManualGearboxFilled />} />
-      {links}
+      <NavLink href="#" label="Contexts" leftSection={<IconManualGearboxFilled />} defaultOpened>
+        {links}
+      </NavLink>
     </>
   );
 }
