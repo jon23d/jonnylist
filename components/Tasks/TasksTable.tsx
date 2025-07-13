@@ -83,7 +83,9 @@ export default function TasksTable({
                   ))}
                 </Table.Td>
               ) : null}
-              {visibleColumns.includes('Project') ? <Table.Td>{task.project}</Table.Td> : null}
+              {visibleColumns.includes('Project') ? (
+                <Table.Td onClick={() => showEditDialog(task)}>{task.project}</Table.Td>
+              ) : null}
               {visibleColumns.includes('Priority') ? (
                 <Table.Td onClick={() => showEditDialog(task)}>
                   {priorityBadge(task.priority)}

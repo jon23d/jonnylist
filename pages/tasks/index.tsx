@@ -15,6 +15,9 @@ import { Task, TaskFilter, TaskStatus } from '@/data/documentTypes/Task';
 import { Notifications } from '@/helpers/Notifications';
 import { getUrgency } from '@/helpers/Tasks';
 
+const MS_IN_A_DAY = 1000 * 60 * 60 * 24;
+const today = new Date();
+
 export default function Page() {
   const router = useRouter();
   const dataSource = useDataSource();
@@ -73,13 +76,35 @@ export default function Page() {
         ? !taskFilter.excludePriority.some((priority) => priority === task.priority)
         : true;
 
+      // Filter by due date
+      let passesDateFilter = true;
+      if (taskFilter.dueWithin?.maximumNumberOfDaysFromToday) {
+        if (!task.dueDate) {
+          passesDateFilter = false;
+        } else {
+          const dueDate = new Date(task.dueDate);
+          const dueInDays = Math.ceil((dueDate.getTime() - today.getTime()) / MS_IN_A_DAY);
+          const minimumDays = taskFilter.dueWithin.minimumNumberOfDaysFromToday || 0;
+          const maximumDays = taskFilter.dueWithin.maximumNumberOfDaysFromToday;
+          const includeOverdueTasks = taskFilter.dueWithin.includeOverdueTasks || false;
+
+          // Check if the task's due date falls within the specified range
+          if (!includeOverdueTasks && dueInDays < 0) {
+            passesDateFilter = false;
+          } else if (dueInDays > 0 && (dueInDays < minimumDays || dueInDays > maximumDays)) {
+            passesDateFilter = false;
+          }
+        }
+      }
+
       return (
         includesTags &&
         excludesTags &&
         includesProjects &&
         excludesProjects &&
         includesPriority &&
-        excludesPriority
+        excludesPriority &&
+        passesDateFilter
       );
     });
   };

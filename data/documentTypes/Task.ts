@@ -36,6 +36,11 @@ export interface TaskFilter {
   excludeProjects?: string[];
   requirePriority?: TaskPriority[];
   excludePriority?: TaskPriority[];
+  dueWithin?: {
+    includeOverdueTasks?: boolean;
+    minimumNumberOfDaysFromToday?: number;
+    maximumNumberOfDaysFromToday?: number;
+  };
 }
 
 export interface Note {

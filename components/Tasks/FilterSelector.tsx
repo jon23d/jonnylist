@@ -2,9 +2,11 @@ import { useState } from 'react';
 import {
   Box,
   Button,
+  Checkbox,
   Chip,
   Group,
   Input,
+  NumberInput,
   Popover,
   Stack,
   Tabs,
@@ -25,7 +27,24 @@ export default function FilterSelector({
   const [saveModalOpened, setSaveModalOpened] = useState(false);
 
   const form = useForm<TaskFilter>({
-    initialValues: taskFilter,
+    initialValues: {
+      ...taskFilter,
+      dueWithin: {
+        includeOverdueTasks: taskFilter.dueWithin?.includeOverdueTasks || false,
+        minimumNumberOfDaysFromToday: taskFilter.dueWithin?.minimumNumberOfDaysFromToday || 0,
+        maximumNumberOfDaysFromToday: taskFilter.dueWithin?.maximumNumberOfDaysFromToday,
+      },
+    },
+    validate: {
+      dueWithin: {
+        includeOverdueTasks: (value, values) => {
+          if (value && !values.dueWithin?.maximumNumberOfDaysFromToday) {
+            return 'Requires maximum number of days from today';
+          }
+          return null;
+        },
+      },
+    },
   });
 
   const handleSubmit = () => {
@@ -42,8 +61,9 @@ export default function FilterSelector({
   const hasTags = form.values.requireTags?.length || form.values.excludeTags?.length;
   const hasProjects = form.values.requireProjects?.length || form.values.excludeProjects?.length;
   const hasPriority = form.values.requirePriority?.length || form.values.excludePriority?.length;
+  const hasDates = form.values.dueWithin?.maximumNumberOfDaysFromToday;
 
-  const filterApplied = hasTags || hasProjects || hasPriority;
+  const filterApplied = hasTags || hasProjects || hasPriority || hasDates;
 
   const targetLabel = filterApplied ? 'Filters (!)' : 'Filters';
 
@@ -54,6 +74,7 @@ export default function FilterSelector({
   const { onChange: onExcludePriorityChange, ..._excludeProps } =
     form.getInputProps('excludePriority');
 
+  // These functions will handle the case where a priority is selected in require, but exists in exclude
   const requirePriorityInputProps = {
     ..._requireProps,
     onChange: (value: string[]) => {
@@ -67,6 +88,8 @@ export default function FilterSelector({
       }
     },
   };
+
+  // The same applies to the exclude priority group
   const excludePriorityInputProps = {
     ..._excludeProps,
     onChange: (value: string[]) => {
@@ -83,6 +106,9 @@ export default function FilterSelector({
 
   let defaultTab = '';
 
+  if (hasDates) {
+    defaultTab = 'dates';
+  }
   if (hasPriority) {
     defaultTab = 'priority';
   }
@@ -93,7 +119,7 @@ export default function FilterSelector({
     defaultTab = 'tags';
   }
 
-  const tagWithDataProps = {
+  const tabWithDataProps = {
     fs: 'italic',
     fw: 600,
   };
@@ -115,21 +141,23 @@ export default function FilterSelector({
             <Tabs defaultValue={defaultTab} orientation="vertical">
               <Tabs.List>
                 <Tabs.Tab value="tags">
-                  <Text size="sm" {...(hasTags && tagWithDataProps)}>
+                  <Text size="sm" {...(hasTags && tabWithDataProps)}>
                     Tags
                   </Text>
                 </Tabs.Tab>
                 <Tabs.Tab value="projects">
-                  <Text size="sm" {...(hasProjects && tagWithDataProps)}>
+                  <Text size="sm" {...(hasProjects && tabWithDataProps)}>
                     Projects
                   </Text>
                 </Tabs.Tab>
                 <Tabs.Tab value="priority">
-                  <Text size="sm" {...(hasPriority && tagWithDataProps)}>
+                  <Text size="sm" {...(hasPriority && tabWithDataProps)}>
                     Priority
                   </Text>
                 </Tabs.Tab>
-                <Tabs.Tab value="dates">Dates</Tabs.Tab>
+                <Tabs.Tab value="dates" {...(hasDates && tabWithDataProps)}>
+                  Dates
+                </Tabs.Tab>
               </Tabs.List>
 
               <Tabs.Panel value="tags" p={5}>
@@ -148,6 +176,7 @@ export default function FilterSelector({
                   />
                 </Stack>
               </Tabs.Panel>
+
               <Tabs.Panel value="projects" p={5}>
                 <Stack gap="xs">
                   <TagsInput
@@ -164,6 +193,7 @@ export default function FilterSelector({
                   />
                 </Stack>
               </Tabs.Panel>
+
               <Tabs.Panel value="priority" p={5}>
                 <Stack gap="xs">
                   <Input.Wrapper label="Require priority" size="xs">
@@ -198,8 +228,31 @@ export default function FilterSelector({
                   </Input.Wrapper>
                 </Stack>
               </Tabs.Panel>
+
               <Tabs.Panel value="dates" p={5}>
-                Comming soon!
+                <Stack gap="xs">
+                  <Text size="xs">
+                    Show tasks with a due date between the number of days from today
+                  </Text>
+                  <NumberInput
+                    label="Minimum days from today"
+                    min={0}
+                    {...form.getInputProps('dueWithin.minimumNumberOfDaysFromToday')}
+                    size="xs"
+                  />
+                  <NumberInput
+                    label="Maximum days from today"
+                    {...form.getInputProps('dueWithin.maximumNumberOfDaysFromToday')}
+                    size="xs"
+                    mb={10}
+                  />
+                  <Checkbox
+                    label="Include overdue tasks"
+                    {...form.getInputProps('dueWithin.includeOverdueTasks', { type: 'checkbox' })}
+                    size="xs"
+                    mb={10}
+                  />
+                </Stack>
               </Tabs.Panel>
             </Tabs>
             <Box ml={100}>

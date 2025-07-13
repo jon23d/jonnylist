@@ -26,7 +26,9 @@ export const DataSourceContextProvider = ({
     // Use the provided dataSource if it exists, otherwise create a new one
     () =>
       dataSource ||
-      new DataSource(new PouchDB<DocumentTypes>('jonnylist', { auto_compaction: true }))
+      new DataSource(
+        new PouchDB<DocumentTypes>('jonnylist', { auto_compaction: true, revs_limit: 20 })
+      )
   );
 
   useEffect(() => {
