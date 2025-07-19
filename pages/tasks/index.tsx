@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Group, SegmentedControl } from '@mantine/core';
+import { IconList, IconTable } from '@tabler/icons-react';
+import { Group, SegmentedControl, Text } from '@mantine/core';
 import ContextModifier from '@/components/Contexts/ContextModifier';
 import ColumnSelector from '@/components/Tasks/ColumnSelector';
 import FilterSelector from '@/components/Tasks/FilterSelector';
+import TasksList from '@/components/Tasks/TasksList';
 import TasksTable from '@/components/Tasks/TasksTable';
 import {
   useContextRepository,
@@ -35,6 +37,7 @@ export default function Page() {
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [status, setStatus] = useState('pending');
+  const [view, setView] = useState<'list' | 'table'>('table');
 
   const filterTasks = (tasks: Task[]): Task[] => {
     return tasks.filter((task) => {
@@ -183,14 +186,54 @@ export default function Page() {
     await dataSource.setLocalSettings(localSettings);
   };
 
+  const viewComponent =
+    view === 'table' ? (
+      <TasksTable
+        visibleColumns={visibleColumns}
+        tasks={tasks}
+        tasksAreCompletedOrCancelled={status === 'completed' || status === 'cancelled'}
+      />
+    ) : (
+      <TasksList tasks={tasks} />
+    );
+
   return (
     <>
       <Group justify="space-between">
-        <SegmentedControl
-          data={['pending', 'completed', 'cancelled', 'recurring', 'waiting']}
-          value={status}
-          onChange={setStatus}
-        />
+        <Group>
+          <SegmentedControl
+            data={['pending', 'completed', 'cancelled', 'recurring', 'waiting']}
+            value={status}
+            onChange={setStatus}
+            size="xs"
+          />
+          <SegmentedControl
+            data={[
+              {
+                value: 'list',
+                label: (
+                  <Text size="xs" ta="center">
+                    <IconList size={10} style={{ marginRight: '5px' }} />
+                    List
+                  </Text>
+                ),
+              },
+              {
+                value: 'table',
+                label: (
+                  <Text size="xs" ta="center">
+                    <IconTable size={10} style={{ marginRight: '5px' }} />
+                    Table
+                  </Text>
+                ),
+              },
+            ]}
+            value={view}
+            onChange={(value) => setView(value as 'list' | 'table')}
+            size="xs"
+          />
+        </Group>
+
         <Group>
           {context && <ContextModifier context={context} />}
           <FilterSelector
@@ -199,27 +242,25 @@ export default function Page() {
             key={JSON.stringify(taskFilter)}
           />
 
-          <ColumnSelector
-            choices={[
-              'Active',
-              'Description',
-              'Tags',
-              'Project',
-              'Priority',
-              'Due Date',
-              'Age',
-              'Urgency',
-            ]}
-            selected={visibleColumns}
-            onChange={updateColumnVisibility}
-          />
+          {view === 'table' && (
+            <ColumnSelector
+              choices={[
+                'Active',
+                'Description',
+                'Tags',
+                'Project',
+                'Priority',
+                'Due Date',
+                'Age',
+                'Urgency',
+              ]}
+              selected={visibleColumns}
+              onChange={updateColumnVisibility}
+            />
+          )}
         </Group>
       </Group>
-      <TasksTable
-        visibleColumns={visibleColumns}
-        tasks={tasks}
-        tasksAreCompletedOrCancelled={status === 'completed' || status === 'cancelled'}
-      />
+      {viewComponent}
     </>
   );
 }

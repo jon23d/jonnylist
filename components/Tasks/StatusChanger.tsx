@@ -38,22 +38,28 @@ export default function StatusChanger({ task }: { task: Task }) {
 
   if (task.status === TaskStatus.Started) {
     configuration.icon = (
-      <Menu shadow="xs">
-        <Menu.Target>
-          <UnstyledButton>⏳</UnstyledButton>
-        </Menu.Target>
+      <Box onClick={(e) => e.stopPropagation()}>
+        <Menu shadow="xs">
+          <Menu.Target>
+            <UnstyledButton>⏳</UnstyledButton>
+          </Menu.Target>
 
-        <Menu.Dropdown>
-          <Menu.Item onClick={handleStop}>Stop</Menu.Item>
-          <Menu.Item onClick={handleComplete}>Complete</Menu.Item>
-        </Menu.Dropdown>
-      </Menu>
+          <Menu.Dropdown>
+            <Menu.Item onClick={handleStop}>Stop</Menu.Item>
+            <Menu.Item onClick={handleComplete}>Complete</Menu.Item>
+          </Menu.Dropdown>
+        </Menu>
+      </Box>
     );
     configuration.alwaysVisible = true;
   }
 
   if (task.status === TaskStatus.Ready) {
-    configuration.icon = <UnstyledButton onClick={handleStart}>▶️</UnstyledButton>;
+    configuration.icon = (
+      <Box onClick={(e) => e.stopPropagation()}>
+        <UnstyledButton onClick={handleStart}>▶️</UnstyledButton>
+      </Box>
+    );
   }
 
   if (!configuration.icon) {
