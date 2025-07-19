@@ -5,4 +5,5 @@ export interface LocalSettings extends Common {
   syncServerUrl?: string;
   syncServerAccessToken?: string;
   visibleTaskColumns?: string[];
+  defaultView?: 'list' | 'table';
 }

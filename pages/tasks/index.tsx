@@ -168,21 +168,31 @@ export default function Page() {
     return unsubscribe;
   }, [status, taskFilter]);
 
-  // Load any default visible columns from local settings
+  // Load any default visible columns and view from local settings
   useEffect(() => {
-    const setColumnVisibility = async () => {
+    const setDefaults = async () => {
       const localSettings = await dataSource.getLocalSettings();
       if (localSettings.visibleTaskColumns && localSettings.visibleTaskColumns.length > 0) {
         setVisibleColumns(localSettings.visibleTaskColumns);
       }
+      if (localSettings.defaultView) {
+        setView(localSettings.defaultView);
+      }
     };
-    setColumnVisibility();
+    setDefaults();
   }, []);
 
   const updateColumnVisibility = async (columns: string[]) => {
     setVisibleColumns(columns);
     const localSettings = await dataSource.getLocalSettings();
     localSettings.visibleTaskColumns = columns;
+    await dataSource.setLocalSettings(localSettings);
+  };
+
+  const updateView = async (newView: 'list' | 'table') => {
+    setView(newView);
+    const localSettings = await dataSource.getLocalSettings();
+    localSettings.defaultView = newView;
     await dataSource.setLocalSettings(localSettings);
   };
 
@@ -210,15 +220,6 @@ export default function Page() {
           <SegmentedControl
             data={[
               {
-                value: 'list',
-                label: (
-                  <Text size="xs" ta="center">
-                    <IconList size={10} style={{ marginRight: '5px' }} />
-                    List
-                  </Text>
-                ),
-              },
-              {
                 value: 'table',
                 label: (
                   <Text size="xs" ta="center">
@@ -227,9 +228,18 @@ export default function Page() {
                   </Text>
                 ),
               },
+              {
+                value: 'list',
+                label: (
+                  <Text size="xs" ta="center">
+                    <IconList size={10} style={{ marginRight: '5px' }} />
+                    List
+                  </Text>
+                ),
+              },
             ]}
             value={view}
-            onChange={(value) => setView(value as 'list' | 'table')}
+            onChange={(value) => updateView(value as 'list' | 'table')}
             size="xs"
           />
         </Group>
