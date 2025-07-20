@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { IconList, IconTable } from '@tabler/icons-react';
-import { Group, SegmentedControl, Text } from '@mantine/core';
+import { Group } from '@mantine/core';
 import ContextModifier from '@/components/Contexts/ContextModifier';
 import ColumnSelector from '@/components/Tasks/ColumnSelector';
 import FilterSelector from '@/components/Tasks/FilterSelector';
+import StatusSelector from '@/components/Tasks/StatusSelector';
 import TasksList from '@/components/Tasks/TasksList';
 import TasksTable from '@/components/Tasks/TasksTable';
+import ViewTypeSelector from '@/components/Tasks/ViewTypeSelector';
 import {
   useContextRepository,
   useDataSource,
@@ -211,37 +212,8 @@ export default function Page() {
     <>
       <Group justify="space-between">
         <Group>
-          <SegmentedControl
-            data={['pending', 'completed', 'cancelled', 'recurring', 'waiting']}
-            value={status}
-            onChange={setStatus}
-            size="xs"
-          />
-          <SegmentedControl
-            data={[
-              {
-                value: 'table',
-                label: (
-                  <Text size="xs" ta="center">
-                    <IconTable size={10} style={{ marginRight: '5px' }} />
-                    Table
-                  </Text>
-                ),
-              },
-              {
-                value: 'list',
-                label: (
-                  <Text size="xs" ta="center">
-                    <IconList size={10} style={{ marginRight: '5px' }} />
-                    List
-                  </Text>
-                ),
-              },
-            ]}
-            value={view}
-            onChange={(value) => updateView(value as 'list' | 'table')}
-            size="xs"
-          />
+          <StatusSelector setStatus={setStatus} status={status} />
+          <ViewTypeSelector view={view} setView={updateView} />
         </Group>
 
         <Group>

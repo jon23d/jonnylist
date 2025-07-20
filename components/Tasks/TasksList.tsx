@@ -8,16 +8,18 @@ import classes from '@/components/Tasks/Tasks.module.css';
 import { Task, TaskPriority } from '@/data/documentTypes/Task';
 
 const priorityBadge = (priority?: TaskPriority) => {
-  switch (priority) {
-    case TaskPriority.Low:
-      return <Badge color="gray.4">L</Badge>;
-    case TaskPriority.Medium:
-      return <Badge color="lime.4">M</Badge>;
-    case TaskPriority.High:
-      return <Badge color="yellow.5">H</Badge>;
-    default:
-      return null;
-  }
+  const badges = {
+    [TaskPriority.Low]: { color: 'gray.4', label: 'L' },
+    [TaskPriority.Medium]: { color: 'lime.4', label: 'M' },
+    [TaskPriority.High]: { color: 'yellow.5', label: 'H' },
+  };
+
+  const badge = badges[priority as TaskPriority];
+  return badge ? (
+    <Badge color={badge.color} size="sm">
+      {badge.label}
+    </Badge>
+  ) : null;
 };
 
 export default function TasksList({ tasks }: { tasks: Task[] }) {
@@ -39,7 +41,7 @@ export default function TasksList({ tasks }: { tasks: Task[] }) {
 
     if (task.project) {
       items.push(
-        <Text key="project" c="dimmed">
+        <Text key="project" c="dimmed" size="sm">
           {task.project}
         </Text>
       );
@@ -90,7 +92,7 @@ export default function TasksList({ tasks }: { tasks: Task[] }) {
 
             <Group justify="flex-start">{secondRowItems(task).map((item) => item)}</Group>
 
-            <Text size="sm" c="dimmed">
+            <Text size="sm" c="dimmed" ml={38}>
               {task.description}
             </Text>
           </Stack>
