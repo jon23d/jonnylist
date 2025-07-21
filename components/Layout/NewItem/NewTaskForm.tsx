@@ -4,7 +4,9 @@ import { useRouter } from 'next/router';
 import {
   Box,
   Button,
+  Chip,
   Fieldset,
+  Flex,
   FocusTrap,
   Group,
   NumberInput,
@@ -12,6 +14,7 @@ import {
   Select,
   SimpleGrid,
   Stack,
+  Switch,
   Tabs,
   TagsInput,
   Text,
@@ -27,7 +30,6 @@ import { datePickerPresets } from '@/helpers/datePicker';
 import { Logger } from '@/helpers/Logger';
 import { Notifications } from '@/helpers/Notifications';
 
-type RecurrenceValue = 'none' | 'daily' | 'weekly' | 'monthly' | 'custom';
 type RecurrenceEndsValue = 'onDate' | 'afterOccurrences' | 'never';
 
 export default function NewTaskForm({ handleClose }: { handleClose: () => void }) {
@@ -50,7 +52,7 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
   );
 
   type FormType = Omit<NewTask, 'status'> & {
-    recurrenceValue: RecurrenceValue;
+    isRecurring: boolean;
     recurrenceEndsValue: RecurrenceEndsValue;
   };
 
@@ -63,14 +65,24 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
       priority: undefined,
       dueDate: undefined,
       waitUntil: undefined,
-      recurrence: undefined,
-      recurrenceValue: 'none' as RecurrenceValue,
+      isRecurring: false,
+      recurrence: {
+        frequency: 'daily',
+        interval: 1,
+        dayOfWeek: new Date().getDay(),
+        dayOfMonth: new Date().getDate(),
+        ends: {
+          afterOccurrences: undefined,
+          onDate: undefined,
+        },
+        yearlyFirstOccurrence: new Date().toISOString().split('T')[0], // Default to today
+      },
       recurrenceEndsValue: 'never',
     },
     validate: {
       title: (value) => (value ? null : 'Title is required'),
       waitUntil: (value, values) => {
-        if (value && values.recurrenceValue !== 'none') {
+        if (value && values.isRecurring) {
           return 'Wait Until date cannot be set for recurring tasks';
         }
         return null;
@@ -146,65 +158,6 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
     ['description', 'waitUntil', 'isRecurring'].includes(item)
   ).length;
 
-  // Recurrence can be a given value or a custom object, so we handle it accordingly
-  const setRecurrence = (value: string) => {
-    if (value === 'none') {
-      form.setFieldValue('recurrence', undefined);
-      form.setFieldValue('recurrenceValue', 'none');
-    } else if (value === 'daily') {
-      form.setFieldValue('recurrenceValue', 'daily');
-      form.setFieldValue('recurrence', {
-        frequency: 'daily',
-        interval: 1,
-      });
-    } else if (value === 'weekly') {
-      form.setFieldValue('recurrenceValue', 'weekly');
-      form.setFieldValue('recurrence', {
-        frequency: 'weekly',
-        interval: 1,
-        dayOfWeek: 'mon',
-      });
-    } else if (value === 'monthly') {
-      form.setFieldValue('recurrenceValue', 'monthly');
-      form.setFieldValue('recurrence', {
-        frequency: 'monthly',
-        interval: 1,
-        dayOfMonth: 1,
-      });
-    } else if (value === 'custom') {
-      form.setFieldValue('recurrenceValue', 'custom');
-      // TBD
-      form.setFieldValue('recurrence', {
-        frequency: 'daily',
-        interval: 1,
-        ends: {
-          afterOccurrences: 10, // Default to 10 occurrences
-          onDate: undefined, // No end date by default
-        },
-      });
-    }
-  };
-
-  // Recurrence monthly allows us to select one of two values, either the nth day of the month,
-  // where n is today, or the nth specific weekday of the month, where n is the current weekday
-  // of the month (1st, 2nd, etc)
-  const monthlyRecurrenceOption = (): {
-    dayOfMonth: number;
-    dayOfWeek: 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
-  } => {
-    const today = dayjs();
-    const dayOfMonth = today.date();
-    const dayOfWeek = today.format('ddd').toLowerCase() as
-      | 'mon'
-      | 'tue'
-      | 'wed'
-      | 'thu'
-      | 'fri'
-      | 'sat'
-      | 'sun';
-    return { dayOfMonth, dayOfWeek };
-  };
-
   return (
     <form onSubmit={form.onSubmit(handleSave)}>
       <FocusTrap>
@@ -272,85 +225,108 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
                 presets={datePickerPresets}
               />
 
-              <Select
-                label="Recurrence"
-                data={[
-                  { value: 'none', label: 'None' },
-                  { value: 'daily', label: 'Daily' },
-                  { value: 'weekly', label: 'Weekly' },
-                  { value: 'monthly', label: 'Monthly' },
-                  { value: 'custom', label: 'Custom' },
-                ]}
-                {...form.getInputProps('recurrenceValue')}
-                onChange={(value) => {
-                  if (value) {
-                    setRecurrence(value);
-                  }
-                }}
-              />
+              <Switch label="Repeating" {...form.getInputProps('isRecurring')} />
             </Stack>
 
-            <Box hidden={form.values.recurrenceValue !== 'weekly'}>
-              <Select
-                label="Day of week"
-                {...form.getInputProps('recurrence.dayOfWeek')}
-                data={['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']}
+            <Box hidden={!form.values.isRecurring} mt={10}>
+              <SimpleGrid cols={2} mb={20}>
+                <NumberInput
+                  label="Repeat every"
+                  {...form.getInputProps('recurrence.interval')}
+                  value={form.values.recurrence?.interval || 1}
+                />
+                <Select
+                  label="Frequency"
+                  data={[
+                    {
+                      value: 'daily',
+                      label: form.values.recurrence?.interval === 1 ? 'Day' : 'Days',
+                    },
+                    {
+                      value: 'weekly',
+                      label: form.values.recurrence?.interval === 1 ? 'Week' : 'Weeks',
+                    },
+                    {
+                      value: 'monthly',
+                      label: form.values.recurrence?.interval === 1 ? 'Month' : 'Months',
+                    },
+                    {
+                      value: 'yearly',
+                      label: form.values.recurrence?.interval === 1 ? 'Year' : 'Years',
+                    },
+                  ]}
+                  {...form.getInputProps('recurrence.frequency')}
+                  value={form.values.recurrence?.frequency || 'daily'}
+                />
+              </SimpleGrid>
+            </Box>
+
+            <Box hidden={form.values.recurrence?.frequency !== 'weekly'} mt={10}>
+              <Flex>
+                <Chip.Group
+                  multiple={false}
+                  {...form.getInputProps('recurrence.dayOfWeek', { type: 'checkbox' })}
+                  defaultValue={new Date().getDay().toString()}
+                >
+                  <Group justify="center">
+                    <Chip value="1">Mon</Chip>
+                    <Chip value="2">Tues</Chip>
+                    <Chip value="3">Weds</Chip>
+                    <Chip value="4">Thurs</Chip>
+                    <Chip value="5">Fri</Chip>
+                    <Chip value="6">Sat</Chip>
+                    <Chip value="7">Sun</Chip>
+                  </Group>
+                </Chip.Group>
+              </Flex>
+            </Box>
+
+            <Box hidden={form.values.recurrence?.frequency !== 'monthly'}>
+              <Group flex="row">
+                <NumberInput
+                  label="Day of month"
+                  {...form.getInputProps('recurrence.dayOfMonth')}
+                  defaultValue={new Date().getDate()}
+                  max={31}
+                  min={1}
+                  w="20%"
+                />
+                <Text size="sm" c="dimmed" flex={1} pt={25}>
+                  Hint: If you set this to 31, it will always use the last day of the month
+                </Text>
+              </Group>
+            </Box>
+
+            <Box hidden={form.values.recurrence?.frequency !== 'yearly'}>
+              <DatePickerInput
+                label="First occurence"
+                {...form.getInputProps('recurrence.yearlyFirstOccurrence')}
+                highlightToday
               />
             </Box>
 
-            <Box hidden={form.values.recurrenceValue == 'monthly'}>
-              <NumberInput
-                label="Day of month"
-                {...form.getInputProps('recurrence.dayOfMonth')}
-                min={1}
-                max={31}
-                step={1}
-                placeholder="1"
-                hidden={form.values.recurrenceValue !== 'monthly'}
-              />
-            </Box>
-
-            <Box hidden={form.values.recurrenceValue !== 'custom'} pt={20}>
+            <Box hidden={!form.values.isRecurring} mt={20}>
               <Fieldset legend="Recurrence Ends" mb={10}>
-                <SimpleGrid cols={2} mb={20}>
-                  <NumberInput
-                    label="Repeat every"
-                    {...form.getInputProps('recurrence.interval')}
-                    value={form.values.recurrence?.interval || 1}
-                  />
-                  <Select
-                    label="Frequency"
-                    data={[
-                      { value: 'daily', label: 'Day' },
-                      { value: 'weekly', label: 'Week' },
-                      { value: 'monthly', label: 'Month' },
-                      { value: 'yearly', label: 'Year' },
-                    ]}
-                    {...form.getInputProps('recurrence.frequency')}
-                    value={form.values.recurrence?.frequency || 'daily'}
-                  />
-                </SimpleGrid>
-
-                <Radio.Group {...form.getInputProps('recurrenceEndsValue', { type: 'checkbox' })}>
+                <Radio.Group {...form.getInputProps('recurrenceEndsValue')}>
                   <Stack>
+                    <Radio value="never" label="Never ends" />
                     <Group flex="row">
-                      <Radio value="onDate" label="Ends on date" w="20%" />
+                      <Radio value="onDate" label="Ends on date" w="25%" />
                       <DatePickerInput
                         {...form.getInputProps('recurrence.ends.onDate')}
                         placeholder={dayjs().add(1, 'month').format('MM/DD/YYYY')}
+                        highlightToday
                         disabled={form.values.recurrenceEndsValue !== 'onDate'}
                       />
                     </Group>
                     <Group flex="row">
-                      <Radio value="afterOccurrences" label="Ends after" w="20%" />
+                      <Radio value="afterOccurrences" label="Ends after" w="25%" />
                       <NumberInput
                         {...form.getInputProps('recurrence.ends.afterOccurrences')}
                         disabled={form.values.recurrenceEndsValue !== 'afterOccurrences'}
                       />
                       <Text size="sm">Occurrences</Text>
                     </Group>
-
-                    <Radio value="never" label="Never ends" />
                   </Stack>
                 </Radio.Group>
               </Fieldset>

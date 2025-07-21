@@ -8,16 +8,22 @@ export default function StatusSelector({
   status: string;
   setStatus: (status: string) => void;
 }) {
+  const segmentedControlData = ['pending', 'completed', 'cancelled', 'recurring', 'waiting'].map(
+    (s) => ({
+      value: s,
+      label: s.charAt(0).toUpperCase() + s.slice(1),
+    })
+  );
+
   // This component allows users to select the status of tasks. If the
   // screen is large, it shows a segmented control. If the screen is small,
   // it shows a button that opens a menu with the status options.
   return (
     <>
       <SegmentedControl
-        data={['pending', 'completed', 'cancelled', 'recurring', 'waiting']}
+        data={segmentedControlData}
         value={status}
         onChange={setStatus}
-        size="xs"
         visibleFrom="sm"
       />
       <Box hiddenFrom="sm">

@@ -51,12 +51,13 @@ export interface Note {
 export interface Recurrence {
   frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
   interval: number;
-  dayOfWeek?: 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
+  dayOfWeek?: number; // 0 for Sunday, 1 for Monday, etc.
   dayOfMonth?: number; // e.g., 1 for first, 2 for second, etc.
   ends?: {
     afterOccurrences?: number;
     onDate?: string;
   };
+  yearlyFirstOccurrence?: string; // e.g., '2023-01-01'
 }
 
 export interface Task extends Common {
