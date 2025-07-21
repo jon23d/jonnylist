@@ -48,6 +48,17 @@ export interface Note {
   createdAt: string;
 }
 
+export interface Recurrence {
+  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  interval: number;
+  dayOfWeek?: 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
+  dayOfMonth?: number; // e.g., 1 for first, 2 for second, etc.
+  ends?: {
+    afterOccurrences?: number;
+    onDate?: string;
+  };
+}
+
 export interface Task extends Common {
   type: 'task';
   title: string;
@@ -59,6 +70,7 @@ export interface Task extends Common {
   dueDate?: string;
   waitUntil?: string;
   notes?: Note[];
+  recurrence?: Recurrence;
   createdAt: Date;
   updatedAt: Date;
 }
