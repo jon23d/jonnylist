@@ -52,9 +52,17 @@ export const DataSourceContextProvider = ({
     // to ready tasks.
     const taskRepository = currentDataSource.getTaskRepository();
     taskRepository.checkWaitingTasks();
-    const intervalId = setInterval(
+    const waitingInterval = setInterval(
       () => {
         taskRepository.checkWaitingTasks();
+      },
+      5 * 60 * 1000
+    );
+
+    // Every five minutes we need to check recurring tasks to see if they need to be created.
+    const recurringInterval = setInterval(
+      () => {
+        taskRepository.checkRecurringTasks();
       },
       5 * 60 * 1000
     );
@@ -64,7 +72,8 @@ export const DataSourceContextProvider = ({
       currentDataSource.cleanup().catch((error) => {
         Logger.error('Failed to cleanup DataSource:', error);
       });
-      clearInterval(intervalId);
+      clearInterval(waitingInterval);
+      clearInterval(recurringInterval);
     };
   }, [currentDataSource]);
 

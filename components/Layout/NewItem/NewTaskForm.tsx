@@ -25,7 +25,12 @@ import { DatePickerInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
 import { useHotkeys } from '@mantine/hooks';
 import { useContextRepository, useTaskRepository } from '@/contexts/DataSourceContext';
-import { NewTask, taskPrioritySelectOptions, TaskStatus } from '@/data/documentTypes/Task';
+import {
+  NewTask,
+  Recurrence,
+  taskPrioritySelectOptions,
+  TaskStatus,
+} from '@/data/documentTypes/Task';
 import { datePickerPresets } from '@/helpers/datePicker';
 import { Logger } from '@/helpers/Logger';
 import { Notifications } from '@/helpers/Notifications';
@@ -69,7 +74,7 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
       recurrence: {
         frequency: 'daily',
         interval: 1,
-        dayOfWeek: new Date().getDay(),
+        dayOfWeek: [new Date().getDay()],
         dayOfMonth: new Date().getDate(),
         ends: {
           afterOccurrences: undefined,
@@ -121,10 +126,31 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
 
   const handleSave = async () => {
     try {
-      const status = form.values.waitUntil ? TaskStatus.Waiting : TaskStatus.Ready;
+      let status = form.values.waitUntil ? TaskStatus.Waiting : TaskStatus.Ready;
+
+      // Clean up the recurrence object to remove unused values
+      let recurrence: Recurrence | undefined;
+
+      if (form.values.isRecurring) {
+        recurrence = form.values.recurrence as Recurrence;
+        status = TaskStatus.Recurring;
+
+        if (recurrence.frequency !== 'weekly') {
+          recurrence.dayOfWeek = [];
+        }
+        if (recurrence.frequency !== 'monthly') {
+          recurrence.dayOfMonth = undefined;
+        }
+        if (recurrence.frequency !== 'yearly') {
+          recurrence.yearlyFirstOccurrence = undefined;
+        }
+      } else {
+        recurrence = undefined;
+      }
 
       const newTask: NewTask = {
         ...form.getValues(),
+        recurrence,
         status,
       };
 
@@ -225,7 +251,10 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
                 presets={datePickerPresets}
               />
 
-              <Switch label="Repeating" {...form.getInputProps('isRecurring')} />
+              <Switch
+                label="Repeating"
+                {...form.getInputProps('isRecurring', { type: 'checkbox' })}
+              />
             </Stack>
 
             <Box hidden={!form.values.isRecurring} mt={10}>
@@ -264,9 +293,9 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
             <Box hidden={form.values.recurrence?.frequency !== 'weekly'} mt={10}>
               <Flex>
                 <Chip.Group
-                  multiple={false}
+                  multiple
                   {...form.getInputProps('recurrence.dayOfWeek', { type: 'checkbox' })}
-                  defaultValue={new Date().getDay().toString()}
+                  defaultValue={[new Date().getDay().toString()]}
                 >
                   <Group justify="center">
                     <Chip value="1">Mon</Chip>
@@ -292,7 +321,8 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
                   w="20%"
                 />
                 <Text size="sm" c="dimmed" flex={1} pt={25}>
-                  Hint: If you set this to 31, it will always use the last day of the month
+                  Hint: If this is greater than the number of days in a month, it will be adjusted
+                  to the last day of that month.
                 </Text>
               </Group>
             </Box>

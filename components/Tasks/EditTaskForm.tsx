@@ -1,11 +1,21 @@
+import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import {
+  Box,
   Button,
+  Chip,
+  Fieldset,
+  Flex,
   FocusTrap,
+  Group,
+  NumberInput,
   Paper,
+  Radio,
   ScrollArea,
   Select,
+  SimpleGrid,
   Stack,
+  Switch,
   Tabs,
   TagsInput,
   Text,
@@ -18,13 +28,17 @@ import { useHotkeys } from '@mantine/hooks';
 import { useTaskRepository } from '@/contexts/DataSourceContext';
 import {
   NewTask,
+  Recurrence,
   Task,
   taskPrioritySelectOptions,
+  TaskStatus,
   taskStatusSelectOptions,
 } from '@/data/documentTypes/Task';
 import { datePickerPresets } from '@/helpers/datePicker';
 import { Logger } from '@/helpers/Logger';
 import { Notifications } from '@/helpers/Notifications';
+
+type RecurrenceEndsValue = 'onDate' | 'afterOccurrences' | 'never';
 
 export default function EditTaskForm({
   task,
@@ -52,9 +66,13 @@ export default function EditTaskForm({
     []
   );
 
-  const form = useForm<NewTask>({
+  type FormType = NewTask & {
+    isRecurring: boolean;
+    recurrenceEndsValue: RecurrenceEndsValue;
+  };
+
+  const form = useForm<FormType>({
     // NewTask is a task without metadata, INCLUDING notes. These are updated separately.
-    mode: 'uncontrolled',
     initialValues: {
       title: task.title,
       description: task.description,
@@ -64,10 +82,33 @@ export default function EditTaskForm({
       dueDate: task.dueDate,
       status: task.status,
       waitUntil: task.waitUntil,
+      isRecurring: !!task.recurrence?.frequency,
+      recurrence: task.recurrence || {
+        frequency: 'daily',
+        interval: 1,
+        dayOfWeek: [new Date().getDay()],
+        dayOfMonth: new Date().getDate(),
+        ends: {
+          afterOccurrences: undefined,
+          onDate: undefined,
+        },
+        yearlyFirstOccurrence: new Date().toISOString().split('T')[0], // Default to today,
+      },
+      recurrenceEndsValue: task.recurrence?.ends?.onDate
+        ? 'onDate'
+        : task.recurrence?.ends?.afterOccurrences
+          ? 'afterOccurrences'
+          : 'never',
     },
     validate: {
       title: (value) => (value ? null : 'Title is required'),
       status: (value) => (value ? null : 'Status is required'),
+      waitUntil: (value, values) => {
+        if (value && values.isRecurring) {
+          return 'Wait Until date cannot be set for recurring tasks';
+        }
+        return null;
+      },
     },
   });
 
@@ -97,9 +138,32 @@ export default function EditTaskForm({
 
   const handleSave = async () => {
     try {
+      // Clean up the recurrence object to remove unused values
+      let recurrence: Recurrence | undefined;
+      let status: TaskStatus = form.values.status;
+
+      if (form.values.isRecurring) {
+        recurrence = form.values.recurrence as Recurrence;
+        status = TaskStatus.Recurring;
+
+        if (recurrence.frequency !== 'weekly') {
+          recurrence.dayOfWeek = [];
+        }
+        if (recurrence.frequency !== 'monthly') {
+          recurrence.dayOfMonth = undefined;
+        }
+        if (recurrence.frequency !== 'yearly') {
+          recurrence.yearlyFirstOccurrence = undefined;
+        }
+      } else {
+        recurrence = undefined;
+      }
+
       await taskRepository.updateTask({
         ...task,
         ...form.getValues(),
+        status,
+        recurrence,
       });
 
       form.reset();
@@ -226,6 +290,114 @@ export default function EditTaskForm({
                 highlightToday
                 presets={datePickerPresets}
               />
+
+              <Switch
+                label="Repeating"
+                {...form.getInputProps('isRecurring', { type: 'checkbox' })}
+              />
+
+              <Box hidden={!form.values.isRecurring} mt={10}>
+                <SimpleGrid cols={2} mb={20}>
+                  <NumberInput
+                    label="Repeat every"
+                    {...form.getInputProps('recurrence.interval')}
+                    value={form.values.recurrence?.interval || 1}
+                  />
+                  <Select
+                    label="Frequency"
+                    clearable={false}
+                    data={[
+                      {
+                        value: 'daily',
+                        label: form.values.recurrence?.interval === 1 ? 'Day' : 'Days',
+                      },
+                      {
+                        value: 'weekly',
+                        label: form.values.recurrence?.interval === 1 ? 'Week' : 'Weeks',
+                      },
+                      {
+                        value: 'monthly',
+                        label: form.values.recurrence?.interval === 1 ? 'Month' : 'Months',
+                      },
+                      {
+                        value: 'yearly',
+                        label: form.values.recurrence?.interval === 1 ? 'Year' : 'Years',
+                      },
+                    ]}
+                    {...form.getInputProps('recurrence.frequency')}
+                  />
+                </SimpleGrid>
+
+                <Box hidden={form.values.recurrence?.frequency !== 'weekly'} mt={10}>
+                  <Flex>
+                    <Chip.Group
+                      multiple
+                      {...form.getInputProps('recurrence.dayOfWeek', { type: 'checkbox' })}
+                    >
+                      <Group justify="center">
+                        <Chip value="1">Mon</Chip>
+                        <Chip value="2">Tues</Chip>
+                        <Chip value="3">Weds</Chip>
+                        <Chip value="4">Thurs</Chip>
+                        <Chip value="5">Fri</Chip>
+                        <Chip value="6">Sat</Chip>
+                        <Chip value="7">Sun</Chip>
+                      </Group>
+                    </Chip.Group>
+                  </Flex>
+                </Box>
+
+                <Box hidden={form.values.recurrence?.frequency !== 'monthly'}>
+                  <Group flex="row">
+                    <NumberInput
+                      label="Day of month"
+                      {...form.getInputProps('recurrence.dayOfMonth')}
+                      max={31}
+                      min={1}
+                      w="20%"
+                    />
+                    <Text size="sm" c="dimmed" flex={1} pt={25}>
+                      Hint: If this is greater than the number of days in a month, it will be
+                      adjusted to the last day of that month.
+                    </Text>
+                  </Group>
+                </Box>
+
+                <Box hidden={form.values.recurrence?.frequency !== 'yearly'}>
+                  <DatePickerInput
+                    label="First occurence"
+                    {...form.getInputProps('recurrence.yearlyFirstOccurrence')}
+                    highlightToday
+                  />
+                </Box>
+
+                <Box hidden={!form.values.isRecurring} mt={20}>
+                  <Fieldset legend="Recurrence Ends" mb={10}>
+                    <Radio.Group {...form.getInputProps('recurrenceEndsValue')}>
+                      <Stack>
+                        <Radio value="never" label="Never ends" />
+                        <Group flex="row">
+                          <Radio value="onDate" label="Ends on date" w="25%" />
+                          <DatePickerInput
+                            {...form.getInputProps('recurrence.ends.onDate')}
+                            placeholder={dayjs().add(1, 'month').format('MM/DD/YYYY')}
+                            highlightToday
+                            disabled={form.values.recurrenceEndsValue !== 'onDate'}
+                          />
+                        </Group>
+                        <Group flex="row">
+                          <Radio value="afterOccurrences" label="Ends after" w="25%" />
+                          <NumberInput
+                            {...form.getInputProps('recurrence.ends.afterOccurrences')}
+                            disabled={form.values.recurrenceEndsValue !== 'afterOccurrences'}
+                          />
+                          <Text size="sm">Occurrences</Text>
+                        </Group>
+                      </Stack>
+                    </Radio.Group>
+                  </Fieldset>
+                </Box>
+              </Box>
 
               <Button type="submit" mt={20}>
                 Update Task

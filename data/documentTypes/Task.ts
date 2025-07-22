@@ -6,8 +6,8 @@ export enum TaskStatus {
   Started = 'started',
   Done = 'done',
   Cancelled = 'cancelled',
+  Recurring = 'recurring',
 }
-export const ALL_TASK_STATUSES: TaskStatus[] = Object.values(TaskStatus);
 
 export const taskStatusSelectOptions = [
   { value: TaskStatus.Started, label: 'Started' },
@@ -15,6 +15,7 @@ export const taskStatusSelectOptions = [
   { value: TaskStatus.Ready, label: 'Ready' },
   { value: TaskStatus.Done, label: 'Done' },
   { value: TaskStatus.Cancelled, label: 'Cancelled' },
+  { value: TaskStatus.Recurring, label: 'Recurring' },
 ];
 
 export enum TaskPriority {
@@ -51,7 +52,7 @@ export interface Note {
 export interface Recurrence {
   frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
   interval: number;
-  dayOfWeek?: number; // 0 for Sunday, 1 for Monday, etc.
+  dayOfWeek?: number[]; // 0 for Sunday, 1 for Monday, etc.
   dayOfMonth?: number; // e.g., 1 for first, 2 for second, etc.
   ends?: {
     afterOccurrences?: number;
@@ -72,8 +73,12 @@ export interface Task extends Common {
   waitUntil?: string;
   notes?: Note[];
   recurrence?: Recurrence;
+  recurrenceTemplateId?: string; // ID of the recurrence template if this task was created from a recurring task
   createdAt: Date;
   updatedAt: Date;
 }
 
-export type NewTask = Omit<Task, keyof Common | 'type' | 'createdAt' | 'updatedAt' | 'notes'>;
+export type NewTask = Omit<
+  Task,
+  keyof Common | 'type' | 'createdAt' | 'updatedAt' | 'notes' | 'recurrenceTemplateId'
+>;

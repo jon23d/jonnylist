@@ -156,6 +156,8 @@ export default function Page() {
       statuses = [TaskStatus.Cancelled];
     } else if (status === 'waiting') {
       statuses = [TaskStatus.Waiting];
+    } else if (status === 'recurring') {
+      statuses = [TaskStatus.Recurring];
     }
 
     // subscribe to tasks
