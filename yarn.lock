@@ -11404,6 +11404,7 @@ __metadata:
     postcss-preset-mantine: "npm:1.17.0"
     postcss-simple-vars: "npm:^7.0.1"
     pouchdb: "npm:^9.0.0"
+    pouchdb-find: "npm:^9.0.0"
     prettier: "npm:^3.5.3"
     react: "npm:19.1.0"
     react-dom: "npm:19.1.0"
@@ -12639,6 +12640,107 @@ __metadata:
     picocolors: "npm:^1.1.1"
     source-map-js: "npm:^1.2.1"
   checksum: 10c0/b75510d7b28c3ab728c8733dd01538314a18c52af426f199a3c9177e63eb08602a3938bfb66b62dc01350b9aed62087eabbf229af97a1659eb8d3513cec823b3
+  languageName: node
+  linkType: hard
+
+"pouchdb-abstract-mapreduce@npm:9.0.0":
+  version: 9.0.0
+  resolution: "pouchdb-abstract-mapreduce@npm:9.0.0"
+  dependencies:
+    pouchdb-binary-utils: "npm:9.0.0"
+    pouchdb-collate: "npm:9.0.0"
+    pouchdb-errors: "npm:9.0.0"
+    pouchdb-fetch: "npm:9.0.0"
+    pouchdb-mapreduce-utils: "npm:9.0.0"
+    pouchdb-md5: "npm:9.0.0"
+    pouchdb-utils: "npm:9.0.0"
+  checksum: 10c0/5c65678ccdeb3a577693f57e7d870cd93e2506d0df6b52bf7212628d9654db4f09a9a4ddd37b28bc0791b11995df6f28e96a542ba460bbfd50d841292346fd7e
+  languageName: node
+  linkType: hard
+
+"pouchdb-binary-utils@npm:9.0.0":
+  version: 9.0.0
+  resolution: "pouchdb-binary-utils@npm:9.0.0"
+  checksum: 10c0/33ef1334c231ab925c3a1e4916ea392ef9389a8c53a654be08a5397fcb53990842670463f477c298d49a2014001f23d55c531af234781fb4e537b2fc091448e6
+  languageName: node
+  linkType: hard
+
+"pouchdb-collate@npm:9.0.0":
+  version: 9.0.0
+  resolution: "pouchdb-collate@npm:9.0.0"
+  checksum: 10c0/95c2067428d0394d7a826364b22b31a54e787d4512312054251f20b68ccca55c8541a83c00484f69d9e3d1db4c7409f473420b77c45913a5ba9123b1b6599f5b
+  languageName: node
+  linkType: hard
+
+"pouchdb-errors@npm:9.0.0":
+  version: 9.0.0
+  resolution: "pouchdb-errors@npm:9.0.0"
+  checksum: 10c0/03ee9032d62a4f4b42cd66dbae796dd5860b1767e278f19c4104bf52695075c8d4a595443b2de1419578039084414d028a5ad31adba2ce0144278633d17a4067
+  languageName: node
+  linkType: hard
+
+"pouchdb-fetch@npm:9.0.0":
+  version: 9.0.0
+  resolution: "pouchdb-fetch@npm:9.0.0"
+  dependencies:
+    fetch-cookie: "npm:2.2.0"
+    node-fetch: "npm:2.6.9"
+  checksum: 10c0/cc1fb0e0c97491de2b9f80af0a211835ab78d7e553ac5002e5dc61cd94b773581621855e5b4746004ec922677e142348a95379a65c4e77a1e3bfb67c800fce32
+  languageName: node
+  linkType: hard
+
+"pouchdb-find@npm:^9.0.0":
+  version: 9.0.0
+  resolution: "pouchdb-find@npm:9.0.0"
+  dependencies:
+    pouchdb-abstract-mapreduce: "npm:9.0.0"
+    pouchdb-collate: "npm:9.0.0"
+    pouchdb-errors: "npm:9.0.0"
+    pouchdb-fetch: "npm:9.0.0"
+    pouchdb-md5: "npm:9.0.0"
+    pouchdb-selector-core: "npm:9.0.0"
+    pouchdb-utils: "npm:9.0.0"
+  checksum: 10c0/db32d7cdc30d912453571839bc67e6dc779756c923a4932c1d745b952655f61c9d7a10d4be01500d87a5b2e4dd525a379b49b7e2debb711ac6c2948335e79fae
+  languageName: node
+  linkType: hard
+
+"pouchdb-mapreduce-utils@npm:9.0.0":
+  version: 9.0.0
+  resolution: "pouchdb-mapreduce-utils@npm:9.0.0"
+  dependencies:
+    pouchdb-utils: "npm:9.0.0"
+  checksum: 10c0/2f5696b023515b4933695e6b794093fb43c0950b22a46ce8e3c2610795ddab76152ca0720fa70d9c7864ec473ef169cc7efefd4f3bc55a1e035eea0d9c27d64d
+  languageName: node
+  linkType: hard
+
+"pouchdb-md5@npm:9.0.0":
+  version: 9.0.0
+  resolution: "pouchdb-md5@npm:9.0.0"
+  dependencies:
+    pouchdb-binary-utils: "npm:9.0.0"
+    spark-md5: "npm:3.0.2"
+  checksum: 10c0/2a39a5dccc18e2453ab05bd3f314a71ecf350c2d942f878475c99d046c87938104394d04bf272ba3a99ff176cc210faf724ff074a0c851339abb7e0054e35a71
+  languageName: node
+  linkType: hard
+
+"pouchdb-selector-core@npm:9.0.0":
+  version: 9.0.0
+  resolution: "pouchdb-selector-core@npm:9.0.0"
+  dependencies:
+    pouchdb-collate: "npm:9.0.0"
+    pouchdb-utils: "npm:9.0.0"
+  checksum: 10c0/84b30b7631ef810db412aa4f88768a364bb68087fb975abd70be261cd39884234421c63d6d49d3d90d2b1740792d054179099ac3b64e9cb25e2b795c4db2e770
+  languageName: node
+  linkType: hard
+
+"pouchdb-utils@npm:9.0.0":
+  version: 9.0.0
+  resolution: "pouchdb-utils@npm:9.0.0"
+  dependencies:
+    pouchdb-errors: "npm:9.0.0"
+    pouchdb-md5: "npm:9.0.0"
+    uuid: "npm:8.3.2"
+  checksum: 10c0/256f891fbb31f47aba779c56432f27859eb46125c96e8ccfdde1dc1fe05c07f1a71ded02f63a2db24621415ff43e370e2a034fbcbcf48f2eb125d5f9ccfd0ce6
   languageName: node
   linkType: hard
 

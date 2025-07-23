@@ -13,6 +13,10 @@ export const taskFactory = (data: Partial<Task> = {}): Task => {
     status: data.status || TaskStatus.Ready,
     priority: data.priority || TaskPriority.Medium,
     dueDate: data.dueDate || undefined,
+    waitUntil: data.waitUntil || undefined,
+    notes: data.notes || [],
+    recurrence: data.recurrence || undefined,
+    recurrenceTemplateId: data.recurrenceTemplateId || undefined,
     createdAt: data.createdAt || new Date(),
     updatedAt: data.updatedAt || new Date(),
   };

@@ -1,4 +1,5 @@
 import PouchDB from 'pouchdb';
+import pouchdbFind from 'pouchdb-find';
 import { ContextRepository } from '@/data/ContextRepository';
 import { DocumentTypes } from '@/data/documentTypes';
 import { LocalSettings } from '@/data/documentTypes/LocalSettings';
@@ -31,6 +32,8 @@ export class DataSource {
    */
   constructor(database: PouchDB.Database<DocumentTypes>, migrationManager?: MigrationManager) {
     this.db = database;
+
+    PouchDB.plugin(pouchdbFind);
 
     if (migrationManager) {
       this.migrationManager = migrationManager;

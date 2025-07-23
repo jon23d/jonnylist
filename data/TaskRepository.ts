@@ -272,63 +272,34 @@ export class TaskRepository implements Repository {
     return Promise.resolve();
   }
 
-  checkRecurringTasks(): Promise<void> {
+  /**
+   * This function will check for tasks that have a recurrence set
+   *  and create new instances of them, if appropriate
+   */
+  async checkRecurringTasks(): Promise<void> {
     Logger.info('Checking for recurring tasks to create new instances');
-    this.getTasks({ statuses: [TaskStatus.Recurring] })
-      .then((recurringTasks) => {
-        const now = new Date();
-        const tasksToCreate: NewTask[] = [];
-
-        recurringTasks.forEach((task) => {
-          if (task.recurrence && task.recurrence.interval) {
-            // We need to find the last occurrence of this task, then create a new one
-            // if we have met the recurrence criteria. We can find the last occurrence
-            // of this task by looking for a task that has a recurrenceTemplateId that
-            // matches this task's _id
-            this.db
-              .find({
-                selector: {
-                  type: 'task',
-                  recurrenceTemplateId: task._id,
-                },
-                sort: [{ updatedAt: 'desc' }],
-                limit: 1,
-              })
-              .then((result) => {
-                const lastOccurrence = result.docs[0] as Task | undefined;
-
-                // We only create a new task if the status of the last one is
-                // not started or ready
-                if (
-                  lastOccurrence?.status !== TaskStatus.Ready &&
-                  lastOccurrence?.status !== TaskStatus.Started
-                ) {
-                  const newTask: Task = {
-                    title: task.title,
-                    description: task.description,
-                    tags: task.tags,
-                    project: task.project,
-                    status: TaskStatus.Ready,
-                    priority: task.priority,
-                    dueDate: task.dueDate,
-                    notes: [],
-                    recurrenceTemplateId: task._id, // Link to the original recurring task
-                  };
-                }
-              });
-          }
-        });
-
-        if (tasksToCreate.length > 0) {
-          Logger.info(`Creating ${tasksToCreate.length} new recurring tasks`);
-          return this.addTasks(tasksToCreate);
-        }
-      })
-      .catch((error) => {
-        Logger.error('Error checking recurring tasks:', error);
-      });
 
     return Promise.resolve();
+  }
+
+  /**
+   * This function will find instances of a recurring task and return them.
+   *
+   * @TODO Add an index to the database for this
+   */
+  async getOccurrencesFromRecurringTask(task: Task): Promise<Task[]> {
+    if (!task.recurrence) {
+      throw new Error('Task is not recurring');
+    }
+
+    const tasks = await this.db.find({
+      selector: {
+        type: 'task',
+        recurrenceTemplateId: task._id,
+      },
+    });
+
+    return tasks.docs as Task[];
   }
 
   /**
