@@ -1,4 +1,3 @@
-import { underline } from 'next/dist/lib/picocolors';
 import { DocumentTypes } from '@/data/documentTypes';
 import { Repository } from '@/data/Repository';
 import { Logger } from '@/helpers/Logger';
@@ -78,6 +77,19 @@ export class TaskRepository implements Repository {
       tags: task.tags?.map((tag) => this.cleanTag(tag)),
     };
 
+    // If the task has no completedAt date, but the status is done, set completedAt to now
+    if (updatedTask.status === TaskStatus.Done && !updatedTask.completedAt) {
+      updatedTask.completedAt = new Date();
+    }
+
+    // If the task has a completedAt date, but the status is started or ready, remove completedAt
+    if (
+      (updatedTask.status === TaskStatus.Started || updatedTask.status === TaskStatus.Ready) &&
+      updatedTask.completedAt
+    ) {
+      delete updatedTask.completedAt;
+    }
+
     let response;
 
     try {
@@ -93,41 +105,6 @@ export class TaskRepository implements Repository {
     }
 
     throw new Error('Failed to update task');
-  }
-
-  /**
-   * Bulk update multiple tasks
-   *
-   * @param tasks
-   */
-  async updateTasks(tasks: Task[]): Promise<Task[]> {
-    Logger.info('Updating multiple tasks');
-    const updatedTasks: Task[] = tasks.map((task) => {
-      return { ...task, updatedAt: new Date() };
-    });
-
-    const taskMap = new Map<string, Task>();
-    updatedTasks.forEach((task) => {
-      taskMap.set(task._id, task);
-    });
-
-    try {
-      const response = await this.db.bulkDocs(updatedTasks);
-      Logger.info('Updated tasks successfully');
-
-      // Update the _rev field for each task in the map
-      for (const result of response) {
-        // TODO: We are making a lot of assumptions here. They are probably pretty safe, but
-        // let's consider better error handling
-        const taskInMap = taskMap.get(result.id!);
-        taskInMap!._rev = result.rev;
-      }
-
-      return updatedTasks;
-    } catch (error) {
-      Logger.error('Error updating tasks:', error);
-      throw error; // Re-throw to handle it in the calling code
-    }
   }
 
   async addNote(taskId: string, noteText: string): Promise<Task> {
@@ -279,13 +256,35 @@ export class TaskRepository implements Repository {
   async checkRecurringTasks(): Promise<void> {
     Logger.info('Checking for recurring tasks to create new instances');
 
-    return Promise.resolve();
+    const recurringTasks = await this.getTasks({ statuses: [TaskStatus.Recurring] });
+    await Promise.all(recurringTasks.map((task) => this.createRecurringTaskInstances(task)));
+  }
+
+  private async createRecurringTaskInstances(task: Task): Promise<void> {
+    if (!task.recurrence) {
+      throw new Error('Task is not recurring');
+    }
+
+    // Get all occurrences of this task
+    const occurrences = await this.getOccurrencesFromRecurringTask(task);
+
+    // If we have an open task (status of TaskStatus.Ready or TaskStatus.Started), do not create a new instance
+    if (
+      occurrences.some(
+        (occurrence) =>
+          occurrence.status === TaskStatus.Ready || occurrence.status === TaskStatus.Started
+      )
+    ) {
+      Logger.info(
+        `Skipping creation of new instance for recurring task ${task._id} as it already has an open instance`
+      );
+    }
+
+    // Get the last occurence date of this task
   }
 
   /**
    * This function will find instances of a recurring task and return them.
-   *
-   * @TODO Add an index to the database for this
    */
   async getOccurrencesFromRecurringTask(task: Task): Promise<Task[]> {
     if (!task.recurrence) {

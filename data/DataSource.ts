@@ -171,6 +171,7 @@ export class DataSource {
 
     try {
       this.onMigrationStatusChange?.(true);
+      throw new Error('Poopy McPoopface');
       await this.migrationManager.runMigrations();
     } finally {
       this.onMigrationStatusChange?.(false);

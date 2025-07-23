@@ -76,6 +76,7 @@ export interface Task extends Common {
   recurrenceTemplateId?: string; // ID of the recurrence template if this task was created from a recurring task
   createdAt: Date;
   updatedAt: Date;
+  completedAt?: Date; // Only set if status is 'done'
 }
 
 export type NewTask = Omit<

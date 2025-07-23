@@ -87,28 +87,6 @@ describe('TaskRepository', () => {
     expect(tasks[0].updatedAt.getTime()).toBeGreaterThanOrEqual(timeAfterUpdate.getTime());
   });
 
-  test('updateTasks should update multiple tasks in the database', async () => {
-    const database = getDb();
-    const repository = new TaskRepository(database);
-
-    const task1 = await repository.addTask(taskFactory());
-    const task2 = await repository.addTask(taskFactory());
-
-    const rev1 = task1._rev;
-    const rev2 = task2._rev;
-
-    task1.title = 'foo1';
-    task2.title = 'foo2';
-
-    const updatedTasks = await repository.updateTasks([task1, task2]);
-
-    expect(updatedTasks).toHaveLength(2);
-    expect(updatedTasks[0].title).toBe('foo1');
-    expect(updatedTasks[1].title).toBe('foo2');
-    expect(updatedTasks[0]._rev).not.toBe(rev1);
-    expect(updatedTasks[1]._rev).not.toBe(rev2);
-  });
-
   test('UpdateTask should return the task with the new revision', async () => {
     const database = getDb();
     const repository = new TaskRepository(database);
@@ -120,6 +98,62 @@ describe('TaskRepository', () => {
     expect(task._rev).not.toEqual(updatedTask._rev);
     expect(updatedTask.title).toBe('Updated Task');
     expect(updatedTask._rev).toBeDefined();
+  });
+
+  test('UpdateTask should set completedAt when status is changed to done', async () => {
+    const database = getDb();
+    const repository = new TaskRepository(database);
+    const newTask = taskFactory({
+      status: TaskStatus.Ready,
+    });
+
+    const task = await repository.addTask(newTask);
+    expect(task.completedAt).toBeUndefined();
+
+    const updatedTask = await repository.updateTask({ ...task, status: TaskStatus.Done });
+
+    expect(updatedTask.completedAt).toBeDefined();
+    expect(updatedTask.status).toBe(TaskStatus.Done);
+  });
+
+  test('UpdateTask should not update completedAt if the prior status is done', async () => {
+    const database = getDb();
+    const repository = new TaskRepository(database);
+    const newTask = taskFactory({
+      status: TaskStatus.Done,
+    });
+
+    const task = await repository.addTask(newTask);
+    expect(task.completedAt).toBeDefined();
+    const completedAt = task.completedAt;
+
+    // Advance time a little
+    jest.setSystemTime(new Date(Date.now() + 10000));
+
+    // Update the task without changing the status
+    const updatedTask = await repository.updateTask({ ...task, title: 'Updated Task' });
+
+    expect(updatedTask.completedAt).toEqual(completedAt);
+  });
+
+  test('UpdateTask should clear the completedAt date if a completed task is moved to started or ready', async () => {
+    const database = getDb();
+    const repository = new TaskRepository(database);
+    const newTask = taskFactory({
+      status: TaskStatus.Done,
+    });
+
+    const task = await repository.addTask(newTask);
+    expect(task.completedAt).toBeDefined();
+
+    // Advance time a little
+    jest.setSystemTime(new Date(Date.now() + 10000));
+
+    // Update the task to move it to started
+    const updatedTask = await repository.updateTask({ ...task, status: TaskStatus.Started });
+
+    expect(updatedTask.completedAt).toBeUndefined();
+    expect(updatedTask.status).toBe(TaskStatus.Started);
   });
 
   test('getTasks should use a high unicode value for the endkey', async () => {
@@ -310,6 +344,7 @@ describe('TaskRepository', () => {
   describe('getOccurrencesFromRecurringTask', () => {
     it('Gets all occurrences for a recurring task', async () => {
       const taskRepository = new TaskRepository(getDb());
+
       const task = await taskRepository.addTask(
         taskFactory({
           recurrence: {
@@ -399,6 +434,13 @@ describe('TaskRepository', () => {
       jest.setSystemTime(new Date(Date.now() + 24 * 60 * 60 * 1000));
 
       // Now it should NOT create a new task because the spawned one is still in-progress
+      await taskRepository.checkRecurringTasks();
+      tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
+      expect(tasks).toHaveLength(0);
+
+      // Let's mark the task as done, and try again -- we should still not see a new task created
+      // until the following day
+      await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done });
       await taskRepository.checkRecurringTasks();
       tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(0);

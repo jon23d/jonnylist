@@ -5,8 +5,9 @@ import V3AddArchivedAtToContexts from '@/data/migrations/versions/V3AddArchivedA
 import V4UpdateSortsToFractionalString from '@/data/migrations/versions/V4UpdateSortsToFractionalString';
 import V5UpdatePriorities from '@/data/migrations/versions/V5UpdatePriorities';
 import V6RemoveContextAndSortOrder from '@/data/migrations/versions/V6RemoveContextAndSortOrder';
+import V7AddRecurrenceIndex from '@/data/migrations/versions/V7AddRecurrenceIndex';
 
-export const DATABASE_VERSION = 6;
+export const DATABASE_VERSION = 7;
 
 export const VERSIONS: Migration[] = [
   new V1AddMigrationsDoc(),
@@ -15,4 +16,5 @@ export const VERSIONS: Migration[] = [
   new V4UpdateSortsToFractionalString(),
   new V5UpdatePriorities(),
   new V6RemoveContextAndSortOrder(),
+  new V7AddRecurrenceIndex(),
 ];

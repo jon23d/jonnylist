@@ -17,6 +17,7 @@ export const taskFactory = (data: Partial<Task> = {}): Task => {
     notes: data.notes || [],
     recurrence: data.recurrence || undefined,
     recurrenceTemplateId: data.recurrenceTemplateId || undefined,
+    completedAt: data.completedAt || (data.status === TaskStatus.Done ? new Date() : undefined),
     createdAt: data.createdAt || new Date(),
     updatedAt: data.updatedAt || new Date(),
   };
