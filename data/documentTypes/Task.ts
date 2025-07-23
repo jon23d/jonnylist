@@ -52,7 +52,7 @@ export interface Note {
 export interface Recurrence {
   frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
   interval: number;
-  dayOfWeek?: number[]; // 0 for Sunday, 1 for Monday, etc.
+  dayOfWeek?: number; // 0 for Sunday, 1 for Monday, etc.
   dayOfMonth?: number; // e.g., 1 for first, 2 for second, etc.
   ends?: {
     afterOccurrences?: number;

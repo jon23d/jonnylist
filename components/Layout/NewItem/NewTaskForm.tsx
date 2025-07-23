@@ -74,7 +74,7 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
       recurrence: {
         frequency: 'daily',
         interval: 1,
-        dayOfWeek: [new Date().getDay()],
+        dayOfWeek: new Date().getDay(),
         dayOfMonth: new Date().getDate(),
         ends: {
           afterOccurrences: undefined,
@@ -136,7 +136,7 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
         status = TaskStatus.Recurring;
 
         if (recurrence.frequency !== 'weekly') {
-          recurrence.dayOfWeek = [];
+          recurrence.dayOfWeek = undefined;
         }
         if (recurrence.frequency !== 'monthly') {
           recurrence.dayOfMonth = undefined;

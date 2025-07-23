@@ -383,6 +383,7 @@ describe('TaskRepository', () => {
             frequency: 'daily',
             interval: 1,
           },
+          status: TaskStatus.Recurring,
         })
       );
 
@@ -400,11 +401,11 @@ describe('TaskRepository', () => {
       tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(0);
 
-      // Let's advance time to the next day using jest.setSystemTime
-      jest.setSystemTime(new Date(Date.now() + 24 * 60 * 60 * 1000));
+      // Let's advance time to the next day
+      const now = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
       // And now we should see another new task created
-      await taskRepository.checkRecurringTasks();
+      await taskRepository.checkRecurringTasks(now);
       tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(1);
     });
@@ -417,31 +418,34 @@ describe('TaskRepository', () => {
           frequency: 'daily',
           interval: 1,
         },
+        status: TaskStatus.Recurring,
       });
       await taskRepository.addTask(template);
 
       // This should create a new task from the template
-      await taskRepository.checkRecurringTasks();
+      let now = new Date();
+      await taskRepository.checkRecurringTasks(now);
 
       // Did it?
       let tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(1);
+      let spawnedTask = tasks[0];
 
       // Now let's update the spawned task to be in-progress
-      await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Started });
+      spawnedTask = await taskRepository.updateTask({ ...spawnedTask, status: TaskStatus.Started });
 
       // Let's advance time to the next day using jest.setSystemTime
-      jest.setSystemTime(new Date(Date.now() + 24 * 60 * 60 * 1000));
+      now = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
       // Now it should NOT create a new task because the spawned one is still in-progress
-      await taskRepository.checkRecurringTasks();
+      await taskRepository.checkRecurringTasks(now);
       tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(0);
 
       // Let's mark the task as done, and try again -- we should still not see a new task created
       // until the following day
-      await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done });
-      await taskRepository.checkRecurringTasks();
+      await taskRepository.updateTask({ ...spawnedTask, status: TaskStatus.Done });
+      await taskRepository.checkRecurringTasks(now);
       tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(0);
     });
@@ -454,23 +458,67 @@ describe('TaskRepository', () => {
           frequency: 'daily',
           interval: 1,
         },
+        status: TaskStatus.Recurring,
       });
       await taskRepository.addTask(template);
 
       // This should create a new task from the template
-      await taskRepository.checkRecurringTasks();
+      let now = new Date();
+      await taskRepository.checkRecurringTasks(now);
 
       // Did it?
       let tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(1);
 
-      // Let's advance time to the next day using jest.setSystemTime
-      jest.setSystemTime(new Date(Date.now() + 24 * 60 * 60 * 1000));
+      // Let's advance time to the next day
+      now = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
       // Now it should NOT create a new task because the spawned one is still in-progress
-      await taskRepository.checkRecurringTasks();
+      await taskRepository.checkRecurringTasks(now);
       tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(1);
+    });
+
+    it('Correctly figures out the last completed time for a recurring task', async () => {
+      // Create the recurring task template
+      const taskRepository = new TaskRepository(getDb());
+      const template = taskFactory({
+        recurrence: {
+          frequency: 'daily',
+          interval: 1,
+        },
+        status: TaskStatus.Recurring,
+      });
+      await taskRepository.addTask(template);
+
+      // This should create a new task from the template
+      let now = new Date();
+      await taskRepository.checkRecurringTasks(now);
+
+      // Mark it as done
+      let tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
+      await taskRepository.updateTask({
+        ...tasks[0],
+        status: TaskStatus.Done,
+        completedAt: now,
+      });
+      // Advance a day and create another one
+      now = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      await taskRepository.checkRecurringTasks(now);
+      tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
+      // close it
+      await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done, completedAt: now });
+
+      // Advance a day, and create another one
+      now = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      await taskRepository.checkRecurringTasks(now);
+      tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
+      await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done, completedAt: now });
+
+      // We shouldn't get another one
+      await taskRepository.checkRecurringTasks(now);
+      tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
+      expect(tasks).toHaveLength(0);
     });
 
     it('Honors interval for daily recurring tasks', async () => {
@@ -481,32 +529,34 @@ describe('TaskRepository', () => {
           frequency: 'daily',
           interval: 2,
         },
+        status: TaskStatus.Recurring,
       });
       await taskRepository.addTask(template);
 
       // This should create a new task from the template
-      await taskRepository.checkRecurringTasks();
+      let now = new Date();
+      await taskRepository.checkRecurringTasks(now);
 
       // Did it?
       let tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(1);
 
       // Mark the task as done
-      await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done });
+      await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done, completedAt: now });
 
       // Advance time by 1 day
-      jest.setSystemTime(new Date(Date.now() + 24 * 60 * 60 * 1000));
+      now = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
       // Check again, it should not create a new task because the interval is 2 days
-      await taskRepository.checkRecurringTasks();
+      await taskRepository.checkRecurringTasks(now);
       tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(0);
 
       // Advance time by another day
-      jest.setSystemTime(new Date(Date.now() + 24 * 60 * 60 * 1000));
+      now = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
       // Now it should create a new task
-      await taskRepository.checkRecurringTasks();
+      await taskRepository.checkRecurringTasks(now);
       tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(1);
     });
@@ -518,33 +568,21 @@ describe('TaskRepository', () => {
         recurrence: {
           frequency: 'weekly',
           interval: 1,
-          dayOfWeek: [1, 3], // Monday and Wednesday
+          dayOfWeek: 3, // Wednesday
         },
+        status: TaskStatus.Recurring,
       });
       await taskRepository.addTask(template);
 
       // Let's set the day of the week to Sunday, where no new task should be created
-      jest.setSystemTime(new Date('2023-10-01T00:00:00Z')); // This is a Sunday
-      await taskRepository.checkRecurringTasks();
+      let now = new Date('2023-10-01T00:00:00Z'); // This is a Sunday
+      await taskRepository.checkRecurringTasks(now);
       let tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(0);
 
-      // Now, let's advance to Monday, where a new task should be created
-      jest.setSystemTime(new Date('2023-10-02T00:00:00Z')); // This is a Monday
-      await taskRepository.checkRecurringTasks();
-      tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
-      expect(tasks).toHaveLength(1);
-
-      // Fantastic! Let's mark the task as done and advance to Tuesday, where no new task should be created
-      await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done });
-      jest.setSystemTime(new Date('2023-10-03T00:00:00Z')); // This is a Tuesday
-      await taskRepository.checkRecurringTasks();
-      tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
-      expect(tasks).toHaveLength(0);
-
       // And now, let's advance to Wednesday, where a new task should be created
-      jest.setSystemTime(new Date('2023-10-04T00:00:00Z')); // This is a Wednesday
-      await taskRepository.checkRecurringTasks();
+      now = new Date('2023-10-04T00:00:00Z'); // This is a Wednesday
+      await taskRepository.checkRecurringTasks(now);
       tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(1);
     });
@@ -558,32 +596,33 @@ describe('TaskRepository', () => {
           interval: 2,
           dayOfMonth: 15,
         },
+        status: TaskStatus.Recurring,
       });
       await taskRepository.addTask(template);
 
       // Let's set the date to the 14th, where no new task should be created
-      jest.setSystemTime(new Date('2023-10-14T00:00:00Z')); // This is the 14th of October
-      await taskRepository.checkRecurringTasks();
+      let now = new Date('2023-10-14T00:00:00Z'); // This is the 14th of October
+      await taskRepository.checkRecurringTasks(now);
       let tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(0);
 
       // Let's advance to the 15th, where a new task should be created
-      jest.setSystemTime(new Date('2023-10-15T00:00:00Z')); // This is the 15th of October
-      await taskRepository.checkRecurringTasks();
+      now = new Date('2023-10-15T00:00:00Z'); // This is the 15th of October
+      await taskRepository.checkRecurringTasks(now);
       tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(1);
 
       // Close the task, and advance to the next month on the 15th, where NO new task should be created
       // because of the interval
-      await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done });
-      jest.setSystemTime(new Date('2023-11-15T00:00:00Z')); // This is the 15th of November
-      await taskRepository.checkRecurringTasks();
+      await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done, completedAt: now });
+      now = new Date('2023-11-15T00:00:00Z'); // This is the 15th of November
+      await taskRepository.checkRecurringTasks(now);
       tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(0);
 
       // Move to the 15th of January, where a new task should be created
-      jest.setSystemTime(new Date('2024-01-15T00:00:00Z')); // This is the 15th of January
-      await taskRepository.checkRecurringTasks();
+      now = new Date('2024-01-15T00:00:00Z'); // This is the 15th of January
+      await taskRepository.checkRecurringTasks(now);
       tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(1);
     });
@@ -600,34 +639,35 @@ describe('TaskRepository', () => {
             interval: 1,
             dayOfMonth: 31,
           },
+          status: TaskStatus.Recurring,
         });
         await taskRepository.addTask(template);
 
         // It should create a task on the 31st of January
-        jest.setSystemTime(new Date('2024-01-31T00:00:00Z'));
-        await taskRepository.checkRecurringTasks();
+        let now = new Date('2024-01-31T00:00:00Z');
+        await taskRepository.checkRecurringTasks(now);
         let tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
         expect(tasks).toHaveLength(1);
 
         // Close it, and move to the 29th of February, where a new task should be created because
         // the 31st does not exist in February, and the 29th is the last day of the month
-        await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done });
-        jest.setSystemTime(new Date('2024-02-29T00:00:00Z'));
-        await taskRepository.checkRecurringTasks();
+        await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done, completedAt: now });
+        now = new Date('2024-02-29T00:00:00Z');
+        await taskRepository.checkRecurringTasks(now);
         tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
         expect(tasks).toHaveLength(1);
 
         // Close it, and advance to november 2024, which has 30 days, so a new task should be created
-        await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done });
-        jest.setSystemTime(new Date('2024-11-30T00:00:00Z'));
-        await taskRepository.checkRecurringTasks();
+        await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done, completedAt: now });
+        now = new Date('2024-11-30T00:00:00Z');
+        await taskRepository.checkRecurringTasks(now);
         tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
         expect(tasks).toHaveLength(1);
 
         // Close it, and advance to feb 28, 2025, the last day of the month, so a new task should be created
-        await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done });
-        jest.setSystemTime(new Date('2025-02-28T00:00:00Z'));
-        await taskRepository.checkRecurringTasks();
+        await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done, completedAt: now });
+        now = new Date('2025-02-28T00:00:00Z');
+        await taskRepository.checkRecurringTasks(now);
         tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
         expect(tasks).toHaveLength(1);
       }
@@ -642,25 +682,26 @@ describe('TaskRepository', () => {
           interval: 2,
           yearlyFirstOccurrence: '2024-12-30',
         },
+        status: TaskStatus.Recurring,
       });
       await taskRepository.addTask(template);
 
       // Set the date to 12/30/2023, where a new task should be created
-      jest.setSystemTime(new Date('2023-12-30T00:00:00Z'));
-      await taskRepository.checkRecurringTasks();
+      let now = new Date('2023-12-30T00:00:00Z');
+      await taskRepository.checkRecurringTasks(now);
       let tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(1);
 
       // Mark the task as done and advance one year. A new one should not be created because the interval is 2 years
-      await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done });
-      jest.setSystemTime(new Date('2024-12-30T00:00:00Z'));
-      await taskRepository.checkRecurringTasks();
+      await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done, completedAt: now });
+      now = new Date('2024-12-30T00:00:00Z');
+      await taskRepository.checkRecurringTasks(now);
       tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(0);
 
       // Advance to 2025, where a new task should be created
-      jest.setSystemTime(new Date('2025-12-30T00:00:00Z'));
-      await taskRepository.checkRecurringTasks();
+      now = new Date('2025-12-30T00:00:00Z');
+      await taskRepository.checkRecurringTasks(now);
       tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(1);
     });
@@ -676,31 +717,33 @@ describe('TaskRepository', () => {
             afterOccurrences: 3,
           },
         },
+        status: TaskStatus.Recurring,
       });
       await taskRepository.addTask(template);
 
       // The first one
-      await taskRepository.checkRecurringTasks();
+      let now = new Date();
+      await taskRepository.checkRecurringTasks(now);
       let tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(1);
 
       // The second one
-      await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done });
-      jest.setSystemTime(new Date(Date.now() + 24 * 60 * 60 * 1000));
-      await taskRepository.checkRecurringTasks();
+      await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done, completedAt: now });
+      now = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      await taskRepository.checkRecurringTasks(now);
       tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(1);
 
       // The third one
-      await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done });
-      jest.setSystemTime(new Date(Date.now() + 24 * 60 * 60 * 1000));
-      await taskRepository.checkRecurringTasks();
+      await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done, completedAt: now });
+      now = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      await taskRepository.checkRecurringTasks(now);
       tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(1);
 
       // The fourth one should not be created
-      await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done });
-      jest.setSystemTime(new Date(Date.now() + 24 * 60 * 60 * 1000));
+      await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done, completedAt: now });
+      now = new Date(now.getTime() + 24 * 60 * 60 * 1000);
       await taskRepository.checkRecurringTasks();
       tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(0);
@@ -717,26 +760,27 @@ describe('TaskRepository', () => {
             onDate: '2024-01-01',
           },
         },
+        status: TaskStatus.Recurring,
       });
       await taskRepository.addTask(template);
 
       // The first one
-      jest.setSystemTime(new Date('2023-12-30T00:00:00Z'));
-      await taskRepository.checkRecurringTasks();
+      let now = new Date('2023-12-30T00:00:00Z');
+      await taskRepository.checkRecurringTasks(now);
       let tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(1);
 
       // The second one
-      await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done });
-      jest.setSystemTime(new Date('2023-12-31T00:00:00Z'));
-      await taskRepository.checkRecurringTasks();
+      await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done, completedAt: now });
+      now = new Date('2023-12-31T00:00:00Z');
+      await taskRepository.checkRecurringTasks(now);
       tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(1);
 
       // The third one should not be created because it ends on 2024-01-01
-      await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done });
-      jest.setSystemTime(new Date('2024-01-01T00:00:00Z'));
-      await taskRepository.checkRecurringTasks();
+      await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Done, completedAt: now });
+      now = new Date('2024-01-01T00:00:00Z');
+      await taskRepository.checkRecurringTasks(now);
       tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(0);
     });

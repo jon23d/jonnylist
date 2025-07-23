@@ -237,8 +237,10 @@ export class TaskRepository implements Repository {
 
         if (tasksToUpdate.length > 0) {
           Logger.info(`Updating ${tasksToUpdate.length} waiting tasks to ready status`);
-          return this.updateTasks(
-            tasksToUpdate.map((task) => ({ ...task, status: TaskStatus.Ready }))
+          Promise.resolve(
+            tasksToUpdate.map((task) => {
+              return this.updateTask({ ...task, status: TaskStatus.Ready });
+            })
           );
         }
       })
@@ -253,14 +255,16 @@ export class TaskRepository implements Repository {
    * This function will check for tasks that have a recurrence set
    *  and create new instances of them, if appropriate
    */
-  async checkRecurringTasks(): Promise<void> {
+  async checkRecurringTasks(currentDate?: Date): Promise<void> {
     Logger.info('Checking for recurring tasks to create new instances');
 
+    const now = currentDate ? new Date(currentDate) : new Date();
+
     const recurringTasks = await this.getTasks({ statuses: [TaskStatus.Recurring] });
-    await Promise.all(recurringTasks.map((task) => this.createRecurringTaskInstances(task)));
+    await Promise.all(recurringTasks.map((task) => this.createRecurringTaskInstances(task, now)));
   }
 
-  private async createRecurringTaskInstances(task: Task): Promise<void> {
+  private async createRecurringTaskInstances(task: Task, currentDate?: Date): Promise<void> {
     if (!task.recurrence) {
       throw new Error('Task is not recurring');
     }
@@ -278,9 +282,205 @@ export class TaskRepository implements Repository {
       Logger.info(
         `Skipping creation of new instance for recurring task ${task._id} as it already has an open instance`
       );
+      return;
     }
 
-    // Get the last occurence date of this task
+    const now = currentDate || new Date();
+
+    // Check if recurrence has ended
+    if (this.hasRecurrenceEnded(task, occurrences, now)) {
+      Logger.info(`Recurrence for task ${task._id} has ended, not creating new instance`);
+      return;
+    }
+
+    // Get the timestamp when the last occurrence was completed
+    const completedOccurrences = occurrences.filter((occurrence) => occurrence.completedAt);
+
+    let shouldCreateTask = false;
+
+    if (task.recurrence.frequency === 'daily') {
+      if (completedOccurrences.length === 0) {
+        // For daily tasks, create the first instance immediately
+        shouldCreateTask = true;
+      } else {
+        const lastOccurrence = completedOccurrences.sort(
+          (a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime()
+        )[0];
+        const lastOccurrenceDate = new Date(lastOccurrence.completedAt!);
+
+        const days = task.recurrence.interval;
+        const nextOccurrenceDate = new Date(lastOccurrenceDate);
+        nextOccurrenceDate.setDate(nextOccurrenceDate.getDate() + days);
+
+        console.log(`Daily task debug:
+        Last completion: ${lastOccurrenceDate.toISOString()}
+        Interval: ${days} days
+        Next occurrence should be: ${nextOccurrenceDate.toISOString()}
+        Current time: ${now.toISOString()}
+        Should create: ${nextOccurrenceDate <= now}`);
+
+        if (nextOccurrenceDate <= now) {
+          shouldCreateTask = true;
+        }
+      }
+    } else if (task.recurrence.frequency === 'weekly') {
+      const weeks = task.recurrence.interval;
+      const dayOfWeek = task.recurrence.dayOfWeek;
+
+      if (
+        !dayOfWeek ||
+        (Array.isArray(dayOfWeek) ? dayOfWeek.length === 0 : dayOfWeek === undefined)
+      ) {
+        throw new Error('dayOfWeek is required for weekly recurring tasks');
+      }
+
+      // Handle both single day (number) and array format for backwards compatibility
+      const targetDay = Array.isArray(dayOfWeek) ? dayOfWeek[0] : dayOfWeek;
+
+      // Check if today is the specified day of the week
+      const currentDayOfWeek = now.getUTCDay();
+      if (currentDayOfWeek !== targetDay) {
+        return; // Not the day when this task should recur
+      }
+
+      if (completedOccurrences.length === 0) {
+        // For weekly tasks, create the first instance if today matches the day of week
+        shouldCreateTask = true;
+      } else {
+        const lastOccurrence = completedOccurrences.sort(
+          (a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime()
+        )[0];
+        const lastOccurrenceDate = new Date(lastOccurrence.completedAt!);
+
+        // Calculate if enough weeks have passed since the last occurrence
+        const timeDifference = now.getTime() - lastOccurrenceDate.getTime();
+        const daysDifference = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+        const weeksSinceLastOccurrence = Math.floor(daysDifference / 7);
+
+        if (weeksSinceLastOccurrence >= weeks) {
+          shouldCreateTask = true;
+        }
+      }
+    } else if (task.recurrence.frequency === 'monthly') {
+      const months = task.recurrence.interval;
+      const dayOfMonth = task.recurrence.dayOfMonth;
+
+      if (!dayOfMonth) {
+        throw new Error('dayOfMonth is required for monthly recurring tasks');
+      }
+
+      // Get the target day for this month
+      const currentMonth = now.getUTCMonth();
+      const currentYear = now.getUTCFullYear();
+
+      // Handle case where dayOfMonth doesn't exist in current month (e.g., Feb 31st)
+      const daysInCurrentMonth = new Date(Date.UTC(currentYear, currentMonth + 1, 0)).getUTCDate();
+      const targetDay = Math.min(dayOfMonth, daysInCurrentMonth);
+
+      const targetDate = new Date(Date.UTC(currentYear, currentMonth, targetDay));
+
+      // Check if today is the target day or later
+      if (now >= targetDate) {
+        if (completedOccurrences.length === 0) {
+          // For monthly tasks, create the first instance if today matches the day of month
+          shouldCreateTask = true;
+        } else {
+          const lastOccurrence = completedOccurrences.sort(
+            (a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime()
+          )[0];
+          const lastOccurrenceDate = new Date(lastOccurrence.completedAt!);
+
+          // Calculate months since last occurrence
+          const lastMonth = lastOccurrenceDate.getUTCMonth();
+          const lastYear = lastOccurrenceDate.getUTCFullYear();
+
+          const monthsSinceLastOccurrence =
+            (currentYear - lastYear) * 12 + (currentMonth - lastMonth);
+
+          if (monthsSinceLastOccurrence >= months) {
+            shouldCreateTask = true;
+          }
+        }
+      }
+    } else if (task.recurrence.frequency === 'yearly') {
+      const years = task.recurrence.interval;
+      const yearlyFirstOccurrence = task.recurrence.yearlyFirstOccurrence;
+
+      if (!yearlyFirstOccurrence) {
+        throw new Error('yearlyFirstOccurrence is required for yearly recurring tasks');
+      }
+
+      const firstOccurrenceDate = new Date(yearlyFirstOccurrence);
+      const currentYear = now.getUTCFullYear();
+
+      // Create target date for this year
+      const targetDate = new Date(
+        Date.UTC(currentYear, firstOccurrenceDate.getUTCMonth(), firstOccurrenceDate.getUTCDate())
+      );
+
+      // Check if today is the target date or later
+      if (now >= targetDate) {
+        if (completedOccurrences.length === 0) {
+          // For yearly tasks, create the first instance if today matches the yearly date
+          shouldCreateTask = true;
+        } else {
+          const lastOccurrence = completedOccurrences.sort(
+            (a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime()
+          )[0];
+          const lastOccurrenceDate = new Date(lastOccurrence.completedAt!);
+
+          // Calculate years since last occurrence
+          const lastYear = lastOccurrenceDate.getUTCFullYear();
+          const yearsSinceLastOccurrence = currentYear - lastYear;
+
+          if (yearsSinceLastOccurrence >= years) {
+            shouldCreateTask = true;
+          }
+        }
+      }
+    }
+
+    if (shouldCreateTask) {
+      await this.createTaskFromTemplate(task);
+    }
+  }
+  private hasRecurrenceEnded(task: Task, occurrences: Task[], now: Date): boolean {
+    if (!task.recurrence?.ends) {
+      return false;
+    }
+
+    const { afterOccurrences, onDate } = task.recurrence.ends;
+
+    // Check if ended by number of occurrences
+    if (afterOccurrences) {
+      const completedOccurrences = occurrences.filter((o) => o.completedAt).length;
+      if (completedOccurrences >= afterOccurrences) {
+        return true;
+      }
+    }
+
+    // Check if ended by date
+    if (onDate) {
+      const endDate = new Date(onDate);
+      if (now >= endDate) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private async createTaskFromTemplate(template: Task): Promise<Task> {
+    const { _id, _rev, ...templateData } = template;
+
+    const newTask: NewTask & { recurrenceTemplateId: string } = {
+      ...templateData,
+      status: TaskStatus.Ready,
+      recurrenceTemplateId: template._id,
+      recurrence: undefined, // Remove recurrence from the spawned task
+    };
+
+    return await this.addTask(newTask as Task);
   }
 
   /**

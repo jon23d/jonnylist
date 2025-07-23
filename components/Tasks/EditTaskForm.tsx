@@ -86,7 +86,7 @@ export default function EditTaskForm({
       recurrence: task.recurrence || {
         frequency: 'daily',
         interval: 1,
-        dayOfWeek: [new Date().getDay()],
+        dayOfWeek: new Date().getDay(),
         dayOfMonth: new Date().getDate(),
         ends: {
           afterOccurrences: undefined,
@@ -147,7 +147,7 @@ export default function EditTaskForm({
         status = TaskStatus.Recurring;
 
         if (recurrence.frequency !== 'weekly') {
-          recurrence.dayOfWeek = [];
+          recurrence.dayOfWeek = undefined;
         }
         if (recurrence.frequency !== 'monthly') {
           recurrence.dayOfMonth = undefined;
