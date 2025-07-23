@@ -142,7 +142,11 @@ export default function EditTaskForm({
       let recurrence: Recurrence | undefined;
       let status: TaskStatus = form.values.status;
 
-      if (form.values.isRecurring) {
+      if (
+        form.values.isRecurring &&
+        status !== TaskStatus.Cancelled &&
+        status !== TaskStatus.Done
+      ) {
         recurrence = form.values.recurrence as Recurrence;
         status = TaskStatus.Recurring;
 
@@ -331,8 +335,10 @@ export default function EditTaskForm({
                 <Box hidden={form.values.recurrence?.frequency !== 'weekly'} mt={10}>
                   <Flex>
                     <Chip.Group
-                      multiple
                       {...form.getInputProps('recurrence.dayOfWeek', { type: 'checkbox' })}
+                      defaultValue={(
+                        form.values.recurrence?.dayOfWeek || new Date().getDay()
+                      ).toString()}
                     >
                       <Group justify="center">
                         <Chip value="1">Mon</Chip>
@@ -341,7 +347,7 @@ export default function EditTaskForm({
                         <Chip value="4">Thurs</Chip>
                         <Chip value="5">Fri</Chip>
                         <Chip value="6">Sat</Chip>
-                        <Chip value="7">Sun</Chip>
+                        <Chip value="0">Sun</Chip>
                       </Group>
                     </Chip.Group>
                   </Flex>

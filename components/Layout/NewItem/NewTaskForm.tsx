@@ -92,6 +92,11 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
         }
         return null;
       },
+      recurrence: (value) => {
+        if (value?.frequency === 'weekly' && value.dayOfWeek === undefined) {
+          return 'A day of the week is required for weekly recurrence';
+        }
+      },
     },
   });
 
@@ -293,9 +298,8 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
             <Box hidden={form.values.recurrence?.frequency !== 'weekly'} mt={10}>
               <Flex>
                 <Chip.Group
-                  multiple
                   {...form.getInputProps('recurrence.dayOfWeek', { type: 'checkbox' })}
-                  defaultValue={[new Date().getDay().toString()]}
+                  defaultValue={new Date().getDay().toString()}
                 >
                   <Group justify="center">
                     <Chip value="1">Mon</Chip>
@@ -304,7 +308,7 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
                     <Chip value="4">Thurs</Chip>
                     <Chip value="5">Fri</Chip>
                     <Chip value="6">Sat</Chip>
-                    <Chip value="7">Sun</Chip>
+                    <Chip value="0">Sun</Chip>
                   </Group>
                 </Chip.Group>
               </Flex>
