@@ -52,6 +52,7 @@ export const DataSourceContextProvider = ({
     // to ready tasks.
     const taskRepository = currentDataSource.getTaskRepository();
     taskRepository.checkWaitingTasks();
+    taskRepository.checkRecurringTasks();
     const waitingInterval = setInterval(
       () => {
         taskRepository.checkWaitingTasks();

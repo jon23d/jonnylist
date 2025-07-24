@@ -159,6 +159,9 @@ export default function EditTaskForm({
         if (recurrence.frequency !== 'yearly') {
           recurrence.yearlyFirstOccurrence = undefined;
         }
+
+        recurrence.dayOfWeek = recurrence.dayOfWeek ? Number(recurrence.dayOfWeek) : undefined;
+        recurrence.dayOfMonth = recurrence.dayOfMonth ? Number(recurrence.dayOfMonth) : undefined;
       } else {
         recurrence = undefined;
       }

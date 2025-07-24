@@ -312,13 +312,6 @@ export class TaskRepository implements Repository {
         const nextOccurrenceDate = new Date(lastOccurrenceDate);
         nextOccurrenceDate.setDate(nextOccurrenceDate.getDate() + days);
 
-        console.log(`Daily task debug:
-        Last completion: ${lastOccurrenceDate.toISOString()}
-        Interval: ${days} days
-        Next occurrence should be: ${nextOccurrenceDate.toISOString()}
-        Current time: ${now.toISOString()}
-        Should create: ${nextOccurrenceDate <= now}`);
-
         if (nextOccurrenceDate <= now) {
           shouldCreateTask = true;
         }
@@ -327,19 +320,13 @@ export class TaskRepository implements Repository {
       const weeks = task.recurrence.interval;
       const dayOfWeek = task.recurrence.dayOfWeek;
 
-      if (
-        !dayOfWeek ||
-        (Array.isArray(dayOfWeek) ? dayOfWeek.length === 0 : dayOfWeek === undefined)
-      ) {
+      if (dayOfWeek === undefined) {
         throw new Error('dayOfWeek is required for weekly recurring tasks');
       }
 
-      // Handle both single day (number) and array format for backwards compatibility
-      const targetDay = Array.isArray(dayOfWeek) ? dayOfWeek[0] : dayOfWeek;
-
       // Check if today is the specified day of the week
       const currentDayOfWeek = now.getUTCDay();
-      if (currentDayOfWeek !== targetDay) {
+      if (currentDayOfWeek !== dayOfWeek) {
         return; // Not the day when this task should recur
       }
 

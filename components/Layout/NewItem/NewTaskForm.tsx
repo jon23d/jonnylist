@@ -149,6 +149,9 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
         if (recurrence.frequency !== 'yearly') {
           recurrence.yearlyFirstOccurrence = undefined;
         }
+
+        recurrence.dayOfWeek = recurrence.dayOfWeek ? Number(recurrence.dayOfWeek) : undefined;
+        recurrence.dayOfMonth = recurrence.dayOfMonth ? Number(recurrence.dayOfMonth) : undefined;
       } else {
         recurrence = undefined;
       }
@@ -300,6 +303,7 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
                 <Chip.Group
                   {...form.getInputProps('recurrence.dayOfWeek', { type: 'checkbox' })}
                   defaultValue={new Date().getDay().toString()}
+                  aria-label="Day of the week"
                 >
                   <Group justify="center">
                     <Chip value="1">Mon</Chip>
