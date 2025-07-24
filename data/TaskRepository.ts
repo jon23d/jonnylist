@@ -287,8 +287,6 @@ export class TaskRepository implements Repository {
 
     const now = currentDate || new Date();
 
-    Logger.info('Checking task', task);
-
     // Check if recurrence has ended
     if (this.hasRecurrenceEnded(task, occurrences, now)) {
       Logger.info(`Recurrence for task ${task._id} has ended, not creating new instance`);
