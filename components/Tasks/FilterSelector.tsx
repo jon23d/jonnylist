@@ -58,8 +58,12 @@ export default function FilterSelector({
     setPopoverOpened(false);
   };
 
-  const hasTags = form.values.requireTags?.length || form.values.excludeTags?.length;
-  const hasProjects = form.values.requireProjects?.length || form.values.excludeProjects?.length;
+  const hasTags =
+    form.values.requireTags?.length || form.values.excludeTags?.length || form.values.hasNoTags;
+  const hasProjects =
+    form.values.requireProjects?.length ||
+    form.values.excludeProjects?.length ||
+    form.values.hasNoProject;
   const hasPriority = form.values.requirePriority?.length || form.values.excludePriority?.length;
   const hasDates = form.values.dueWithin?.maximumNumberOfDaysFromToday;
 
@@ -161,7 +165,7 @@ export default function FilterSelector({
               </Tabs.List>
 
               <Tabs.Panel value="tags" p={5}>
-                <Stack gap="xs">
+                <Stack gap="xs" mb={10}>
                   <TagsInput
                     label="Require tags"
                     {...form.getInputProps('requireTags')}
@@ -174,11 +178,16 @@ export default function FilterSelector({
                     size="xs"
                     comboboxProps={{ withinPortal: false }}
                   />
+                  <Checkbox
+                    label="Has no tags"
+                    {...form.getInputProps('hasNoTags', { type: 'checkbox' })}
+                    size="xs"
+                  />
                 </Stack>
               </Tabs.Panel>
 
               <Tabs.Panel value="projects" p={5}>
-                <Stack gap="xs">
+                <Stack gap="xs" mb={10}>
                   <TagsInput
                     label="Require projects"
                     {...form.getInputProps('requireProjects')}
@@ -190,6 +199,11 @@ export default function FilterSelector({
                     {...form.getInputProps('excludeProjects')}
                     size="xs"
                     comboboxProps={{ withinPortal: false }}
+                  />
+                  <Checkbox
+                    label="Has no project"
+                    {...form.getInputProps('hasNoProject', { type: 'checkbox' })}
+                    size="xs"
                   />
                 </Stack>
               </Tabs.Panel>

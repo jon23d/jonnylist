@@ -49,6 +49,7 @@ export default function Page() {
       const excludesTags = taskFilter.excludeTags?.length
         ? !taskFilter.excludeTags.some((tag) => task.tags?.includes(tag))
         : true;
+      const hasNoTags = taskFilter.hasNoTags ? !task.tags?.length : true;
 
       // filter by projects. Projects are hierarchical, separated by dots,
       // so we will look for projects that start with what is provided
@@ -71,6 +72,7 @@ export default function Page() {
           }
         }
       }
+      const hasNoProject = taskFilter.hasNoProject ? !task.project : true;
 
       // Filter by status
       const includesPriority = taskFilter.requirePriority?.length
@@ -108,7 +110,9 @@ export default function Page() {
         excludesProjects &&
         includesPriority &&
         excludesPriority &&
-        passesDateFilter
+        passesDateFilter &&
+        hasNoTags &&
+        hasNoProject
       );
     });
   };
