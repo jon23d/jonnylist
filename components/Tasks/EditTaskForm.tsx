@@ -160,8 +160,10 @@ export default function EditTaskForm({
           recurrence.yearlyFirstOccurrence = undefined;
         }
 
-        recurrence.dayOfWeek = recurrence.dayOfWeek ? Number(recurrence.dayOfWeek) : undefined;
-        recurrence.dayOfMonth = recurrence.dayOfMonth ? Number(recurrence.dayOfMonth) : undefined;
+        recurrence.dayOfWeek =
+          recurrence.dayOfWeek !== undefined ? Number(recurrence.dayOfWeek) : undefined;
+        recurrence.dayOfMonth =
+          recurrence.dayOfMonth !== undefined ? Number(recurrence.dayOfMonth) : undefined;
       } else {
         recurrence = undefined;
       }
@@ -339,9 +341,11 @@ export default function EditTaskForm({
                   <Flex>
                     <Chip.Group
                       {...form.getInputProps('recurrence.dayOfWeek', { type: 'checkbox' })}
-                      defaultValue={(
-                        form.values.recurrence?.dayOfWeek || new Date().getDay()
-                      ).toString()}
+                      defaultValue={
+                        form.values.recurrence?.dayOfWeek !== undefined
+                          ? form.values.recurrence.dayOfWeek.toString()
+                          : new Date().getDay().toString()
+                      }
                     >
                       <Group justify="center">
                         <Chip value="1">Mon</Chip>
