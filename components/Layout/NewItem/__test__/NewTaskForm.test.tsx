@@ -133,6 +133,92 @@ describe('NewTaskForm', () => {
     blurSpy.mockRestore();
   });
 
+  it('Converts recurrence day of week to number', async () => {
+    const handleClose = jest.fn();
+    const dataSource = getDataSource();
+    const taskRepository = dataSource.getTaskRepository();
+
+    renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
+
+    const titleInput = screen.getByRole('textbox', { name: 'Title' });
+    await userEvent.type(titleInput, 'Recurring Task');
+
+    const advancedTab = screen.getByRole('tab', { name: 'Advanced' });
+    await userEvent.click(advancedTab);
+
+    // Click the repeating checkbox to enable recurrence
+    const recurrenceCheckbox = screen.getByRole('switch', { name: 'Repeating' });
+    await userEvent.click(recurrenceCheckbox);
+
+    // Set recurrence values
+    const recurrenceInput = screen.getByRole('textbox', { name: 'Repeat every' });
+    await userEvent.clear(recurrenceInput);
+    await userEvent.type(recurrenceInput, '2');
+
+    const frequencySelect = screen.getByRole('textbox', { name: 'Frequency' });
+    await userEvent.click(frequencySelect);
+    await userEvent.click(screen.getByRole('option', { name: 'Weeks' }));
+
+    // Chose Tuesday
+    const recurrenceDaySelect = screen.getByRole('radio', { name: 'Tues' });
+    await userEvent.click(recurrenceDaySelect);
+
+    const submitButton = screen.getByRole('button', { name: 'Create Task' });
+    await userEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(handleClose).toHaveBeenCalled();
+    });
+
+    const tasks = await taskRepository.getTasks({});
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].title).toBe('Recurring Task');
+    expect(tasks[0].recurrence?.interval).toBe(2);
+    expect(tasks[0].recurrence?.frequency).toBe('weekly');
+    expect(tasks[0].recurrence?.dayOfWeek).toBe(2); // strict equality, this must be a number
+  });
+
+  it('Converts recurrence day of month to number', async () => {
+    const handleClose = jest.fn();
+    const dataSource = getDataSource();
+    const taskRepository = dataSource.getTaskRepository();
+
+    renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
+
+    const titleInput = screen.getByRole('textbox', { name: 'Title' });
+    await userEvent.type(titleInput, 'Recurring Task');
+
+    const advancedTab = screen.getByRole('tab', { name: 'Advanced' });
+    await userEvent.click(advancedTab);
+
+    // Click the repeating checkbox to enable recurrence
+    const recurrenceCheckbox = screen.getByRole('switch', { name: 'Repeating' });
+    await userEvent.click(recurrenceCheckbox);
+
+    const frequencySelect = screen.getByRole('textbox', { name: 'Frequency' });
+    await userEvent.click(frequencySelect);
+    await userEvent.click(screen.getByRole('option', { name: 'Month' }));
+
+    // Chose the 15th day of the month
+    const recurrenceDaySelect = screen.getByRole('textbox', { name: 'Day of month' });
+    await userEvent.clear(recurrenceDaySelect);
+    await userEvent.type(recurrenceDaySelect, '15');
+
+    const submitButton = screen.getByRole('button', { name: 'Create Task' });
+    await userEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(handleClose).toHaveBeenCalled();
+    });
+
+    const tasks = await taskRepository.getTasks({});
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].title).toBe('Recurring Task');
+    expect(tasks[0].recurrence?.interval).toBe(1);
+    expect(tasks[0].recurrence?.frequency).toBe('monthly');
+    expect(tasks[0].recurrence?.dayOfMonth).toBe(15); // strict equality, this must be a number
+  });
+
   /*it('Sets the project and tags from the context if available', async () => {
     const handleClose = jest.fn();
     const dataSource = getDataSource();
