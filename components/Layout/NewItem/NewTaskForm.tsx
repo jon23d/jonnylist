@@ -274,6 +274,7 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
                 />
                 <Select
                   label="Frequency"
+                  clearable={false}
                   data={[
                     {
                       value: 'daily',

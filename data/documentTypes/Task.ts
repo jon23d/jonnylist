@@ -81,6 +81,7 @@ export interface Task extends Common {
   completedAt?: Date; // Only set if status is 'done'
 }
 
+// @ TODO remove notes from this list once there is a common component for the form
 export type NewTask = Omit<
   Task,
   keyof Common | 'type' | 'createdAt' | 'updatedAt' | 'notes' | 'recurrenceTemplateId'

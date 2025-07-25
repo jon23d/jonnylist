@@ -23,31 +23,30 @@ import {
   TextInput,
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
-import { useForm } from '@mantine/form';
+import { UseFormReturnType } from '@mantine/form';
 import { useHotkeys, useOs } from '@mantine/hooks';
-import { useTaskRepository } from '@/contexts/DataSourceContext';
 import {
   NewTask,
-  Recurrence,
-  Task,
+  Note,
   taskPrioritySelectOptions,
-  TaskStatus,
   taskStatusSelectOptions,
 } from '@/data/documentTypes/Task';
 import { datePickerPresets } from '@/helpers/datePicker';
-import { Logger } from '@/helpers/Logger';
-import { Notifications } from '@/helpers/Notifications';
 
-type RecurrenceEndsValue = 'onDate' | 'afterOccurrences' | 'never';
+export type RecurrenceEndsValue = 'onDate' | 'afterOccurrences' | 'never';
+export type FormType = NewTask & {
+  isRecurring: boolean;
+  recurrenceEndsValue: RecurrenceEndsValue;
+  notes: Note[];
+};
 
-export default function EditTaskForm({
-  task,
-  handleClose,
+export default function TaskForm({
+  form,
+  handleSubmit,
 }: {
-  task: Task;
-  handleClose: () => void;
+  form: UseFormReturnType<FormType>;
+  handleSubmit: (values: FormType) => void;
 }) {
-  const taskRepository = useTaskRepository();
   const [activeTab, setActiveTab] = useState<string | null>('basics');
   const [newNoteText, setNewNoteText] = useState<string>('');
   const os = useOs();
@@ -68,53 +67,7 @@ export default function EditTaskForm({
     []
   );
 
-  type FormType = NewTask & {
-    isRecurring: boolean;
-    recurrenceEndsValue: RecurrenceEndsValue;
-  };
-
-  const form = useForm<FormType>({
-    // NewTask is a task without metadata, INCLUDING notes. These are updated separately.
-    initialValues: {
-      title: task.title,
-      description: task.description,
-      tags: task.tags,
-      project: task.project,
-      priority: task.priority,
-      dueDate: task.dueDate,
-      status: task.status,
-      waitUntil: task.waitUntil,
-      isRecurring: !!task.recurrence?.frequency,
-      recurrence: task.recurrence || {
-        frequency: 'daily',
-        interval: 1,
-        dayOfWeek: new Date().getDay(),
-        dayOfMonth: new Date().getDate(),
-        ends: {
-          afterOccurrences: undefined,
-          onDate: undefined,
-        },
-        yearlyFirstOccurrence: new Date().toISOString().split('T')[0], // Default to today,
-      },
-      recurrenceEndsValue: task.recurrence?.ends?.onDate
-        ? 'onDate'
-        : task.recurrence?.ends?.afterOccurrences
-          ? 'afterOccurrences'
-          : 'never',
-    },
-    validate: {
-      title: (value) => (value ? null : 'Title is required'),
-      status: (value) => (value ? null : 'Status is required'),
-      waitUntil: (value, values) => {
-        if (value && values.isRecurring) {
-          return 'Wait Until date cannot be set for recurring tasks';
-        }
-        return null;
-      },
-    },
-  });
-
-  // Focus on the first input of the active tab when it changes on desktop.
+  // For easier keyboard navigation, focus on the first input of the active tab
   useEffect(() => {
     if (os === 'ios' || os === 'android') {
       return;
@@ -142,79 +95,23 @@ export default function EditTaskForm({
     }
   }, [activeTab]);
 
-  const handleSave = async () => {
-    try {
-      // Clean up the recurrence object to remove unused values
-      let recurrence: Recurrence | undefined;
-      let status: TaskStatus = form.values.status;
-
-      if (
-        form.values.isRecurring &&
-        status !== TaskStatus.Cancelled &&
-        status !== TaskStatus.Done
-      ) {
-        recurrence = form.values.recurrence as Recurrence;
-        status = TaskStatus.Recurring;
-
-        if (recurrence.frequency !== 'weekly') {
-          recurrence.dayOfWeek = undefined;
-        }
-        if (recurrence.frequency !== 'monthly') {
-          recurrence.dayOfMonth = undefined;
-        }
-        if (recurrence.frequency !== 'yearly') {
-          recurrence.yearlyFirstOccurrence = undefined;
-        }
-
-        recurrence.dayOfWeek =
-          recurrence.dayOfWeek !== undefined ? Number(recurrence.dayOfWeek) : undefined;
-        recurrence.dayOfMonth =
-          recurrence.dayOfMonth !== undefined ? Number(recurrence.dayOfMonth) : undefined;
-      } else {
-        recurrence = undefined;
-      }
-
-      await taskRepository.updateTask({
-        ...task,
-        ...form.getValues(),
-        status,
-        recurrence,
-      });
-
-      form.reset();
-
-      // We want to make sure that we've cleared focus so that keyboard navigation works properly
-      if (document.activeElement instanceof HTMLElement) {
-        document.activeElement.blur();
-      }
-
-      handleClose();
-    } catch (error) {
-      // @TODO handle error properly
-      Logger.error('Error saving task:', error);
-    }
-  };
-
-  const handleAddNote = async () => {
-    try {
-      const { _rev, notes } = await taskRepository.addNote(task._id, newNoteText);
-      setNewNoteText(''); // Clear the note input after adding
-      // Update the task with the new note and revision
-      task.notes = notes;
-      task._rev = _rev;
-    } catch (error) {
-      Notifications.showError({ message: 'Unable to add note to task', title: 'Error' });
-    }
-  };
-
-  // If the advanced tab has data on it, we want for the user to be able to tell at a glance
+  // Let the user know if a tab has data on it
   const advancedHasData = form.values.waitUntil || form.values.description;
-  const notesHasData = task.notes && task.notes.length > 0;
+  const notesHasData = form.values.notes && form.values.notes.length > 0;
   const hasDataProps = { fs: 'italic', fw: 600 };
 
+  // We are going to highlight the tabs that have errors in them
+  const basicsHasErrors = Object.keys(form.errors).filter((item) =>
+    ['title', 'tags', 'project', 'priority', 'dueDate'].includes(item)
+  ).length;
+  const advancedHasErrors = Object.keys(form.errors).filter((item) =>
+    ['description', 'waitUntil', 'isRecurring'].includes(item)
+  ).length;
+
+  // The list of notes
   const notesDisplay =
-    task.notes && task.notes.length > 0
-      ? task.notes.map((note, index) => (
+    form.values.notes && form.values.notes.length > 0
+      ? form.values.notes.map((note, index) => (
           <Paper key={index} mb={10} shadow="xs" p={10} mr={20}>
             <Text span size="xs" fw={700} c="dimmed">
               {new Date(note.createdAt).toLocaleString()}
@@ -224,16 +121,37 @@ export default function EditTaskForm({
         ))
       : null;
 
+  const handleAddNote = async () => {
+    if (!newNoteText.trim()) {
+      return; // Don't add empty notes
+    }
+
+    const newNote: Note = {
+      noteText: newNoteText,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Update the form values with the new note
+    form.setFieldValue('notes', [...(form.values.notes || []), newNote]);
+    setNewNoteText(''); // Clear the input field after adding the note
+  };
+
   return (
-    <form onSubmit={form.onSubmit(handleSave)}>
+    <form onSubmit={form.onSubmit(handleSubmit)}>
       <FocusTrap>
         <Tabs value={activeTab} onChange={setActiveTab}>
           <Tabs.List mb={10}>
             <Tabs.Tab value="basics">
-              <Text size="sm">Basics</Text>
+              <Text size="sm" c={basicsHasErrors ? 'red.9' : 'black'}>
+                Basics
+              </Text>
             </Tabs.Tab>
             <Tabs.Tab value="advanced">
-              <Text size="sm" {...(advancedHasData && hasDataProps)}>
+              <Text
+                size="sm"
+                {...(advancedHasData && hasDataProps)}
+                c={advancedHasErrors ? 'red.9' : 'black'}
+              >
                 Advanced
               </Text>
             </Tabs.Tab>
@@ -347,11 +265,7 @@ export default function EditTaskForm({
                   <Flex>
                     <Chip.Group
                       {...form.getInputProps('recurrence.dayOfWeek', { type: 'checkbox' })}
-                      defaultValue={
-                        form.values.recurrence?.dayOfWeek !== undefined
-                          ? form.values.recurrence.dayOfWeek.toString()
-                          : new Date().getDay().toString()
-                      }
+                      aria-label="Day of the week"
                     >
                       <Group justify="center">
                         <Chip value="1">Mon</Chip>
