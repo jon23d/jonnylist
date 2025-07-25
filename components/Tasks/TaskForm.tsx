@@ -34,7 +34,7 @@ import {
 import { datePickerPresets } from '@/helpers/datePicker';
 
 export type RecurrenceEndsValue = 'onDate' | 'afterOccurrences' | 'never';
-export type FormType = NewTask & {
+export type TaskFormType = NewTask & {
   isRecurring: boolean;
   recurrenceEndsValue: RecurrenceEndsValue;
   notes: Note[];
@@ -44,8 +44,8 @@ export default function TaskForm({
   form,
   handleSubmit,
 }: {
-  form: UseFormReturnType<FormType>;
-  handleSubmit: (values: FormType) => void;
+  form: UseFormReturnType<TaskFormType>;
+  handleSubmit: (values: TaskFormType) => void;
 }) {
   const [activeTab, setActiveTab] = useState<string | null>('basics');
   const [newNoteText, setNewNoteText] = useState<string>('');
@@ -135,6 +135,8 @@ export default function TaskForm({
     form.setFieldValue('notes', [...(form.values.notes || []), newNote]);
     setNewNoteText(''); // Clear the input field after adding the note
   };
+
+  const pluralizeInterval = form.values.recurrence?.interval === 1;
 
   return (
     <form onSubmit={form.onSubmit(handleSubmit)}>
@@ -242,19 +244,19 @@ export default function TaskForm({
                     data={[
                       {
                         value: 'daily',
-                        label: form.values.recurrence?.interval === 1 ? 'Day' : 'Days',
+                        label: pluralizeInterval ? 'Day' : 'Days',
                       },
                       {
                         value: 'weekly',
-                        label: form.values.recurrence?.interval === 1 ? 'Week' : 'Weeks',
+                        label: pluralizeInterval ? 'Week' : 'Weeks',
                       },
                       {
                         value: 'monthly',
-                        label: form.values.recurrence?.interval === 1 ? 'Month' : 'Months',
+                        label: pluralizeInterval ? 'Month' : 'Months',
                       },
                       {
                         value: 'yearly',
-                        label: form.values.recurrence?.interval === 1 ? 'Year' : 'Years',
+                        label: pluralizeInterval ? 'Year' : 'Years',
                       },
                     ]}
                     {...form.getInputProps('recurrence.frequency')}
@@ -333,7 +335,7 @@ export default function TaskForm({
               </Box>
 
               <Button type="submit" mt={20}>
-                Update Task
+                Save Task
               </Button>
             </Stack>
           </Tabs.Panel>

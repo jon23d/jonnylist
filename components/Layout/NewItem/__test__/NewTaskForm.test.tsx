@@ -50,7 +50,7 @@ describe('NewTaskForm', () => {
     const descriptionInput = screen.getByRole('textbox', { name: 'Description' });
     await userEvent.type(descriptionInput, 'This is a test task description.');
 
-    const submitButton = screen.getByRole('button', { name: 'Create Task' });
+    const submitButton = screen.getByRole('button', { name: 'Save Task' });
     await userEvent.click(submitButton);
 
     await waitFor(() => {
@@ -84,7 +84,7 @@ describe('NewTaskForm', () => {
     const dueDateInput = screen.getByRole('textbox', { name: 'Wait Until' });
     await userEvent.type(dueDateInput, '03/15/2026');
 
-    const submitButton = screen.getByRole('button', { name: 'Create Task' });
+    const submitButton = screen.getByRole('button', { name: 'Save Task' });
     await userEvent.click(submitButton);
 
     await waitFor(
@@ -163,7 +163,7 @@ describe('NewTaskForm', () => {
     const recurrenceDaySelect = screen.getByRole('radio', { name: 'Tues' });
     await userEvent.click(recurrenceDaySelect);
 
-    const submitButton = screen.getByRole('button', { name: 'Create Task' });
+    const submitButton = screen.getByRole('button', { name: 'Save Task' });
     await userEvent.click(submitButton);
 
     await waitFor(() => {
@@ -204,7 +204,7 @@ describe('NewTaskForm', () => {
     await userEvent.clear(recurrenceDaySelect);
     await userEvent.type(recurrenceDaySelect, '15');
 
-    const submitButton = screen.getByRole('button', { name: 'Create Task' });
+    const submitButton = screen.getByRole('button', { name: 'Save Task' });
     await userEvent.click(submitButton);
 
     await waitFor(() => {
@@ -249,7 +249,7 @@ describe('NewTaskForm', () => {
     const recurrenceDaySelect = screen.getByRole('radio', { name: 'Sun' });
     await userEvent.click(recurrenceDaySelect);
 
-    const submitButton = screen.getByRole('button', { name: 'Create Task' });
+    const submitButton = screen.getByRole('button', { name: 'Save Task' });
     await userEvent.click(submitButton);
 
     await waitFor(() => {
