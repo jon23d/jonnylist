@@ -24,10 +24,12 @@ export default function TasksTable({
   visibleColumns,
   tasks,
   tasksAreCompletedOrCancelled,
+  tasksAreRecurring,
 }: {
   visibleColumns: string[];
   tasks: Task[];
   tasksAreCompletedOrCancelled: boolean;
+  tasksAreRecurring?: boolean;
 }) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [editorOpened, { open, close }] = useDisclosure(false);
@@ -47,12 +49,54 @@ export default function TasksTable({
     return <Text mt={20}>No tasks match current filters</Text>;
   }
 
+  const getRecurrenceText = (task: Task) => {
+    if (!task.recurrence) {
+      return 'None';
+    }
+
+    const { frequency, interval } = task.recurrence;
+
+    if (frequency === 'daily') {
+      if (interval === 1) {
+        return 'Daily';
+      }
+      return `Every ${interval} days`;
+    }
+
+    if (frequency === 'weekly') {
+      const dayOfWeek = task.recurrence.dayOfWeek;
+      const dayString =
+        dayOfWeek !== undefined
+          ? `on ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dayOfWeek]}`
+          : '';
+      const inflection = interval === 1 ? 'week' : `${interval} weeks`;
+      return `Every ${inflection} ${dayString}`;
+    }
+
+    if (frequency === 'monthly') {
+      const dayOfMonth = task.recurrence.dayOfMonth;
+      if (dayOfMonth !== undefined) {
+        return `Every ${interval} month(s) on the ${dayOfMonth}${dayOfMonth === 1 ? 'st' : dayOfMonth === 2 ? 'nd' : dayOfMonth === 3 ? 'rd' : 'th'}`;
+      }
+      return `Every ${interval} month(s)`;
+    }
+
+    if (frequency === 'yearly') {
+      const firstOccurrence = task.recurrence.yearlyFirstOccurrence;
+      if (firstOccurrence) {
+        return `Every ${interval} year(s) starting from ${new Date(firstOccurrence).toLocaleDateString()}`;
+      }
+      return `Every ${interval} year(s)`;
+    }
+  };
+
   return (
     <>
       <Table striped highlightOnHover>
         <Table.Thead>
           <Table.Tr>
             {visibleColumns.includes('Active') ? <Table.Th w="25px" /> : null}
+            {tasksAreRecurring ? <Table.Th>Recurrence</Table.Th> : null}
             <Table.Th>Title</Table.Th>
             {visibleColumns.includes('Description') ? <Table.Th>Description</Table.Th> : null}
             {visibleColumns.includes('Tags') ? <Table.Th>Tags</Table.Th> : null}
@@ -71,6 +115,9 @@ export default function TasksTable({
                 <Table.Td>
                   <StatusChanger task={task} />
                 </Table.Td>
+              ) : null}
+              {tasksAreRecurring ? (
+                <Table.Td onClick={() => showEditDialog(task)}>{getRecurrenceText(task)}</Table.Td>
               ) : null}
               <Table.Td onClick={() => showEditDialog(task)}>{task.title}</Table.Td>
               {visibleColumns.includes('Description') ? (

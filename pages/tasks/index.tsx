@@ -209,6 +209,7 @@ export default function Page() {
         visibleColumns={visibleColumns}
         tasks={tasks}
         tasksAreCompletedOrCancelled={status === 'completed' || status === 'cancelled'}
+        tasksAreRecurring={status === 'recurring'}
       />
     ) : (
       <TasksList tasks={tasks} />
