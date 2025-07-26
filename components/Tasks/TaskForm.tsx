@@ -33,10 +33,10 @@ import {
 } from '@/data/documentTypes/Task';
 import { datePickerPresets } from '@/helpers/datePicker';
 
-export type RecurrenceEndsValue = 'onDate' | 'afterOccurrences' | 'never';
+type RecurrenceEndsValue = 'onDate' | 'afterOccurrences' | 'never';
 export type TaskFormType = NewTask & {
   isRecurring: boolean;
-  recurrenceEndsValue: RecurrenceEndsValue;
+  recurrenceEndsValue?: RecurrenceEndsValue;
   notes: Note[];
 };
 
@@ -356,6 +356,9 @@ export default function TaskForm({
             </Stack>
           </Tabs.Panel>
         </Tabs>
+        <Text size="sm" c="red" pt={20}>
+          {Object.keys(form.errors).length ? 'Fix errors to continue' : null}
+        </Text>
       </FocusTrap>
     </form>
   );
