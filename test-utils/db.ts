@@ -28,8 +28,11 @@ export function setupTestDatabase(): {
   });
 
   afterEach(async () => {
-    await dataSource.cleanup();
-    await db.destroy();
+    try {
+      await dataSource.cleanup();
+    } finally {
+      await db.destroy();
+    }
   });
 
   // Return getters so tests can access current instances

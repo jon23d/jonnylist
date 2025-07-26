@@ -61,7 +61,7 @@ describe('EditTaskForm', () => {
     const waitUntilInput = screen.getByRole('textbox', { name: 'Wait Until' });
     await userEvent.type(waitUntilInput, '03/01/2027');
 
-    const saveButton = screen.getByRole('button', { name: /update task/i });
+    const saveButton = screen.getByRole('button', { name: /Save task/i });
     await userEvent.click(saveButton);
 
     // Assert that updateTask was called with the updated values
@@ -72,10 +72,11 @@ describe('EditTaskForm', () => {
         description: 'Updated Task Description',
         priority: TaskPriority.Medium,
         dueDate: '2023-10-15',
-        status: TaskStatus.Started,
+        status: TaskStatus.Waiting,
         project: 'Updated Project',
         tags: ['tag1', 'tag2'],
         waitUntil: '2027-03-01',
+        notes: [],
       })
     );
   });
@@ -85,7 +86,7 @@ describe('EditTaskForm', () => {
     const dataSource = getDataSource();
     renderWithDataSource(<EditTaskForm task={task} handleClose={() => {}} />, dataSource);
 
-    const saveButton = screen.getByRole('button', { name: /update task/i });
+    const saveButton = screen.getByRole('button', { name: /save task/i });
     await userEvent.click(saveButton);
 
     expect(document.activeElement).not.toBe(saveButton);
