@@ -107,29 +107,6 @@ export class TaskRepository implements Repository {
     throw new Error('Failed to update task');
   }
 
-  async addNote(taskId: string, noteText: string): Promise<Task> {
-    Logger.info('Adding note to task', taskId);
-
-    try {
-      const task = await this.db.get<Task>(taskId);
-      const newNote = {
-        noteText,
-        createdAt: new Date().toISOString(),
-      };
-
-      // Ensure notes is initialized
-      if (!task.notes) {
-        task.notes = [];
-      }
-
-      task.notes.push(newNote);
-      return await this.updateTask(task);
-    } catch (error) {
-      Logger.error('Error adding note to task:', error);
-      throw error; // Re-throw to handle it in the calling code
-    }
-  }
-
   /**
    * Do a one-time fetch of tasks based on the provided parameters.
    *
@@ -264,7 +241,7 @@ export class TaskRepository implements Repository {
     await Promise.all(recurringTasks.map((task) => this.createRecurringTaskInstances(task, now)));
   }
 
-  private async createRecurringTaskInstances(task: Task, currentDate?: Date): Promise<void> {
+  private async createRecurringTaskInstances(task: Task, now: Date): Promise<void> {
     if (!task.recurrence) {
       throw new Error('Task is not recurring');
     }
@@ -274,19 +251,13 @@ export class TaskRepository implements Repository {
 
     // If we have an open task (status of TaskStatus.Ready or TaskStatus.Started), do not create a new instance
     if (
-      occurrences.some(
-        (occurrence) =>
-          occurrence.status === TaskStatus.Ready || occurrence.status === TaskStatus.Started
-      )
+      occurrences.some(({ status }) => status === TaskStatus.Ready || status === TaskStatus.Started)
     ) {
       Logger.info(
         `Skipping creation of new instance for recurring task ${task._id} as it already has an open instance`
       );
       return;
     }
-
-    const now = currentDate || new Date();
-
     // Check if recurrence has ended
     if (this.hasRecurrenceEnded(task, occurrences, now)) {
       Logger.info(`Recurrence for task ${task._id} has ended, not creating new instance`);
@@ -478,16 +449,17 @@ export class TaskRepository implements Repository {
       throw new Error('Task is not recurring');
     }
 
-    const tasks = await this.db.find({
-      selector: {
-        type: 'task',
-        recurrenceTemplateId: task._id,
-      },
+    const allDocsResult = await this.db.allDocs<Task>({
+      include_docs: true,
+      startkey: 'task-',
+      endkey: 'task-\ufff0',
     });
 
-    return tasks.docs as Task[];
-  }
+    const allTasks = allDocsResult.rows.map((row) => row.doc as Task);
 
+    // Filter the results in memory
+    return allTasks.filter((doc) => doc.recurrenceTemplateId === task._id);
+  }
   /**
    * Initialize the PouchDB changes feed to listen for changes to task documents.
    *
