@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
+import clsx from 'clsx';
 import {
   Box,
   Button,
@@ -25,6 +26,7 @@ import {
 import { DatePickerInput } from '@mantine/dates';
 import { UseFormReturnType } from '@mantine/form';
 import { useHotkeys, useOs } from '@mantine/hooks';
+import sharedStyle from '@/components/style.module.css';
 import {
   NewTask,
   Note,
@@ -98,7 +100,6 @@ export default function TaskForm({
   // Let the user know if a tab has data on it
   const advancedHasData = form.values.waitUntil || form.values.description;
   const notesHasData = form.values.notes && form.values.notes.length > 0;
-  const hasDataProps = { fs: 'italic', fw: 600 };
 
   // We are going to highlight the tabs that have errors in them
   const basicsHasErrors = Object.keys(form.errors).filter((item) =>
@@ -112,7 +113,7 @@ export default function TaskForm({
   const notesDisplay =
     form.values.notes && form.values.notes.length > 0
       ? form.values.notes.map((note, index) => (
-          <Paper key={index} mb={10} shadow="xs" p={10} mr={20}>
+          <Paper key={index} mb={10} shadow="xs" p={10} mr={20} data-testid={`note-${index}`}>
             <Text span size="xs" fw={700} c="dimmed">
               {new Date(note.createdAt).toLocaleString()}
             </Text>
@@ -144,21 +145,23 @@ export default function TaskForm({
         <Tabs value={activeTab} onChange={setActiveTab}>
           <Tabs.List mb={10}>
             <Tabs.Tab value="basics">
-              <Text size="sm" c={basicsHasErrors ? 'red.9' : 'black'}>
+              <Text size="sm" className={clsx(basicsHasErrors ? sharedStyle.hasErrors : null)}>
                 Basics
               </Text>
             </Tabs.Tab>
             <Tabs.Tab value="advanced">
               <Text
                 size="sm"
-                {...(advancedHasData && hasDataProps)}
-                c={advancedHasErrors ? 'red.9' : 'black'}
+                className={clsx(
+                  advancedHasErrors ? sharedStyle.hasErrors : null,
+                  advancedHasData ? sharedStyle.hasData : null
+                )}
               >
                 Advanced
               </Text>
             </Tabs.Tab>
             <Tabs.Tab value="notes">
-              <Text size="sm" {...(notesHasData && hasDataProps)}>
+              <Text size="sm" className={clsx(notesHasData ? sharedStyle.hasData : null)}>
                 Notes
               </Text>
             </Tabs.Tab>
@@ -203,7 +206,7 @@ export default function TaskForm({
               />
 
               <Button type="submit" mt={20}>
-                Update Task
+                Save Task
               </Button>
             </Stack>
           </Tabs.Panel>

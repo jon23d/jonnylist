@@ -86,7 +86,7 @@ describe('EditTaskForm', () => {
     const dataSource = getDataSource();
     renderWithDataSource(<EditTaskForm task={task} handleClose={() => {}} />, dataSource);
 
-    const saveButton = screen.getByRole('button', { name: /update task/i });
+    const saveButton = screen.getByRole('button', { name: /save task/i });
     await userEvent.click(saveButton);
 
     expect(document.activeElement).not.toBe(saveButton);

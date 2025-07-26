@@ -1,0 +1,8 @@
+.hasData {
+    font-style: italic;
+    font-weight: 600;
+}
+
+.hasErrors {
+    color: var(--mantine-color-red-9);
+}
