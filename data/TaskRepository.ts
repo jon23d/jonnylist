@@ -2,15 +2,10 @@ import { DocumentTypes } from '@/data/documentTypes';
 import { Repository } from '@/data/Repository';
 import { Logger } from '@/helpers/Logger';
 import { TaskFilterer } from '@/helpers/TaskFilterer';
-import { NewTask, Task, TaskStatus } from './documentTypes/Task';
+import { NewTask, Task, TaskFilter, TaskStatus } from './documentTypes/Task';
 
-export type getTasksParams = {
-  statuses?: TaskStatus[];
-  due?: true;
-};
-
-type TaskSubscriberWithFilterParams = {
-  params: getTasksParams;
+type TaskSubscriberWithFilter = {
+  params: TaskFilter;
   callback: TaskSubscriber;
 };
 
@@ -19,7 +14,7 @@ export type TaskSubscriber = (tasks: Task[]) => void;
 
 export class TaskRepository implements Repository {
   protected db: PouchDB.Database<DocumentTypes>;
-  private taskChangeSubscribers = new Set<TaskSubscriberWithFilterParams>();
+  private taskChangeSubscribers = new Set<TaskSubscriberWithFilter>();
   private taskChangesFeed?: PouchDB.Core.Changes<Task>;
 
   constructor(database: PouchDB.Database<DocumentTypes>) {
@@ -111,9 +106,9 @@ export class TaskRepository implements Repository {
   /**
    * Do a one-time fetch of tasks based on the provided parameters.
    *
-   * @param params
+   * @param filter
    */
-  async getTasks(params: getTasksParams): Promise<Task[]> {
+  async getTasks(filter: TaskFilter): Promise<Task[]> {
     Logger.info('Getting tasks');
     const result = await this.db.allDocs<Task>({
       include_docs: true,
@@ -134,17 +129,17 @@ export class TaskRepository implements Repository {
       task.updatedAt = new Date(task.updatedAt);
     });
 
-    return this.filterTasksByParams(allTasks, params);
+    return this.filterTasks(allTasks, filter);
   }
 
   /**
    * Filter tasks based on the provided getTaskParams object.
    *
    * @param tasks
-   * @param params
+   * @param filter
    */
-  filterTasksByParams(tasks: Task[], params: getTasksParams): Task[] {
-    const taskFilterer = new TaskFilterer(params);
+  filterTasks(tasks: Task[], filter: TaskFilter): Task[] {
+    const taskFilterer = new TaskFilterer(filter);
     return taskFilterer.filterTasks(tasks);
   }
 
@@ -169,14 +164,14 @@ export class TaskRepository implements Repository {
    * The return function should be used to unsubscribe from the changes feed when no longer needed
    * or when the component using this is unmounted.
    *
-   * @param params
+   * @param filter
    * @param callback
    *
    * @return A function to unsubscribe from the changes feed.
    */
-  subscribeToTasks(params: getTasksParams, callback: (tasks: Task[]) => void): UnsubscribeFunction {
+  subscribeToTasks(filter: TaskFilter, callback: (tasks: Task[]) => void): UnsubscribeFunction {
     // Register the callback so that we can notify it of changes
-    this.taskChangeSubscribers.add({ callback, params });
+    this.taskChangeSubscribers.add({ callback, params: filter });
 
     // Set up the PouchDB changes feed if this is the first subscriber
     if (this.taskChangeSubscribers.size === 1) {
@@ -184,14 +179,14 @@ export class TaskRepository implements Repository {
     }
 
     // Provide the initial tasks to the callback
-    this.getTasks(params)
+    this.getTasks(filter)
       .then((tasks) => callback(tasks))
       .catch((error) => {
         Logger.error('Error fetching initial tasks for watcher:', error);
       });
 
     // Return an unsubscribe function
-    return () => this.removeTaskSubscriber({ callback, params });
+    return () => this.removeTaskSubscriber({ callback, params: filter });
   }
 
   /**
@@ -495,7 +490,7 @@ export class TaskRepository implements Repository {
    * @param subscriber
    * @private
    */
-  private removeTaskSubscriber(subscriber: TaskSubscriberWithFilterParams): void {
+  private removeTaskSubscriber(subscriber: TaskSubscriberWithFilter): void {
     Logger.info('Removing task change subscriber');
     this.taskChangeSubscribers.delete(subscriber);
 
@@ -514,9 +509,9 @@ export class TaskRepository implements Repository {
    */
   private notifyTaskSubscribers(tasks: Task[]): void {
     Logger.info('Notifying task change subscribers');
-    this.taskChangeSubscribers.forEach((taskSubscriber: TaskSubscriberWithFilterParams) => {
+    this.taskChangeSubscribers.forEach((taskSubscriber: TaskSubscriberWithFilter) => {
       try {
-        const tasksToNotify = this.filterTasksByParams(tasks, taskSubscriber.params);
+        const tasksToNotify = this.filterTasks(tasks, taskSubscriber.params);
         taskSubscriber.callback(tasksToNotify);
       } catch (error) {
         // TODO

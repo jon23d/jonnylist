@@ -185,7 +185,7 @@ describe('TaskRepository', () => {
 
     await repository.addTask(task1);
 
-    const filterMock = jest.spyOn(repository, 'filterTasksByParams').mockReturnValue([]);
+    const filterMock = jest.spyOn(repository, 'filterTasks').mockReturnValue([]);
 
     const tasks = await repository.getTasks({
       statuses: [],
@@ -216,7 +216,7 @@ describe('TaskRepository', () => {
         taskFactory({ status: TaskStatus.Done }),
       ];
 
-      const filteredTasks = repository.filterTasksByParams(tasks, {
+      const filteredTasks = repository.filterTasks(tasks, {
         statuses: [TaskStatus.Started, TaskStatus.Waiting],
       });
 
@@ -235,7 +235,7 @@ describe('TaskRepository', () => {
         taskFactory({ status: TaskStatus.Done }),
       ];
 
-      const filteredTasks = repository.filterTasksByParams(tasks, {
+      const filteredTasks = repository.filterTasks(tasks, {
         statuses: [TaskStatus.Ready, TaskStatus.Started],
       });
 
@@ -248,10 +248,9 @@ describe('TaskRepository', () => {
       const database = getDb();
       const repository = new TaskRepository(database);
 
-      const filteredTasks = repository.filterTasksByParams(
-        [taskFactory({ status: TaskStatus.Started })],
-        { statuses: [TaskStatus.Started] }
-      );
+      const filteredTasks = repository.filterTasks([taskFactory({ status: TaskStatus.Started })], {
+        statuses: [TaskStatus.Started],
+      });
 
       expect(filteredTasks).toHaveLength(1);
     });
@@ -267,7 +266,7 @@ describe('TaskRepository', () => {
         taskFactory({ status: TaskStatus.Done }),
       ];
 
-      const filteredTasks = repository.filterTasksByParams(tasks, {});
+      const filteredTasks = repository.filterTasks(tasks, {});
 
       expect(filteredTasks).toHaveLength(4);
     });

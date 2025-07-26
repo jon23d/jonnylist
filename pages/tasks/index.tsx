@@ -18,9 +18,6 @@ import { Task, TaskFilter, TaskStatus } from '@/data/documentTypes/Task';
 import { Notifications } from '@/helpers/Notifications';
 import { getUrgency } from '@/helpers/Tasks';
 
-const MS_IN_A_DAY = 1000 * 60 * 60 * 24;
-const today = new Date();
-
 export default function Page() {
   const router = useRouter();
   const dataSource = useDataSource();
@@ -39,83 +36,6 @@ export default function Page() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [status, setStatus] = useState('pending');
   const [view, setView] = useState<'list' | 'table'>('table');
-
-  const filterTasks = (tasks: Task[]): Task[] => {
-    return tasks.filter((task) => {
-      // filter by tags
-      const includesTags = taskFilter.requireTags?.length
-        ? taskFilter.requireTags.some((tag) => task.tags?.includes(tag))
-        : true;
-      const excludesTags = taskFilter.excludeTags?.length
-        ? !taskFilter.excludeTags.some((tag) => task.tags?.includes(tag))
-        : true;
-      const hasNoTags = taskFilter.hasNoTags ? !task.tags?.length : true;
-
-      // filter by projects. Projects are hierarchical, separated by dots,
-      // so we will look for projects that start with what is provided
-      // in the filter. This allows for filtering by parent projects as well.
-      let includesProjects = !taskFilter.requireProjects?.length;
-      if (taskFilter.requireProjects?.length && task.project) {
-        for (const project of taskFilter.requireProjects) {
-          if (task.project.startsWith(project)) {
-            includesProjects = true;
-            break;
-          }
-        }
-      }
-      let excludesProjects = true;
-      if (taskFilter.excludeProjects?.length && task.project) {
-        for (const project of taskFilter.excludeProjects) {
-          if (task.project.startsWith(project)) {
-            excludesProjects = false;
-            break;
-          }
-        }
-      }
-      const hasNoProject = taskFilter.hasNoProject ? !task.project : true;
-
-      // Filter by status
-      const includesPriority = taskFilter.requirePriority?.length
-        ? taskFilter.requirePriority.some((priority) => priority === task.priority)
-        : true;
-      const excludesPriority = taskFilter.excludePriority?.length
-        ? !taskFilter.excludePriority.some((priority) => priority === task.priority)
-        : true;
-
-      // Filter by due date
-      let passesDateFilter = true;
-      if (taskFilter.dueWithin?.maximumNumberOfDaysFromToday) {
-        if (!task.dueDate) {
-          passesDateFilter = false;
-        } else {
-          const dueDate = new Date(task.dueDate);
-          const dueInDays = Math.ceil((dueDate.getTime() - today.getTime()) / MS_IN_A_DAY);
-          const minimumDays = taskFilter.dueWithin.minimumNumberOfDaysFromToday || 0;
-          const maximumDays = taskFilter.dueWithin.maximumNumberOfDaysFromToday;
-          const includeOverdueTasks = taskFilter.dueWithin.includeOverdueTasks || false;
-
-          // Check if the task's due date falls within the specified range
-          if (!includeOverdueTasks && dueInDays < 0) {
-            passesDateFilter = false;
-          } else if (dueInDays > 0 && (dueInDays < minimumDays || dueInDays > maximumDays)) {
-            passesDateFilter = false;
-          }
-        }
-      }
-
-      return (
-        includesTags &&
-        excludesTags &&
-        includesProjects &&
-        excludesProjects &&
-        includesPriority &&
-        excludesPriority &&
-        passesDateFilter &&
-        hasNoTags &&
-        hasNoProject
-      );
-    });
-  };
 
   const sortTasks = (tasks: Task[]): Task[] => {
     if (status === 'completed' || status === 'cancelled') {
@@ -168,8 +88,9 @@ export default function Page() {
     const unsubscribe = taskRepository.subscribeToTasks(
       {
         statuses,
+        ...taskFilter,
       },
-      (tasks) => setTasks(filterTasks(sortTasks(tasks)))
+      (tasks) => setTasks(sortTasks(tasks))
     );
 
     return unsubscribe;

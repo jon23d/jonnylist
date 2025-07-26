@@ -246,7 +246,7 @@ export default function FilterSelector({
               <Tabs.Panel value="dates" p={5}>
                 <Stack gap="xs">
                   <Text size="xs">
-                    Show tasks with a due date between the number of days from today
+                    Show tasks with a due date within the specified range from today.
                   </Text>
                   <NumberInput
                     label="Minimum days from today"

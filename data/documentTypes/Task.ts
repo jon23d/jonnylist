@@ -31,6 +31,8 @@ export const taskPrioritySelectOptions = [
 ];
 
 export interface TaskFilter {
+  statuses?: TaskStatus[];
+  due?: true;
   requireTags?: string[];
   excludeTags?: string[];
   requireProjects?: string[];
