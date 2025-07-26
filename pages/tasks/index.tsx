@@ -215,11 +215,6 @@ export default function Page() {
       <TasksList tasks={tasks} />
     );
 
-  if (status === 'pending' || status === 'recurring') {
-    const chestAndShouldersTasks = tasks.filter((task) => task.title === 'Clean bedroom');
-    console.log(chestAndShouldersTasks);
-  }
-
   return (
     <>
       <Group justify="space-between">
