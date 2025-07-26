@@ -1,6 +1,7 @@
 import { DocumentTypes } from '@/data/documentTypes';
 import { Repository } from '@/data/Repository';
 import { Logger } from '@/helpers/Logger';
+import { TaskFilterer } from '@/helpers/TaskFilterer';
 import { NewTask, Task, TaskStatus } from './documentTypes/Task';
 
 export type getTasksParams = {
@@ -143,12 +144,8 @@ export class TaskRepository implements Repository {
    * @param params
    */
   filterTasksByParams(tasks: Task[], params: getTasksParams): Task[] {
-    return tasks.filter((task) => {
-      const matchesStatus = !params.statuses || params.statuses.includes(task.status);
-      const matchesDue = !params.due || (task.dueDate && new Date() >= new Date(task.dueDate));
-
-      return matchesStatus && matchesDue;
-    });
+    const taskFilterer = new TaskFilterer(params);
+    return taskFilterer.filterTasks(tasks);
   }
 
   /**
