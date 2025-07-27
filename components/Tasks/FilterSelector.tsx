@@ -5,6 +5,7 @@ import {
   Button,
   Checkbox,
   Chip,
+  Flex,
   Group,
   Input,
   NumberInput,
@@ -35,6 +36,22 @@ export default function FilterSelector({
         includeOverdueTasks: taskFilter.dueWithin?.includeOverdueTasks || false,
         minimumNumberOfDaysFromToday: taskFilter.dueWithin?.minimumNumberOfDaysFromToday,
         maximumNumberOfDaysFromToday: taskFilter.dueWithin?.maximumNumberOfDaysFromToday,
+      },
+    },
+    validate: {
+      dueWithin: {
+        minimumNumberOfDaysFromToday: (value) => {
+          if (value !== undefined && value < 0) {
+            return 'Minimum days from today cannot be negative';
+          }
+          return null;
+        },
+        maximumNumberOfDaysFromToday: (value) => {
+          if (value !== undefined && value < 0) {
+            return 'Maximum days from today cannot be negative';
+          }
+          return null;
+        },
       },
     },
   });
@@ -248,18 +265,47 @@ export default function FilterSelector({
                   <Text size="xs">
                     Show tasks with a due date within the specified range from today.
                   </Text>
-                  <NumberInput
-                    label="Minimum days from today"
-                    min={0}
-                    {...form.getInputProps('dueWithin.minimumNumberOfDaysFromToday')}
-                    size="xs"
-                  />
-                  <NumberInput
-                    label="Maximum days from today"
-                    {...form.getInputProps('dueWithin.maximumNumberOfDaysFromToday')}
-                    size="xs"
-                    mb={10}
-                  />
+                  <Flex>
+                    <NumberInput
+                      label="Minimum days from today"
+                      {...form.getInputProps('dueWithin.minimumNumberOfDaysFromToday')}
+                      size="xs"
+                      flex={1}
+                    />
+                    <Button
+                      size="xs"
+                      variant="subtle"
+                      mt={25}
+                      ml={5}
+                      onClick={() =>
+                        form.setFieldValue('dueWithin.minimumNumberOfDaysFromToday', undefined)
+                      }
+                    >
+                      Clear
+                    </Button>
+                  </Flex>
+
+                  <Flex>
+                    <NumberInput
+                      label="Maximum days from today"
+                      {...form.getInputProps('dueWithin.maximumNumberOfDaysFromToday')}
+                      size="xs"
+                      mb={10}
+                      flex={1}
+                    />
+                    <Button
+                      size="xs"
+                      variant="subtle"
+                      mt={25}
+                      ml={5}
+                      onClick={() =>
+                        form.setFieldValue('dueWithin.maximumNumberOfDaysFromToday', undefined)
+                      }
+                    >
+                      Clear
+                    </Button>
+                  </Flex>
+
                   <Checkbox
                     label="Include overdue tasks"
                     {...form.getInputProps('dueWithin.includeOverdueTasks', { type: 'checkbox' })}
