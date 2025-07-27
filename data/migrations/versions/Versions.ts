@@ -7,6 +7,7 @@ import V5UpdatePriorities from '@/data/migrations/versions/V5UpdatePriorities';
 import V6RemoveContextAndSortOrder from '@/data/migrations/versions/V6RemoveContextAndSortOrder';
 import V7AddRecurrenceIndex from '@/data/migrations/versions/V7AddRecurrenceIndex';
 import V8UpdateRecurrenceParamsToNumbers from '@/data/migrations/versions/V8UpdateRecurrenceParamsToNumbers';
+import V9ClearMinimumDaysFromContextFilters from '@/data/migrations/versions/V9ClearMinimumDaysFromContextFilters';
 
 export const DATABASE_VERSION = 8;
 
@@ -19,4 +20,5 @@ export const VERSIONS: Migration[] = [
   new V6RemoveContextAndSortOrder(),
   new V7AddRecurrenceIndex(),
   new V8UpdateRecurrenceParamsToNumbers(),
+  new V9ClearMinimumDaysFromContextFilters(),
 ];
