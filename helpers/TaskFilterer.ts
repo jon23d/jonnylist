@@ -3,7 +3,14 @@ import { Task, TaskFilter } from '@/data/documentTypes/Task';
 const MS_IN_A_DAY = 1000 * 60 * 60 * 24;
 
 export class TaskFilterer {
-  constructor(private readonly filter: TaskFilter) {}
+  private readonly now: Date;
+
+  constructor(
+    private readonly filter: TaskFilter,
+    now?: Date
+  ) {
+    this.now = now || new Date();
+  }
 
   filterTasks(tasks: Task[]): Task[] {
     let filteredTasks = this.filterByStatus(tasks);
@@ -16,38 +23,39 @@ export class TaskFilterer {
     return filteredTasks;
   }
 
-  filterByStatus(tasks: Task[]): Task[] {
+  private filterByStatus(tasks: Task[]): Task[] {
     const { statuses } = this.filter;
 
     return statuses?.length ? tasks.filter((task) => statuses.includes(task.status)) : tasks;
   }
 
-  filterByIsDue(tasks: Task[]): Task[] {
+  private filterByIsDue(tasks: Task[]): Task[] {
     const { due } = this.filter;
     if (!due) {
       return tasks;
     }
 
-    const now = new Date();
-    return tasks.filter((task) => task.dueDate && now >= new Date(task.dueDate));
+    return tasks.filter((task) => task.dueDate && this.now >= new Date(task.dueDate));
   }
 
-  filterByTags(tasks: Task[]): Task[] {
+  private filterByTags(tasks: Task[]): Task[] {
     const { requireTags, excludeTags } = this.filter;
 
     return tasks.filter((task) => {
-      const hasRequiredTags = requireTags
-        ? requireTags.every((tag) => task.tags?.includes(tag))
-        : true;
-      const hasExcludedTags = excludeTags
-        ? !excludeTags.some((tag) => task.tags?.includes(tag))
-        : true;
+      const hasRequiredTags =
+        requireTags && requireTags.length
+          ? requireTags.some((tag) => task.tags?.includes(tag))
+          : true;
+      const hasExcludedTags =
+        excludeTags && excludeTags.length
+          ? excludeTags.some((tag) => task.tags?.includes(tag))
+          : false;
 
-      return hasRequiredTags && hasExcludedTags;
+      return hasRequiredTags && !hasExcludedTags;
     });
   }
 
-  filterByProjects(tasks: Task[]): Task[] {
+  private filterByProjects(tasks: Task[]): Task[] {
     const { requireProjects, excludeProjects } = this.filter;
 
     return tasks.filter((task) => {
@@ -57,16 +65,16 @@ export class TaskFilterer {
           : true;
       const hasExcludedProjects =
         excludeProjects && excludeProjects.length
-          ? !excludeProjects.some((project) => task.project?.startsWith(project))
-          : true;
+          ? excludeProjects.some((project) => task.project?.startsWith(project))
+          : false;
 
       const hasNoProject = this.filter.hasNoProject ? !task.project : true;
 
-      return hasRequiredProjects && hasExcludedProjects && hasNoProject;
+      return hasRequiredProjects && !hasExcludedProjects && hasNoProject;
     });
   }
 
-  filterByPriority(tasks: Task[]): Task[] {
+  private filterByPriority(tasks: Task[]): Task[] {
     const { requirePriority, excludePriority } = this.filter;
 
     return tasks.filter((task) => {
@@ -83,22 +91,20 @@ export class TaskFilterer {
     });
   }
 
-  filterByDueDate(tasks: Task[]): Task[] {
+  private filterByDueDate(tasks: Task[]): Task[] {
     const { dueWithin } = this.filter;
-    if (!dueWithin?.maximumNumberOfDaysFromToday) {
+
+    if (!dueWithin) {
       return tasks;
     }
-
-    const now = new Date();
-
     return tasks.filter((task) => {
       if (!task.dueDate) {
         return false;
       }
       const dueDate = new Date(task.dueDate);
-      const dueInDays = Math.ceil((dueDate.getTime() - now.getTime()) / MS_IN_A_DAY);
+      const dueInDays = Math.ceil((dueDate.getTime() - this.now.getTime()) / MS_IN_A_DAY);
       const minimumDays = dueWithin.minimumNumberOfDaysFromToday || 0;
-      const maximumDays = dueWithin.maximumNumberOfDaysFromToday!;
+      const maximumDays = dueWithin.maximumNumberOfDaysFromToday || Infinity;
       const includeOverdueTasks = dueWithin.includeOverdueTasks || false;
 
       // Check if the task's due date falls within the specified range
@@ -106,10 +112,7 @@ export class TaskFilterer {
         return false;
       }
 
-      if (dueInDays > 0 && (dueInDays < minimumDays || dueInDays > maximumDays)) {
-        return false;
-      }
-      return true;
+      return !(dueInDays > 0 && (dueInDays < minimumDays || dueInDays > maximumDays));
     });
   }
 }

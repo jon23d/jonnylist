@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { IconInfoCircle } from '@tabler/icons-react';
 import {
   Box,
   Button,
@@ -12,6 +13,7 @@ import {
   Tabs,
   TagsInput,
   Text,
+  Tooltip,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import SaveContextModal from '@/components/Contexts/SaveContextModal';
@@ -31,18 +33,6 @@ export default function FilterSelector({
       ...taskFilter,
       dueWithin: {
         includeOverdueTasks: taskFilter.dueWithin?.includeOverdueTasks || false,
-        minimumNumberOfDaysFromToday: taskFilter.dueWithin?.minimumNumberOfDaysFromToday || 0,
-        maximumNumberOfDaysFromToday: taskFilter.dueWithin?.maximumNumberOfDaysFromToday,
-      },
-    },
-    validate: {
-      dueWithin: {
-        includeOverdueTasks: (value, values) => {
-          if (value && !values.dueWithin?.maximumNumberOfDaysFromToday) {
-            return 'Requires maximum number of days from today';
-          }
-          return null;
-        },
       },
     },
   });
@@ -167,7 +157,13 @@ export default function FilterSelector({
               <Tabs.Panel value="tags" p={5}>
                 <Stack gap="xs" mb={10}>
                   <TagsInput
-                    label="Require tags"
+                    label={
+                      <Tooltip label="Require at least one of">
+                        <Text size="xs">
+                          Require tags <IconInfoCircle size={12} />
+                        </Text>
+                      </Tooltip>
+                    }
                     {...form.getInputProps('requireTags')}
                     size="xs"
                     comboboxProps={{ withinPortal: false }} // required for use in popover
@@ -225,7 +221,7 @@ export default function FilterSelector({
                       </Group>
                     </Chip.Group>
                   </Input.Wrapper>
-                  <Input.Wrapper label="Require priority" size="xs" mt=".3em">
+                  <Input.Wrapper label="Exclude priority" size="xs" mt=".3em">
                     <Chip.Group multiple {...excludePriorityInputProps}>
                       <Group justify="space-evenly">
                         <Chip value={TaskPriority.Low} size="xs">
