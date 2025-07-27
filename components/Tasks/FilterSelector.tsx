@@ -33,6 +33,8 @@ export default function FilterSelector({
       ...taskFilter,
       dueWithin: {
         includeOverdueTasks: taskFilter.dueWithin?.includeOverdueTasks || false,
+        minimumNumberOfDaysFromToday: taskFilter.dueWithin?.minimumNumberOfDaysFromToday,
+        maximumNumberOfDaysFromToday: taskFilter.dueWithin?.maximumNumberOfDaysFromToday,
       },
     },
   });
@@ -55,7 +57,9 @@ export default function FilterSelector({
     form.values.excludeProjects?.length ||
     form.values.hasNoProject;
   const hasPriority = form.values.requirePriority?.length || form.values.excludePriority?.length;
-  const hasDates = form.values.dueWithin?.maximumNumberOfDaysFromToday;
+  const hasDates =
+    form.values.dueWithin?.maximumNumberOfDaysFromToday !== undefined ||
+    form.values.dueWithin?.minimumNumberOfDaysFromToday !== undefined;
 
   const filterApplied = hasTags || hasProjects || hasPriority || hasDates;
 
