@@ -384,4 +384,32 @@ describe('TaskFilterer', () => {
       ])
     );
   });
+
+  it('Should not attempt to filter by due date if no dueWithin filter is set', () => {
+    const tasks = [
+      taskFactory({ dueDate: '2024-01-01' }),
+      taskFactory({ dueDate: '2024-01-05' }),
+      taskFactory({ dueDate: '2023-12-15' }),
+      taskFactory({ dueDate: undefined }),
+    ];
+    filter.dueWithin = {
+      includeOverdueTasks: false,
+      minimumNumberOfDaysFromToday: undefined,
+      maximumNumberOfDaysFromToday: undefined,
+    };
+
+    const taskFilterer = new TaskFilterer(filter);
+
+    const result = taskFilterer.filterTasks(tasks);
+
+    expect(result.length).toBe(4);
+    expect(result).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ dueDate: '2024-01-01' }),
+        expect.objectContaining({ dueDate: '2024-01-05' }),
+        expect.objectContaining({ dueDate: '2023-12-15' }),
+        expect.objectContaining({ dueDate: undefined }),
+      ])
+    );
+  });
 });

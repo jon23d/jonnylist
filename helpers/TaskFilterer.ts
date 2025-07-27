@@ -94,9 +94,15 @@ export class TaskFilterer {
   private filterByDueDate(tasks: Task[]): Task[] {
     const { dueWithin } = this.filter;
 
-    if (!dueWithin) {
+    if (
+      !dueWithin ||
+      (dueWithin.minimumNumberOfDaysFromToday === undefined &&
+        dueWithin.maximumNumberOfDaysFromToday === undefined &&
+        !dueWithin.includeOverdueTasks)
+    ) {
       return tasks;
     }
+
     return tasks.filter((task) => {
       if (!task.dueDate) {
         return false;
