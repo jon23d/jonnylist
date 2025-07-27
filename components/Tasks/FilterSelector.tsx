@@ -278,7 +278,10 @@ export default function FilterSelector({
                       mt={25}
                       ml={5}
                       onClick={() =>
-                        form.setFieldValue('dueWithin.minimumNumberOfDaysFromToday', undefined)
+                        form.setFieldValue(
+                          'dueWithin.minimumNumberOfDaysFromToday',
+                          '' as unknown as number
+                        )
                       }
                     >
                       Clear
@@ -299,7 +302,10 @@ export default function FilterSelector({
                       mt={25}
                       ml={5}
                       onClick={() =>
-                        form.setFieldValue('dueWithin.maximumNumberOfDaysFromToday', undefined)
+                        form.setFieldValue(
+                          'dueWithin.maximumNumberOfDaysFromToday',
+                          '' as unknown as number
+                        )
                       }
                     >
                       Clear
