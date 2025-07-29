@@ -45,9 +45,11 @@ export type TaskFormType = NewTask & {
 export default function TaskForm({
   form,
   handleSubmit,
+  isNewTask,
 }: {
   form: UseFormReturnType<TaskFormType>;
-  handleSubmit: (values: TaskFormType) => void;
+  handleSubmit: () => void;
+  isNewTask: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<string | null>('basics');
   const [newNoteText, setNewNoteText] = useState<string>('');
@@ -135,6 +137,11 @@ export default function TaskForm({
     // Update the form values with the new note
     form.setFieldValue('notes', [...(form.values.notes || []), newNote]);
     setNewNoteText(''); // Clear the input field after adding the note
+
+    // If this is not a new task, we will submit the form to save the note
+    if (!isNewTask) {
+      handleSubmit();
+    }
   };
 
   const pluralizeInterval = form.values.recurrence?.interval === 1;

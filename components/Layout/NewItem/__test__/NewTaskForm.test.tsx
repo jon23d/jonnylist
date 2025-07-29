@@ -263,30 +263,4 @@ describe('NewTaskForm', () => {
     expect(tasks[0].recurrence?.frequency).toBe('weekly');
     expect(tasks[0].recurrence?.dayOfWeek).toBe(0); // strict equality, this must be a number
   });
-
-  /*it('Sets the project and tags from the context if available', async () => {
-    const handleClose = jest.fn();
-    const dataSource = getDataSource();
-    const contextRepository = dataSource.getContextRepository();
-
-    const context = await contextRepository.addContext(
-      contextFactory({
-        filter: {
-          requireProjects: ['Test Project'],
-          requireTags: ['context-tag'],
-        },
-      })
-    );
-    (useRouter as jest.Mock).mockReturnValue({
-      query: { context: context._id },
-    });
-
-    renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
-
-    // Wait for the form to be populated with context data
-    await waitFor(() => {
-      expect(screen.getByRole('textbox', { name: 'Project' })).toHaveValue('Test Project');
-      expect(screen.getByRole('textbox', { name: 'Tags' })).toHaveValue('context-tag');
-    });
-  });*/
 });

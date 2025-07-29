@@ -128,5 +128,5 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
     }
   };
 
-  return <TaskForm form={form} handleSubmit={handleSave} />;
+  return <TaskForm form={form} handleSubmit={handleSave} isNewTask />;
 }

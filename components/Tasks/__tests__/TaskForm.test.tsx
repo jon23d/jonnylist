@@ -17,13 +17,15 @@ describe('TaskForm', () => {
   const TestComponent = ({
     formInput,
     handleSubmit,
+    isNewTask = true,
   }: {
     formInput: UseFormInput<TaskFormType>;
     handleSubmit: () => void;
+    isNewTask?: boolean;
   }) => {
     const form = useForm<TaskFormType>(formInput);
 
-    return <TaskForm form={form} handleSubmit={handleSubmit} />;
+    return <TaskForm form={form} handleSubmit={handleSubmit} isNewTask={isNewTask} />;
   };
 
   it('Renders basic form fields', async () => {
@@ -318,6 +320,68 @@ describe('TaskForm', () => {
     expect(
       within(screen.getByTestId('note-0')).getByText('This is a new note')
     ).toBeInTheDocument();
+  });
+
+  it('Calls handleSubmit when notes are added to an existing task', async () => {
+    const handleSubmit = jest.fn();
+    const formInput = {
+      initialValues: {
+        title: 'Task title',
+        description: 'Task description',
+        tags: ['tag1', 'tag2'],
+        project: 'Project A',
+        priority: TaskPriority.Low,
+        dueDate: '2024-12-31',
+        status: TaskStatus.Cancelled,
+        waitUntil: '2024-10-01',
+        notes: [],
+        isRecurring: false,
+      },
+    };
+
+    render(<TestComponent formInput={formInput} handleSubmit={handleSubmit} isNewTask={false} />);
+
+    // Go to Notes tab
+    await userEvent.click(screen.getByText('Notes'));
+
+    // Add a note
+    const newNoteInput = screen.getByLabelText('New Note');
+    await userEvent.type(newNoteInput, 'This is a new note');
+    const addNoteButton = screen.getByRole('button', { name: 'Add Note' });
+    await userEvent.click(addNoteButton);
+
+    expect(handleSubmit).toHaveBeenCalled();
+  });
+
+  it('Should not call handleSubmit when the notes are added to a new task', async () => {
+    const handleSubmit = jest.fn();
+    const formInput = {
+      initialValues: {
+        title: 'Task title',
+        description: 'Task description',
+        tags: ['tag1', 'tag2'],
+        project: 'Project A',
+        priority: TaskPriority.Low,
+        dueDate: '2024-12-31',
+        status: TaskStatus.Cancelled,
+        waitUntil: '2024-10-01',
+        notes: [],
+        isRecurring: false,
+      },
+    };
+
+    render(<TestComponent formInput={formInput} handleSubmit={handleSubmit} isNewTask />);
+
+    // Go to Notes tab
+    await userEvent.click(screen.getByText('Notes'));
+
+    // Add a note
+    const newNoteInput = screen.getByLabelText('New Note');
+    await userEvent.type(newNoteInput, 'This is a new note');
+    const addNoteButton = screen.getByRole('button', { name: 'Add Note' });
+    await userEvent.click(addNoteButton);
+
+    expect(handleSubmit).not.toHaveBeenCalled();
   });
 
   it('Should call handleSubmit when the form is submitted', async () => {

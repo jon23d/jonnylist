@@ -123,5 +123,5 @@ export default function EditTaskForm({
     }
   };
 
-  return <TaskForm form={form} handleSubmit={handleSave} />;
+  return <TaskForm form={form} handleSubmit={handleSave} isNewTask={false} />;
 }
