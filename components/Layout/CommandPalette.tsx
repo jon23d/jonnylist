@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { IconSearch } from '@tabler/icons-react';
 import { Modal } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
+import { useDisclosure, useViewportSize } from '@mantine/hooks';
 import { Spotlight, SpotlightActionData, SpotlightActionGroupData } from '@mantine/spotlight';
+import NewTaskForm from '@/components/Layout/NewItem/NewTaskForm';
 import EditTaskForm from '@/components/Tasks/EditTaskForm';
 import { useTaskRepository } from '@/contexts/DataSourceContext';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
@@ -11,7 +12,9 @@ export default function CommandPalette() {
   const taskRepository = useTaskRepository();
   const [openTasks, setOpenTasks] = useState<Task[]>([]);
   const [taskOpened, { open, close }] = useDisclosure(false);
+  const [newTaskOpened, { open: openNewTask, close: closeNewTask }] = useDisclosure(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const { height: viewportHeight, width: viewportWidth } = useViewportSize();
 
   const cancelEditing = () => {
     setSelectedTask(null);
@@ -20,6 +23,18 @@ export default function CommandPalette() {
 
   const actions = useMemo(() => {
     const actionsArray: (SpotlightActionGroupData | SpotlightActionData)[] = [];
+
+    // New task action
+    const newTaskAction: SpotlightActionData = {
+      id: 'new-task',
+      label: 'Add New Task',
+      description: 'Create a new task',
+      onClick: () => {
+        setSelectedTask(null);
+        openNewTask();
+      },
+    };
+    actionsArray.push(newTaskAction);
 
     // Open tasks actions
     const openTaskActions = openTasks.map((task) => ({
@@ -67,9 +82,22 @@ export default function CommandPalette() {
           placeholder: 'Search...',
         }}
       />
-      <Modal opened={taskOpened} onClose={close} title="Edit Task" size="lg">
-        {selectedTask && <EditTaskForm task={selectedTask} handleClose={cancelEditing} />}
-      </Modal>
+      {taskOpened && (
+        <Modal opened={taskOpened} onClose={close} title="Edit Task" size="lg">
+          {selectedTask && <EditTaskForm task={selectedTask} handleClose={cancelEditing} />}
+        </Modal>
+      )}
+      {newTaskOpened && (
+        <Modal
+          opened={newTaskOpened}
+          onClose={closeNewTask}
+          title="Add Task"
+          size="lg"
+          fullScreen={viewportWidth < 768 || viewportHeight < 500}
+        >
+          <NewTaskForm handleClose={closeNewTask} />
+        </Modal>
+      )}
     </>
   );
 }

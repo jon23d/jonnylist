@@ -19,15 +19,17 @@ export default function AddNewItemButton() {
         Add Task (a)
       </Button>
 
-      <Modal
-        opened={modalOpened}
-        onClose={handleClose}
-        title="Add Task"
-        size="lg"
-        fullScreen={viewportWidth < 768 || viewportHeight < 500}
-      >
-        <NewTaskForm handleClose={handleClose} />
-      </Modal>
+      {modalOpened && (
+        <Modal
+          opened={modalOpened}
+          onClose={handleClose}
+          title="Add Task"
+          size="lg"
+          fullScreen={viewportWidth < 768 || viewportHeight < 500}
+        >
+          <NewTaskForm handleClose={handleClose} />
+        </Modal>
+      )}
     </>
   );
 }
