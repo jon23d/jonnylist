@@ -100,7 +100,8 @@ export default function TaskForm({
   }, [activeTab]);
 
   // Let the user know if a tab has data on it
-  const advancedHasData = form.values.waitUntil || form.values.description;
+  const advancedHasData =
+    form.values.waitUntil || form.values.description || form.values.isRecurring;
   const notesHasData = form.values.notes && form.values.notes.length > 0;
 
   // We are going to highlight the tabs that have errors in them
