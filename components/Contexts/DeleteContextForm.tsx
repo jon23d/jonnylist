@@ -1,7 +1,6 @@
 import React from 'react';
 import { useRouter } from 'next/router';
 import { Button, Stack, Text } from '@mantine/core';
-import { modals } from '@mantine/modals';
 import { useContextRepository } from '@/contexts/DataSourceContext';
 import { Context } from '@/data/documentTypes/Context';
 import { Notifications } from '@/helpers/Notifications';
@@ -16,17 +15,7 @@ export default function DeleteContextForm({
   const router = useRouter();
   const contextRepository = useContextRepository();
 
-  const handleSubmit = () => {
-    modals.openConfirmModal({
-      title: 'Delete this context?',
-      children: <Text size="sm">Are you sure you want to delete the context?</Text>,
-      labels: { confirm: 'Yes, delete the context', cancel: 'No, do not' },
-      onCancel: () => onClose(),
-      onConfirm: async () => await doDelete(),
-    });
-  };
-
-  const doDelete = async () => {
+  const handleSubmit = async () => {
     try {
       await contextRepository.deleteContext(context);
       await router.push('/');
