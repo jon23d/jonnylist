@@ -19,7 +19,7 @@ export default function ViewTypeSelector({
           {
             value: 'table',
             label: (
-              <Text ta="center">
+              <Text ta="center" size="sm">
                 <IconTable size={10} style={{ marginRight: '5px' }} />
                 Table
               </Text>
@@ -28,7 +28,7 @@ export default function ViewTypeSelector({
           {
             value: 'list',
             label: (
-              <Text ta="center">
+              <Text ta="center" size="sm">
                 <IconList size={10} style={{ marginRight: '5px' }} />
                 List
               </Text>

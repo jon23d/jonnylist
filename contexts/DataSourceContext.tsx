@@ -50,20 +50,23 @@ export const DataSourceContextProvider = ({
 
     // Every five minutes, we need to run checkWaitingTasks so that waiting tasks are moved
     // to ready tasks.
-    const taskRepository = currentDataSource.getTaskRepository();
-    taskRepository.checkWaitingTasks();
-    taskRepository.checkRecurringTasks();
-    const waitingInterval = setInterval(
-      () => {
-        taskRepository.checkWaitingTasks();
-      },
-      5 * 60 * 1000
-    );
+    const runPeriodicChecks = () => {
+      const taskRepository = currentDataSource.getTaskRepository();
+      taskRepository.checkWaitingTasks();
+      taskRepository.checkRecurringTasks();
+    };
+
+    // Wait 30 seconds before running the first periodic check to help with initial async
+    // issues with recurring tasks (we really want the sync to have time to establish so that
+    // we don't create duplicates of what other clients could have created).
+    setTimeout(() => {
+      runPeriodicChecks();
+    }, 30 * 1000);
 
     // Every five minutes we need to check recurring tasks to see if they need to be created.
-    const recurringInterval = setInterval(
+    const periodicInterval = setInterval(
       () => {
-        taskRepository.checkRecurringTasks();
+        runPeriodicChecks();
       },
       5 * 60 * 1000
     );
@@ -73,8 +76,7 @@ export const DataSourceContextProvider = ({
       currentDataSource.cleanup().catch((error) => {
         Logger.error('Failed to cleanup DataSource:', error);
       });
-      clearInterval(waitingInterval);
-      clearInterval(recurringInterval);
+      clearInterval(periodicInterval);
     };
   }, [currentDataSource]);
 
