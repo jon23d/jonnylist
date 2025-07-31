@@ -120,7 +120,7 @@ export default function BulkEditor({
         <Checkbox
           mt={30}
           ml={10}
-          label="Clear project"
+          label="Clear Project"
           {...form.getInputProps('clearProject', { type: 'checkbox' })}
         />
       </Flex>
