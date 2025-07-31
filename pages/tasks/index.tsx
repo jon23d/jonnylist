@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Group, Modal } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
+import { Group } from '@mantine/core';
 import ContextModifier from '@/components/Contexts/ContextModifier';
-import BulkEditor from '@/components/Tasks/BulkEditor';
 import ColumnSelector from '@/components/Tasks/ColumnSelector';
 import FilterSelector from '@/components/Tasks/FilterSelector';
 import StatusSelector from '@/components/Tasks/StatusSelector';
@@ -34,8 +32,6 @@ export default function Page() {
   ]);
   const [taskFilter, setTaskFilter] = useState<TaskFilter>({});
   const [context, setContext] = useState<Context | null>(null);
-  const [bulkEditorOpened, { close: closeBulkEditor, open: openBulkEditor }] = useDisclosure();
-  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [status, setStatus] = useState('pending');
@@ -126,17 +122,6 @@ export default function Page() {
     await dataSource.setLocalSettings(localSettings);
   };
 
-  const showBulkEditDialog = (taskIds: string[]) => {
-    if (taskIds.length === 0) {
-      Notifications.showError({
-        title: 'Error',
-        message: 'No tasks selected for bulk edit',
-      });
-    }
-    setSelectedTaskIds(taskIds);
-    openBulkEditor();
-  };
-
   const viewComponent =
     view === 'table' ? (
       <TasksTable
@@ -144,7 +129,6 @@ export default function Page() {
         tasks={tasks}
         tasksAreCompletedOrCancelled={status === 'completed' || status === 'cancelled'}
         tasksAreRecurring={status === 'recurring'}
-        handleBulkEdit={showBulkEditDialog}
       />
     ) : (
       <TasksList tasks={tasks} />
@@ -185,9 +169,6 @@ export default function Page() {
         </Group>
       </Group>
       {viewComponent}
-      <Modal opened={bulkEditorOpened} onClose={closeBulkEditor} title="Bulk Edit Tasks">
-        <BulkEditor taskIds={selectedTaskIds} />
-      </Modal>
     </>
   );
 }
