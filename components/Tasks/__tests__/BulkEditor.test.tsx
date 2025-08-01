@@ -188,8 +188,6 @@ describe('BulkEditor', () => {
   });
 
   it('Calls onSave when update tasks is clicked', async () => {
-    const taskRepository = getDataSource().getTaskRepository();
-
     renderWithDataSource(
       <BulkEditor tasks={tasks} onSave={onSave} onCancel={onCancel} />,
       getDataSource()
@@ -202,8 +200,6 @@ describe('BulkEditor', () => {
   });
 
   it('Calls onCancel when cancel is clicked', async () => {
-    const taskRepository = getDataSource().getTaskRepository();
-
     renderWithDataSource(
       <BulkEditor tasks={tasks} onSave={onSave} onCancel={onCancel} />,
       getDataSource()

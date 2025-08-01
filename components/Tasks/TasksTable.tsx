@@ -5,22 +5,9 @@ import BulkEditor from '@/components/Tasks/BulkEditor';
 import EditTaskForm from '@/components/Tasks/EditTaskForm';
 import StatusChanger from '@/components/Tasks/StatusChanger';
 import classes from '@/components/Tasks/Tasks.module.css';
-import { Task, TaskPriority } from '@/data/documentTypes/Task';
+import { Task } from '@/data/documentTypes/Task';
 import { Notifications } from '@/helpers/Notifications';
-import { getAgeInDays, getUrgency } from '@/helpers/Tasks';
-
-const priorityBadge = (priority?: TaskPriority) => {
-  switch (priority) {
-    case TaskPriority.Low:
-      return <Badge color="gray.4">L</Badge>;
-    case TaskPriority.Medium:
-      return <Badge color="lime.4">M</Badge>;
-    case TaskPriority.High:
-      return <Badge color="yellow.5">H</Badge>;
-    default:
-      return null;
-  }
-};
+import { describeRecurrence, getAgeInDays, getUrgency, priorityBadge } from '@/helpers/Tasks';
 
 export default function TasksTable({
   visibleColumns,
@@ -30,7 +17,7 @@ export default function TasksTable({
 }: {
   visibleColumns: string[];
   tasks: Task[];
-  tasksAreCompletedOrCancelled: boolean;
+  tasksAreCompletedOrCancelled?: boolean;
   tasksAreRecurring?: boolean;
 }) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -63,47 +50,6 @@ export default function TasksTable({
   if (!tasks.length) {
     return <Text mt={20}>No tasks match current filters</Text>;
   }
-
-  const getRecurrenceText = (task: Task) => {
-    if (!task.recurrence) {
-      return 'None';
-    }
-
-    const { frequency, interval } = task.recurrence;
-
-    if (frequency === 'daily') {
-      if (interval === 1) {
-        return 'Daily';
-      }
-      return `Every ${interval} days`;
-    }
-
-    if (frequency === 'weekly') {
-      const dayOfWeek = task.recurrence.dayOfWeek;
-      const dayString =
-        dayOfWeek !== undefined
-          ? `on ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dayOfWeek]}`
-          : '';
-      const inflection = interval === 1 ? 'week' : `${interval} weeks`;
-      return `Every ${inflection} ${dayString}`;
-    }
-
-    if (frequency === 'monthly') {
-      const dayOfMonth = task.recurrence.dayOfMonth;
-      if (dayOfMonth !== undefined) {
-        return `Every ${interval} month(s) on the ${dayOfMonth}${dayOfMonth === 1 ? 'st' : dayOfMonth === 2 ? 'nd' : dayOfMonth === 3 ? 'rd' : 'th'}`;
-      }
-      return `Every ${interval} month(s)`;
-    }
-
-    if (frequency === 'yearly') {
-      const firstOccurrence = task.recurrence.yearlyFirstOccurrence;
-      if (firstOccurrence) {
-        return `Every ${interval} year(s) starting from ${new Date(firstOccurrence).toLocaleDateString()}`;
-      }
-      return `Every ${interval} year(s)`;
-    }
-  };
 
   const selectedTaskIds = selectedTasks.map((task) => task._id);
   const handleBulkSelect = (values: string[]) => {
@@ -141,7 +87,7 @@ export default function TasksTable({
                   size="xs"
                   onClick={() => showBulkEditDialog(selectedTasks)}
                 >
-                  Edit selected
+                  Edit Selected
                 </Button>
               </Table.Th>
             </Table.Tr>
@@ -156,7 +102,7 @@ export default function TasksTable({
                 ) : null}
                 {tasksAreRecurring ? (
                   <Table.Td onClick={() => showEditDialog(task)}>
-                    {getRecurrenceText(task)}
+                    {describeRecurrence(task)}
                   </Table.Td>
                 ) : null}
                 <Table.Td onClick={() => showEditDialog(task)}>{task.title}</Table.Td>
@@ -185,7 +131,7 @@ export default function TasksTable({
                 ) : null}
                 {visibleColumns.includes('Age') ? (
                   <Table.Td onClick={() => showEditDialog(task)}>
-                    {getAgeInDays(task.createdAt)}
+                    {getAgeInDays(task.createdAt)} days
                   </Table.Td>
                 ) : null}
                 {visibleColumns.includes('Urgency') ? (
