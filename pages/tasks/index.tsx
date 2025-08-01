@@ -84,16 +84,14 @@ export default function Page() {
       statuses = [TaskStatus.Recurring];
     }
 
-    // subscribe to tasks
-    const unsubscribe = taskRepository.subscribeToTasks(
+    // subscribe to tasks and return unsubscribe handler
+    return taskRepository.subscribeToTasks(
       {
         statuses,
         ...taskFilter,
       },
       (tasks) => setTasks(sortTasks(tasks))
     );
-
-    return unsubscribe;
   }, [status, taskFilter]);
 
   // Load any default visible columns and view from local settings

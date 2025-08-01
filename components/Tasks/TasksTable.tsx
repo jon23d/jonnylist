@@ -1,24 +1,13 @@
 import React, { useState } from 'react';
-import { Badge, Modal, Table, Text } from '@mantine/core';
+import { Badge, Button, Center, Checkbox, Modal, Table, Text } from '@mantine/core';
 import { useDisclosure, useViewportSize } from '@mantine/hooks';
+import BulkEditor from '@/components/Tasks/BulkEditor';
 import EditTaskForm from '@/components/Tasks/EditTaskForm';
 import StatusChanger from '@/components/Tasks/StatusChanger';
 import classes from '@/components/Tasks/Tasks.module.css';
-import { Task, TaskPriority } from '@/data/documentTypes/Task';
-import { getAgeInDays, getUrgency } from '@/helpers/Tasks';
-
-const priorityBadge = (priority?: TaskPriority) => {
-  switch (priority) {
-    case TaskPriority.Low:
-      return <Badge color="gray.4">L</Badge>;
-    case TaskPriority.Medium:
-      return <Badge color="lime.4">M</Badge>;
-    case TaskPriority.High:
-      return <Badge color="yellow.5">H</Badge>;
-    default:
-      return null;
-  }
-};
+import { Task } from '@/data/documentTypes/Task';
+import { Notifications } from '@/helpers/Notifications';
+import { describeRecurrence, getAgeInDays, getUrgency, priorityBadge } from '@/helpers/Tasks';
 
 export default function TasksTable({
   visibleColumns,
@@ -28,12 +17,14 @@ export default function TasksTable({
 }: {
   visibleColumns: string[];
   tasks: Task[];
-  tasksAreCompletedOrCancelled: boolean;
+  tasksAreCompletedOrCancelled?: boolean;
   tasksAreRecurring?: boolean;
 }) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [editorOpened, { open, close }] = useDisclosure(false);
   const { height: viewportHeight, width: viewportWidth } = useViewportSize();
+  const [bulkEditorOpened, { close: closeBulkEditor, open: openBulkEditor }] = useDisclosure();
+  const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
 
   const showEditDialog = (task: Task) => {
     setSelectedTask(task);
@@ -45,119 +36,122 @@ export default function TasksTable({
     close();
   };
 
+  const showBulkEditDialog = (selectedTasks: Task[]) => {
+    if (selectedTasks.length === 0) {
+      Notifications.showError({
+        title: 'Error',
+        message: 'No tasks selected for bulk edit',
+      });
+    }
+    setSelectedTasks(selectedTasks);
+    openBulkEditor();
+  };
+
   if (!tasks.length) {
     return <Text mt={20}>No tasks match current filters</Text>;
   }
 
-  const getRecurrenceText = (task: Task) => {
-    if (!task.recurrence) {
-      return 'None';
-    }
-
-    const { frequency, interval } = task.recurrence;
-
-    if (frequency === 'daily') {
-      if (interval === 1) {
-        return 'Daily';
-      }
-      return `Every ${interval} days`;
-    }
-
-    if (frequency === 'weekly') {
-      const dayOfWeek = task.recurrence.dayOfWeek;
-      const dayString =
-        dayOfWeek !== undefined
-          ? `on ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dayOfWeek]}`
-          : '';
-      const inflection = interval === 1 ? 'week' : `${interval} weeks`;
-      return `Every ${inflection} ${dayString}`;
-    }
-
-    if (frequency === 'monthly') {
-      const dayOfMonth = task.recurrence.dayOfMonth;
-      if (dayOfMonth !== undefined) {
-        return `Every ${interval} month(s) on the ${dayOfMonth}${dayOfMonth === 1 ? 'st' : dayOfMonth === 2 ? 'nd' : dayOfMonth === 3 ? 'rd' : 'th'}`;
-      }
-      return `Every ${interval} month(s)`;
-    }
-
-    if (frequency === 'yearly') {
-      const firstOccurrence = task.recurrence.yearlyFirstOccurrence;
-      if (firstOccurrence) {
-        return `Every ${interval} year(s) starting from ${new Date(firstOccurrence).toLocaleDateString()}`;
-      }
-      return `Every ${interval} year(s)`;
-    }
+  const selectedTaskIds = selectedTasks.map((task) => task._id);
+  const handleBulkSelect = (values: string[]) => {
+    // extract the tasks with an _id found in values and assign to selectedTasks
+    const selectedTasks = tasks.filter((task) => values.includes(task._id));
+    setSelectedTasks(selectedTasks);
+  };
+  const onSave = () => {
+    setSelectedTasks([]);
+    closeBulkEditor();
   };
 
   return (
     <>
-      <Table striped highlightOnHover>
-        <Table.Thead>
-          <Table.Tr>
-            {visibleColumns.includes('Active') ? <Table.Th w="25px" /> : null}
-            {tasksAreRecurring ? <Table.Th>Recurrence</Table.Th> : null}
-            <Table.Th>Title</Table.Th>
-            {visibleColumns.includes('Description') ? <Table.Th>Description</Table.Th> : null}
-            {visibleColumns.includes('Tags') ? <Table.Th>Tags</Table.Th> : null}
-            {visibleColumns.includes('Project') ? <Table.Th>Project</Table.Th> : null}
-            {visibleColumns.includes('Priority') ? <Table.Th>Priority</Table.Th> : null}
-            {visibleColumns.includes('Due Date') ? <Table.Th>Due</Table.Th> : null}
-            {visibleColumns.includes('Age') ? <Table.Th>Age</Table.Th> : null}
-            {visibleColumns.includes('Urgency') ? <Table.Th>Urgency</Table.Th> : null}
-            {tasksAreCompletedOrCancelled ? <Table.Th>Completed</Table.Th> : null}
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>
-          {tasks.map((task) => (
-            <Table.Tr key={task._id} className={classes.hasHoverControls}>
-              {visibleColumns.includes('Active') ? (
-                <Table.Td>
-                  <StatusChanger task={task} />
-                </Table.Td>
-              ) : null}
-              {tasksAreRecurring ? (
-                <Table.Td onClick={() => showEditDialog(task)}>{getRecurrenceText(task)}</Table.Td>
-              ) : null}
-              <Table.Td onClick={() => showEditDialog(task)}>{task.title}</Table.Td>
-              {visibleColumns.includes('Description') ? (
-                <Table.Td onClick={() => showEditDialog(task)}>{task.description}</Table.Td>
-              ) : null}
-              {visibleColumns.includes('Tags') ? (
-                <Table.Td onClick={() => showEditDialog(task)}>
-                  {task.tags?.map((tag, index) => (
-                    <Badge key={index} size="xs" mr={3} variant="light">{`#${tag}`}</Badge>
-                  ))}
-                </Table.Td>
-              ) : null}
-              {visibleColumns.includes('Project') ? (
-                <Table.Td onClick={() => showEditDialog(task)}>{task.project}</Table.Td>
-              ) : null}
-              {visibleColumns.includes('Priority') ? (
-                <Table.Td onClick={() => showEditDialog(task)}>
-                  {priorityBadge(task.priority)}
-                </Table.Td>
-              ) : null}
-              {visibleColumns.includes('Due Date') ? (
-                <Table.Td c="orange.5" onClick={() => showEditDialog(task)}>
-                  {task.dueDate}
-                </Table.Td>
-              ) : null}
-              {visibleColumns.includes('Age') ? (
-                <Table.Td onClick={() => showEditDialog(task)}>
-                  {getAgeInDays(task.createdAt)}
-                </Table.Td>
-              ) : null}
-              {visibleColumns.includes('Urgency') ? <Table.Td>{getUrgency(task)}</Table.Td> : null}
-              {tasksAreCompletedOrCancelled ? (
-                <Table.Td onClick={() => showEditDialog(task)}>
-                  {task.updatedAt.toLocaleDateString()}
-                </Table.Td>
-              ) : null}
+      <Checkbox.Group value={selectedTaskIds} onChange={handleBulkSelect}>
+        <Table striped highlightOnHover>
+          <Table.Thead>
+            <Table.Tr>
+              {visibleColumns.includes('Active') ? <Table.Th w="25px" /> : null}
+              {tasksAreRecurring ? <Table.Th>Recurrence</Table.Th> : null}
+              <Table.Th>Title</Table.Th>
+              {visibleColumns.includes('Description') ? <Table.Th>Description</Table.Th> : null}
+              {visibleColumns.includes('Tags') ? <Table.Th>Tags</Table.Th> : null}
+              {visibleColumns.includes('Project') ? <Table.Th>Project</Table.Th> : null}
+              {visibleColumns.includes('Priority') ? <Table.Th>Priority</Table.Th> : null}
+              {visibleColumns.includes('Due Date') ? <Table.Th>Due</Table.Th> : null}
+              {visibleColumns.includes('Age') ? <Table.Th>Age</Table.Th> : null}
+              {visibleColumns.includes('Urgency') ? <Table.Th>Urgency</Table.Th> : null}
+              {tasksAreCompletedOrCancelled ? <Table.Th>Completed</Table.Th> : null}
+              <Table.Th ta="center">
+                <Button
+                  className={classes.bulkEditButton}
+                  variant="transparent"
+                  disabled={!selectedTasks.length}
+                  size="xs"
+                  onClick={() => showBulkEditDialog(selectedTasks)}
+                >
+                  Edit Selected
+                </Button>
+              </Table.Th>
             </Table.Tr>
-          ))}
-        </Table.Tbody>
-      </Table>
+          </Table.Thead>
+          <Table.Tbody>
+            {tasks.map((task) => (
+              <Table.Tr key={task._id} className={classes.hasHoverControls}>
+                {visibleColumns.includes('Active') ? (
+                  <Table.Td>
+                    <StatusChanger task={task} />
+                  </Table.Td>
+                ) : null}
+                {tasksAreRecurring ? (
+                  <Table.Td onClick={() => showEditDialog(task)}>
+                    {describeRecurrence(task)}
+                  </Table.Td>
+                ) : null}
+                <Table.Td onClick={() => showEditDialog(task)}>{task.title}</Table.Td>
+                {visibleColumns.includes('Description') ? (
+                  <Table.Td onClick={() => showEditDialog(task)}>{task.description}</Table.Td>
+                ) : null}
+                {visibleColumns.includes('Tags') ? (
+                  <Table.Td onClick={() => showEditDialog(task)}>
+                    {task.tags?.map((tag, index) => (
+                      <Badge key={index} size="xs" mr={3} variant="light">{`#${tag}`}</Badge>
+                    ))}
+                  </Table.Td>
+                ) : null}
+                {visibleColumns.includes('Project') ? (
+                  <Table.Td onClick={() => showEditDialog(task)}>{task.project}</Table.Td>
+                ) : null}
+                {visibleColumns.includes('Priority') ? (
+                  <Table.Td onClick={() => showEditDialog(task)}>
+                    {priorityBadge(task.priority)}
+                  </Table.Td>
+                ) : null}
+                {visibleColumns.includes('Due Date') ? (
+                  <Table.Td c="orange.5" onClick={() => showEditDialog(task)}>
+                    {task.dueDate}
+                  </Table.Td>
+                ) : null}
+                {visibleColumns.includes('Age') ? (
+                  <Table.Td onClick={() => showEditDialog(task)}>
+                    {getAgeInDays(task.createdAt)} days
+                  </Table.Td>
+                ) : null}
+                {visibleColumns.includes('Urgency') ? (
+                  <Table.Td>{getUrgency(task)}</Table.Td>
+                ) : null}
+                {tasksAreCompletedOrCancelled ? (
+                  <Table.Td onClick={() => showEditDialog(task)}>
+                    {task.updatedAt.toLocaleDateString()}
+                  </Table.Td>
+                ) : null}
+                <Table.Td>
+                  <Center>
+                    <Checkbox value={task._id} />
+                  </Center>
+                </Table.Td>
+              </Table.Tr>
+            ))}
+          </Table.Tbody>
+        </Table>
+      </Checkbox.Group>
 
       <Modal
         opened={editorOpened}
@@ -167,6 +161,10 @@ export default function TasksTable({
         fullScreen={viewportWidth < 768 || viewportHeight < 500}
       >
         {selectedTask && <EditTaskForm task={selectedTask} handleClose={cancelEditing} />}
+      </Modal>
+
+      <Modal opened={bulkEditorOpened} onClose={closeBulkEditor} title="Bulk Edit Tasks">
+        <BulkEditor tasks={selectedTasks} onCancel={closeBulkEditor} onSave={onSave} />
       </Modal>
     </>
   );
