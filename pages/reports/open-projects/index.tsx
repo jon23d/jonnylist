@@ -2,12 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { Group, Tabs, Title } from '@mantine/core';
 import ColumnSelector from '@/components/Tasks/ColumnSelector';
 import TasksTable from '@/components/Tasks/TasksTable';
-import { useDataSource, useTaskRepository } from '@/contexts/DataSourceContext';
+import {
+  useDataSource,
+  usePreferencesRepository,
+  useTaskRepository,
+} from '@/contexts/DataSourceContext';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
-import { getUrgency } from '@/helpers/Tasks';
+import { UrgencyCalculator } from '@/helpers/UrgencyCalculator';
 
 export default function Page() {
   const dataSource = useDataSource();
+  const preferencesRepository = usePreferencesRepository();
   const taskRepository = useTaskRepository();
   const [groupedTasks, setGroupedTasks] = useState<Record<string, Task[]>>({});
   const [visibleColumns, setVisibleColumns] = useState<string[]>([
@@ -22,9 +27,11 @@ export default function Page() {
     return tasks.filter((task) => !!task.project);
   };
 
-  const sortTasks = (tasks: Task[]): Task[] => {
+  const sortTasks = async (tasks: Task[]): Promise<Task[]> => {
+    const preferences = await preferencesRepository.getPreferences();
+    const calculator = new UrgencyCalculator(preferences);
     // sort by task urgency
-    return tasks.sort((a, b) => getUrgency(b) - getUrgency(a));
+    return tasks.sort((a, b) => calculator.getUrgency(b) - calculator.getUrgency(a));
   };
 
   // Subscribe to all non-closed tasks with a project
@@ -56,9 +63,9 @@ export default function Page() {
     await dataSource.setLocalSettings(localSettings);
   };
 
-  const groupTasksByProject = (tasks: Task[]) => {
+  const groupTasksByProject = async (tasks: Task[]) => {
     const filteredTasks = filterTasks(tasks);
-    const sortedTasks = sortTasks(filteredTasks);
+    const sortedTasks = await sortTasks(filteredTasks);
 
     const grouped = sortedTasks.reduce(
       (acc, task) => {

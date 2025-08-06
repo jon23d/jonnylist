@@ -2,30 +2,31 @@ import React from 'react';
 import { Badge } from '@mantine/core';
 import { Task, TaskPriority, TaskStatus } from '@/data/documentTypes/Task';
 
-type Coefficient = (task: Task) => number;
+export type BaseCoefficients = {
+  nextTag: number;
+  nearDueDate: number;
+  highPriority: number;
+  mediumPriority: number;
+  lowPriority: number;
+  startedStatus: number;
+  hasDescription: number;
+  hasTags: number;
+  hasProject: number;
+  ageCoefficient: number;
+};
 
-const coefficients: Coefficient[] = [
-  // Is there a next tag?
-  (task) => (task.tags?.includes('next') ? 15.0 : 0),
-  // Is the due date near or past?
-  (task) => (nearOrPastDueDate(task.dueDate) ? 12.0 : 0),
-  // Is the task high priority?
-  (task) => (task.priority === TaskPriority.High ? 6.0 : 0),
-  // Is the task medium priority?
-  (task) => (task.priority === TaskPriority.Medium ? 3.9 : 0),
-  // Is the task low priority?
-  (task) => (task.priority === TaskPriority.Low ? 1.8 : 0),
-  // Has the task begun?
-  (task) => (task.status === TaskStatus.Started ? 8.0 : 0),
-  // Does it have a description?
-  (task) => (task.description ? 1.0 : 0),
-  // Does it have tags?
-  (task) => (task.tags?.length ? 1.0 : 0),
-  // Does it have a project?
-  (task) => (task.project ? 1.0 : 0),
-  // What about its age?
-  (task) => 2.0 * (getAgeInDays(task.createdAt) / 365),
-];
+export const defaultCoefficients: BaseCoefficients = {
+  nextTag: 15.0,
+  nearDueDate: 12.0,
+  highPriority: 6.0,
+  mediumPriority: 3.9,
+  lowPriority: 1.8,
+  startedStatus: 8.0,
+  hasDescription: 1.0,
+  hasTags: 1.0,
+  hasProject: 1.0,
+  ageCoefficient: 2.0,
+};
 
 /*
 const coefficients = {
@@ -49,17 +50,13 @@ const nearOrPastDueDate = (date: string | undefined): boolean => {
     return false;
   }
 
+  // Return true if the due date is within the next 5 days or has already passed
   const now = new Date();
   const dueDate = new Date(date);
+  const fiveDaysFromNow = new Date(now);
+  fiveDaysFromNow.setDate(now.getDate() + 5);
 
-  const fiveDaysAgo = new Date(now);
-  fiveDaysAgo.setDate(now.getDate() - 5);
-
-  return dueDate >= fiveDaysAgo;
-};
-
-export const getUrgency = (task: Task): number => {
-  return coefficients.reduce((total, coefficient) => total + coefficient(task), 0);
+  return dueDate <= fiveDaysFromNow;
 };
 
 export const describeRecurrence = (task: Task): string => {

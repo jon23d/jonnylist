@@ -21,8 +21,9 @@ describe('SyncServerForm', () => {
 
   it('Does not call initializeSync in test', async () => {
     const { dataSource, initializeSyncSpy } = getDataSource();
+    const localSettings = localSettingsFactory();
 
-    renderWithDataSource(<SyncServerForm />, dataSource);
+    renderWithDataSource(<SyncServerForm localSettings={localSettings} />, dataSource);
 
     expect(initializeSyncSpy).toHaveBeenCalledTimes(1);
   });
@@ -36,19 +37,15 @@ describe('SyncServerForm', () => {
     });
     await dataSource.setLocalSettings(localSettings);
 
-    renderWithDataSource(<SyncServerForm />, dataSource);
+    renderWithDataSource(<SyncServerForm localSettings={localSettings} />, dataSource);
 
-    await waitFor(() => {
-      expect(screen.getByRole('textbox', { name: /server url/i })).toHaveValue(
-        'https://example.com'
-      );
-      expect(screen.getByRole('textbox', { name: /access token/i })).toHaveValue('test-token');
-    });
+    expect(screen.getByRole('textbox', { name: /server url/i })).toHaveValue('https://example.com');
+    expect(screen.getByRole('textbox', { name: /access token/i })).toHaveValue('test-token');
   });
 
   it('Validates URL and access token', async () => {
     const { dataSource } = getDataSource();
-    renderWithDataSource(<SyncServerForm />, dataSource);
+    renderWithDataSource(<SyncServerForm localSettings={localSettingsFactory()} />, dataSource);
 
     const serverUrlInput = screen.getByRole('textbox', { name: /server url/i });
     const submitButton = screen.getByRole('button', { name: /log in/i });
@@ -65,7 +62,7 @@ describe('SyncServerForm', () => {
 
   it('Updates local settings on form submission', async () => {
     const { dataSource, initializeSyncSpy } = getDataSource();
-    renderWithDataSource(<SyncServerForm />, dataSource);
+    renderWithDataSource(<SyncServerForm localSettings={localSettingsFactory()} />, dataSource);
 
     const serverUrlInput = screen.getByRole('textbox', { name: /server url/i });
     const accessTokenInput = screen.getByRole('textbox', { name: /access token/i });
@@ -94,26 +91,13 @@ describe('SyncServerForm', () => {
     expect(initializeSyncSpy).toHaveBeenCalledTimes(2);
   });
 
-  it('Handles errors when loading local settings', async () => {
-    const { dataSource } = getDataSource();
-    jest
-      .spyOn(dataSource, 'getLocalSettings')
-      .mockRejectedValue(new Error('Failed to load settings'));
-
-    renderWithDataSource(<SyncServerForm />, dataSource);
-
-    await waitFor(() => {
-      expect(screen.getByText(/failed to load sync server settings/i)).toBeInTheDocument();
-    });
-  });
-
   it('Handles errors when updating local settings', async () => {
     const { dataSource } = getDataSource();
     jest
       .spyOn(dataSource, 'setLocalSettings')
       .mockRejectedValue(new Error('Failed to update settings'));
 
-    renderWithDataSource(<SyncServerForm />, dataSource);
+    renderWithDataSource(<SyncServerForm localSettings={localSettingsFactory()} />, dataSource);
 
     const serverUrlInput = screen.getByRole('textbox', { name: /server url/i });
     const accessTokenInput = screen.getByRole('textbox', { name: /access token/i });
@@ -133,7 +117,7 @@ describe('SyncServerForm', () => {
 
   it('Initializes sync when form is submitted with values', async () => {
     const { dataSource, initializeSyncSpy } = getDataSource();
-    renderWithDataSource(<SyncServerForm />, dataSource);
+    renderWithDataSource(<SyncServerForm localSettings={localSettingsFactory()} />, dataSource);
 
     // This happens in the context
     expect(initializeSyncSpy).toHaveBeenCalledTimes(1);
@@ -155,7 +139,7 @@ describe('SyncServerForm', () => {
 
   it('Disables the logout button when form is empty', async () => {
     const { dataSource } = getDataSource();
-    renderWithDataSource(<SyncServerForm />, dataSource);
+    renderWithDataSource(<SyncServerForm localSettings={localSettingsFactory()} />, dataSource);
 
     const logoutButton = screen.getByRole('button', { name: /log out/i });
 
@@ -170,12 +154,7 @@ describe('SyncServerForm', () => {
     });
     await dataSource.setLocalSettings(localSettings);
 
-    renderWithDataSource(<SyncServerForm />, dataSource);
-    const serverUrlInput = screen.getByRole('textbox', { name: /server url/i });
-
-    await waitFor(() => {
-      expect(serverUrlInput).toHaveValue('https://example.com');
-    });
+    renderWithDataSource(<SyncServerForm localSettings={localSettings} />, dataSource);
 
     const logoutButton = screen.getByRole('button', { name: /log out/i });
 
@@ -199,7 +178,7 @@ describe('SyncServerForm', () => {
       .spyOn(dataSource, 'getLocalSettings')
       .mockResolvedValue(localSettings);
 
-    renderWithDataSource(<SyncServerForm />, dataSource);
+    renderWithDataSource(<SyncServerForm localSettings={localSettings} />, dataSource);
 
     const logoutButton = screen.getByRole('button', { name: /log out/i });
 

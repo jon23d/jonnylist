@@ -11,16 +11,18 @@ import ViewTypeSelector from '@/components/Tasks/ViewTypeSelector';
 import {
   useContextRepository,
   useDataSource,
+  usePreferencesRepository,
   useTaskRepository,
 } from '@/contexts/DataSourceContext';
 import { Context } from '@/data/documentTypes/Context';
 import { Task, TaskFilter, TaskStatus } from '@/data/documentTypes/Task';
 import { Notifications } from '@/helpers/Notifications';
-import { getUrgency } from '@/helpers/Tasks';
+import { UrgencyCalculator } from '@/helpers/UrgencyCalculator';
 
 export default function Page() {
   const router = useRouter();
   const dataSource = useDataSource();
+  const preferencesRepository = usePreferencesRepository();
   const taskRepository = useTaskRepository();
   const contextRepository = useContextRepository();
   const [visibleColumns, setVisibleColumns] = useState<string[]>([
@@ -37,13 +39,15 @@ export default function Page() {
   const [status, setStatus] = useState('pending');
   const [view, setView] = useState<'list' | 'table'>('table');
 
-  const sortTasks = (tasks: Task[]): Task[] => {
+  const sortTasks = async (tasks: Task[]): Promise<Task[]> => {
     if (status === 'completed' || status === 'cancelled') {
       // sort by updatedAt desc
       return tasks.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
     }
     // sort by task urgency
-    return tasks.sort((a, b) => getUrgency(b) - getUrgency(a));
+    const preferences = await preferencesRepository.getPreferences();
+    const calculator = new UrgencyCalculator(preferences);
+    return tasks.sort((a, b) => calculator.getUrgency(b) - calculator.getUrgency(a));
   };
 
   // If there is a context in the URL, fetch it and set the task filter
@@ -90,7 +94,7 @@ export default function Page() {
         statuses,
         ...taskFilter,
       },
-      (tasks) => setTasks(sortTasks(tasks))
+      async (tasks) => setTasks(await sortTasks(tasks))
     );
   }, [status, taskFilter]);
 
