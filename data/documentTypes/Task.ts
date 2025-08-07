@@ -88,3 +88,7 @@ export type NewTask = Omit<
   Task,
   keyof Common | 'type' | 'createdAt' | 'updatedAt' | 'notes' | 'recurrenceTemplateId'
 >;
+
+export interface TaskWithUrgency extends Task {
+  urgency: number;
+}

@@ -7,14 +7,14 @@ import {
   usePreferencesRepository,
   useTaskRepository,
 } from '@/contexts/DataSourceContext';
-import { Task, TaskStatus } from '@/data/documentTypes/Task';
+import { Task, TaskStatus, TaskWithUrgency } from '@/data/documentTypes/Task';
 import { UrgencyCalculator } from '@/helpers/UrgencyCalculator';
 
 export default function Page() {
   const dataSource = useDataSource();
   const preferencesRepository = usePreferencesRepository();
   const taskRepository = useTaskRepository();
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<TaskWithUrgency[]>([]);
   const [visibleColumns, setVisibleColumns] = useState<string[]>([
     'Active',
     'Tags',
@@ -23,11 +23,19 @@ export default function Page() {
     'Due Date',
   ]);
 
-  const sortTasks = async (tasks: Task[]): Promise<Task[]> => {
+  const sortTasks = async (tasks: Task[]): Promise<TaskWithUrgency[]> => {
+    const tasksWithUrgency = await augmentTasksWithUrgency(tasks);
+    // sort by task urgency
+    return tasksWithUrgency.sort((a, b) => b.urgency - a.urgency);
+  };
+
+  const augmentTasksWithUrgency = async (tasks: Task[]): Promise<TaskWithUrgency[]> => {
     const preferences = await preferencesRepository.getPreferences();
     const calculator = new UrgencyCalculator(preferences);
-    // sort by task urgency
-    return tasks.sort((a, b) => calculator.getUrgency(b) - calculator.getUrgency(a));
+    return tasks.map((task) => ({
+      ...task,
+      urgency: calculator.getUrgency(task),
+    }));
   };
 
   // Subscribe to due and overdue tasks

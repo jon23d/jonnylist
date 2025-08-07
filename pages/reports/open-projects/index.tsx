@@ -7,14 +7,14 @@ import {
   usePreferencesRepository,
   useTaskRepository,
 } from '@/contexts/DataSourceContext';
-import { Task, TaskStatus } from '@/data/documentTypes/Task';
+import { Task, TaskStatus, TaskWithUrgency } from '@/data/documentTypes/Task';
 import { UrgencyCalculator } from '@/helpers/UrgencyCalculator';
 
 export default function Page() {
   const dataSource = useDataSource();
   const preferencesRepository = usePreferencesRepository();
   const taskRepository = useTaskRepository();
-  const [groupedTasks, setGroupedTasks] = useState<Record<string, Task[]>>({});
+  const [groupedTasks, setGroupedTasks] = useState<Record<string, TaskWithUrgency[]>>({});
   const [visibleColumns, setVisibleColumns] = useState<string[]>([
     'Active',
     'Tags',
@@ -27,11 +27,19 @@ export default function Page() {
     return tasks.filter((task) => !!task.project);
   };
 
-  const sortTasks = async (tasks: Task[]): Promise<Task[]> => {
+  const sortTasks = async (tasks: Task[]): Promise<TaskWithUrgency[]> => {
+    const tasksWithUrgency = await augmentTasksWithUrgency(tasks);
+    // sort by task urgency
+    return tasksWithUrgency.sort((a, b) => b.urgency - a.urgency);
+  };
+
+  const augmentTasksWithUrgency = async (tasks: Task[]): Promise<TaskWithUrgency[]> => {
     const preferences = await preferencesRepository.getPreferences();
     const calculator = new UrgencyCalculator(preferences);
-    // sort by task urgency
-    return tasks.sort((a, b) => calculator.getUrgency(b) - calculator.getUrgency(a));
+    return tasks.map((task) => ({
+      ...task,
+      urgency: calculator.getUrgency(task),
+    }));
   };
 
   // Subscribe to all non-closed tasks with a project
@@ -77,7 +85,7 @@ export default function Page() {
         }
         return acc;
       },
-      {} as Record<string, Task[]>
+      {} as Record<string, TaskWithUrgency[]>
     );
 
     setGroupedTasks(grouped);
@@ -114,9 +122,9 @@ export default function Page() {
       </Group>
       <Tabs defaultValue={Object.keys(groupedTasks)[0]}>
         <Tabs.List>
-          {Object.entries(groupedTasks).map(([project, _tasks]) => (
+          {Object.entries(groupedTasks).map(([project, tasks]) => (
             <Tabs.Tab key={project} value={project}>
-              {project}
+              {project} ({tasks.length})
             </Tabs.Tab>
           ))}
         </Tabs.List>

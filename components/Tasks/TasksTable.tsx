@@ -1,15 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Badge, Button, Center, Checkbox, Modal, Table, Text } from '@mantine/core';
 import { useDisclosure, useViewportSize } from '@mantine/hooks';
 import BulkEditor from '@/components/Tasks/BulkEditor';
 import EditTaskForm from '@/components/Tasks/EditTaskForm';
 import StatusChanger from '@/components/Tasks/StatusChanger';
 import classes from '@/components/Tasks/Tasks.module.css';
-import { usePreferencesRepository } from '@/contexts/DataSourceContext';
-import { Task } from '@/data/documentTypes/Task';
+import { Task, TaskWithUrgency } from '@/data/documentTypes/Task';
 import { Notifications } from '@/helpers/Notifications';
 import { describeRecurrence, getAgeInDays, priorityBadge } from '@/helpers/Tasks';
-import { UrgencyCalculator } from '@/helpers/UrgencyCalculator';
 
 export default function TasksTable({
   visibleColumns,
@@ -18,33 +16,15 @@ export default function TasksTable({
   tasksAreRecurring,
 }: {
   visibleColumns: string[];
-  tasks: Task[];
+  tasks: TaskWithUrgency[];
   tasksAreCompletedOrCancelled?: boolean;
   tasksAreRecurring?: boolean;
 }) {
-  const preferencesRepository = usePreferencesRepository();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [editorOpened, { open, close }] = useDisclosure(false);
   const { height: viewportHeight, width: viewportWidth } = useViewportSize();
   const [bulkEditorOpened, { close: closeBulkEditor, open: openBulkEditor }] = useDisclosure();
   const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
-  const [urgencies, setUrgencies] = useState<Record<string, number>>({});
-
-  useEffect(() => {
-    const getUrgencies = async () => {
-      const preferences = await preferencesRepository.getPreferences();
-      const calculator = new UrgencyCalculator(preferences);
-      const urgencies: Record<string, number> = tasks.reduce(
-        (acc, task) => {
-          acc[task._id] = calculator.getUrgency(task);
-          return acc;
-        },
-        {} as Record<string, number>
-      );
-      setUrgencies(urgencies);
-    };
-    getUrgencies();
-  });
 
   const showEditDialog = (task: Task) => {
     setSelectedTask(task);
@@ -154,9 +134,7 @@ export default function TasksTable({
                     {getAgeInDays(task.createdAt)} days
                   </Table.Td>
                 ) : null}
-                {visibleColumns.includes('Urgency') ? (
-                  <Table.Td>{urgencies[task._id]}</Table.Td>
-                ) : null}
+                {visibleColumns.includes('Urgency') ? <Table.Td>{task.urgency}</Table.Td> : null}
                 {tasksAreCompletedOrCancelled ? (
                   <Table.Td onClick={() => showEditDialog(task)}>
                     {task.updatedAt.toLocaleDateString()}

@@ -350,7 +350,7 @@ describe('TaskForm', () => {
     const addNoteButton = screen.getByRole('button', { name: 'Add Note' });
     await userEvent.click(addNoteButton);
 
-    expect(handleSubmit).toHaveBeenCalled();
+    expect(handleSubmit).toHaveBeenCalledWith();
   });
 
   it('Should not call handleSubmit when the notes are added to a new task', async () => {

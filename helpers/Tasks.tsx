@@ -1,6 +1,8 @@
 import React from 'react';
 import { Badge } from '@mantine/core';
-import { Task, TaskPriority, TaskStatus } from '@/data/documentTypes/Task';
+import { Preferences } from '@/data/documentTypes/Preferences';
+import { Task, TaskPriority, TaskWithUrgency } from '@/data/documentTypes/Task';
+import { UrgencyCalculator } from '@/helpers/UrgencyCalculator';
 
 export type BaseCoefficients = {
   nextTag: number;
@@ -43,20 +45,6 @@ export const getAgeInDays = (createdAt: Date): number => {
   const ageInDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
   return ageInDays <= 365 ? ageInDays : 365;
-};
-
-const nearOrPastDueDate = (date: string | undefined): boolean => {
-  if (!date) {
-    return false;
-  }
-
-  // Return true if the due date is within the next 5 days or has already passed
-  const now = new Date();
-  const dueDate = new Date(date);
-  const fiveDaysFromNow = new Date(now);
-  fiveDaysFromNow.setDate(now.getDate() + 5);
-
-  return dueDate <= fiveDaysFromNow;
 };
 
 export const describeRecurrence = (task: Task): string => {
