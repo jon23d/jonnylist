@@ -10,6 +10,8 @@ export class UrgencyCalculator {
       ...defaultCoefficients,
       ...preferences.coefficients,
     };
+
+    console.log(this.coefficients);
   }
 
   getUrgency(task: Task): number {

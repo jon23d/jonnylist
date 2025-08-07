@@ -7,6 +7,10 @@ import { Logger } from '@/helpers/Logger';
 import { Notifications } from '@/helpers/Notifications';
 import { defaultCoefficients } from '@/helpers/Tasks';
 
+const isPresent = (value: string | number): string | null => {
+  return value === '' ? 'Must be numeric' : null;
+};
+
 export default function CoefficientsForm({ preferences }: { preferences: Preferences }) {
   const preferencesRepository = usePreferencesRepository();
 
@@ -16,16 +20,16 @@ export default function CoefficientsForm({ preferences }: { preferences: Prefere
       ...preferences.coefficients,
     },
     validate: {
-      /*nextTag: (value) => (parseFloat(value) !== value ? 'Must be numeric' : null),
-      nearDueDate: (value) => (parseFloat(value) !== value ? 'Must be numeric' : null),
-      highPriority: (value) => (parseFloat(value) !== value ? 'Must be numeric' : null),
-      mediumPriority: (value) => (parseFloat(value) !== value ? 'Must be numeric' : null),
-      lowPriority: (value) => (parseFloat(value) !== value ? 'Must be numeric' : null),
-      startedStatus: (value) => (parseFloat(value) !== value ? 'Must be numeric' : null),
-      hasDescription: (value) => (parseFloat(value) !== value ? 'Must be numeric' : null),
-      hasTags: (value) => (parseFloat(value) !== value ? 'Must be numeric' : null),
-      hasProject: (value) => (parseFloat(value) !== value ? 'Must be numeric' : null),
-      ageCoefficient: (value) => (parseFloat(value) !== value ? 'Must be numeric' : null),*/
+      nextTag: isPresent,
+      nearDueDate: isPresent,
+      highPriority: isPresent,
+      mediumPriority: isPresent,
+      lowPriority: isPresent,
+      startedStatus: isPresent,
+      hasDescription: isPresent,
+      hasTags: isPresent,
+      hasProject: isPresent,
+      ageCoefficient: isPresent,
     },
   });
 
@@ -114,8 +118,8 @@ export default function CoefficientsForm({ preferences }: { preferences: Prefere
               description="Coefficient based on task age in days. Default 2"
             />
           </Stack>
-          <Button onClick={resetToDefaults}>Reset to defaults</Button>
           <Button type="submit">Save Coefficients</Button>
+          <Button onClick={resetToDefaults}>Reset to defaults</Button>
         </SimpleGrid>
       </form>
     </>
