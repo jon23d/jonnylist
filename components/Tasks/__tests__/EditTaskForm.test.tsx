@@ -3,7 +3,7 @@ import EditTaskForm from '@/components/Tasks/EditTaskForm';
 import { TaskPriority, TaskStatus } from '@/data/documentTypes/Task';
 import { renderWithDataSource, screen, userEvent } from '@/test-utils';
 import { setupTestDatabase } from '@/test-utils/db';
-import { taskWithUrgencyFactory } from '@/test-utils/factories/TaskFactory';
+import { taskFactory } from '@/test-utils/factories/TaskFactory';
 
 const updateTaskMock = jest.fn();
 
@@ -25,7 +25,7 @@ describe('EditTaskForm', () => {
   const { getDataSource } = setupTestDatabase();
 
   it('Saves the task when the form is submitted', async () => {
-    const task = taskWithUrgencyFactory();
+    const task = taskFactory();
     const dataSource = getDataSource();
     renderWithDataSource(<EditTaskForm task={task} handleClose={() => {}} />, dataSource);
 
@@ -82,7 +82,7 @@ describe('EditTaskForm', () => {
   });
 
   it('blurs the active element after saving', async () => {
-    const task = taskWithUrgencyFactory();
+    const task = taskFactory();
     const dataSource = getDataSource();
     renderWithDataSource(<EditTaskForm task={task} handleClose={() => {}} />, dataSource);
 
@@ -90,21 +90,5 @@ describe('EditTaskForm', () => {
     await userEvent.click(saveButton);
 
     expect(document.activeElement).not.toBe(saveButton);
-  });
-
-  it('Does not persist urgency when saving', async () => {
-    const task = taskWithUrgencyFactory({ urgency: 5.0 });
-    const dataSource = getDataSource();
-    renderWithDataSource(<EditTaskForm task={task} handleClose={() => {}} />, dataSource);
-
-    const saveButton = screen.getByRole('button', { name: /Save task/i });
-    await userEvent.click(saveButton);
-
-    // Assert that updateTask was called without urgency
-    expect(updateTaskMock).toHaveBeenCalledWith(
-      expect.not.objectContaining({
-        urgency: expect.anything(),
-      })
-    );
   });
 });

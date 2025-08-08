@@ -97,17 +97,8 @@ export default function EditTaskForm({
         recurrence = undefined;
       }
 
-      // strip urgency from task
-      let taskWithoutUrgency: Task;
-      if ('urgency' in task) {
-        const { urgency, ...rest } = task;
-        taskWithoutUrgency = rest;
-      } else {
-        taskWithoutUrgency = task;
-      }
-
       await taskRepository.updateTask({
-        ...taskWithoutUrgency,
+        ...task,
         ...form.getValues(),
         status,
         recurrence,

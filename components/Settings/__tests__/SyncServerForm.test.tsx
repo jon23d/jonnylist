@@ -134,7 +134,9 @@ describe('SyncServerForm', () => {
     await userEvent.click(submitButton);
 
     // And now it happens again!
-    expect(initializeSyncSpy).toHaveBeenCalledTimes(2);
+    await waitFor(() => {
+      expect(initializeSyncSpy).toHaveBeenCalledTimes(2);
+    });
   });
 
   it('Disables the logout button when form is empty', async () => {

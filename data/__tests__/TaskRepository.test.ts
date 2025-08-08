@@ -57,6 +57,32 @@ describe('TaskRepository', () => {
     expect(addedTask.tags).toEqual(['tag1']);
   });
 
+  test('addTask sets status to waiting if waitUntil is set', async () => {
+    const database = getDb();
+    const repository = new TaskRepository(database);
+    const newTask = taskFactory({
+      waitUntil: '2024-01-01',
+    });
+
+    const addedTask = await repository.addTask(newTask);
+
+    expect(addedTask.status).toBe(TaskStatus.Waiting);
+  });
+
+  test('updateTask sets status to waiting if waitUntil is set', async () => {
+    const database = getDb();
+    const repository = new TaskRepository(database);
+    const newTask = taskFactory();
+    const task = await repository.addTask(newTask);
+
+    const updatedTask = await repository.updateTask({
+      ...task,
+      waitUntil: '2024-01-01',
+    });
+
+    expect(updatedTask.status).toBe(TaskStatus.Waiting);
+  });
+
   test('updateTask should clean tags', async () => {
     const database = getDb();
     const repository = new TaskRepository(database);
@@ -85,6 +111,20 @@ describe('TaskRepository', () => {
     expect(tasks).toHaveLength(1);
     expect(tasks[0].project).toBe('county domination');
     expect(tasks[0].updatedAt.getTime()).toBeGreaterThanOrEqual(timeAfterUpdate.getTime());
+  });
+
+  test('updateTask should remove urgency from the task prior to saving', async () => {
+    const database = getDb();
+    const repository = new TaskRepository(database);
+    const newTask = taskFactory();
+
+    const task = await repository.addTask(newTask);
+
+    // @ts-ignore
+    const updatedTask = await repository.updateTask({ ...task, title: 'Updated Task', urgency: 5 });
+
+    // @ts-ignore
+    expect(updatedTask.urgency).toBeUndefined();
   });
 
   test('UpdateTask should return the task with the new revision', async () => {

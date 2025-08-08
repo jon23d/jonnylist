@@ -76,7 +76,7 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
 
   const handleSave = async () => {
     try {
-      let status = form.values.waitUntil ? TaskStatus.Waiting : form.values.status;
+      let status = form.values.status;
 
       // Clean up the recurrence object to remove unused values
       let recurrence: Recurrence | undefined;
