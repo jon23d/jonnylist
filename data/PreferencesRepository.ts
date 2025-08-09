@@ -39,10 +39,13 @@ export class PreferencesRepository implements Repository {
    *
    * @param preferences
    */
-  async setPreferences(preferences: Preferences): Promise<void> {
+  async setPreferences(preferences: Preferences): Promise<Preferences> {
     try {
       Logger.info('Setting preferences');
-      await this.db.put<Preferences>(preferences);
+
+      const response = await this.db.put<Preferences>(preferences);
+
+      return { ...preferences, _rev: response.rev };
     } catch (error) {
       Logger.error('Error setting preferences:', error);
       throw error; // Re-throw to handle it in the calling code

@@ -64,4 +64,16 @@ describe('PreferencesRepository', () => {
     const updatedPreferences = await preferencesRepository.getPreferences();
     expect(updatedPreferences.lastSelectedContext).toBe('poo-context');
   });
+
+  test('setPreferences should return the updated preferences', async () => {
+    const preferencesRepository = new PreferencesRepository(getDb());
+    const newPreferences = preferencesFactory({
+      lastSelectedContext: 'bar-context',
+    });
+
+    const updatedPreferences: Preferences =
+      await preferencesRepository.setPreferences(newPreferences);
+
+    expect(updatedPreferences._rev).not.toBe(newPreferences._rev);
+  });
 });

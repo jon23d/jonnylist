@@ -13,11 +13,12 @@ const isPresent = (value: string | number): string | null => {
 
 export default function CoefficientsForm({ preferences }: { preferences: Preferences }) {
   const preferencesRepository = usePreferencesRepository();
+  const [dbPreferences, setDbPreferences] = React.useState<Preferences>(preferences);
 
   const form = useForm({
     initialValues: {
       ...defaultCoefficients,
-      ...preferences.coefficients,
+      ...dbPreferences.coefficients,
     },
     validate: {
       nextTag: isPresent,
@@ -35,12 +36,13 @@ export default function CoefficientsForm({ preferences }: { preferences: Prefere
 
   const handleSubmit = async () => {
     try {
-      await preferencesRepository.setPreferences({
-        ...preferences,
+      const updatedPreferences = await preferencesRepository.setPreferences({
+        ...dbPreferences,
         coefficients: {
           ...form.values,
         },
       });
+      setDbPreferences(updatedPreferences);
       Notifications.showQuickSuccess('Updated coefficients');
     } catch (error) {
       Logger.error('Error persisting coefficients', error);
