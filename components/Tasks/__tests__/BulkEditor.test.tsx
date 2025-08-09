@@ -4,6 +4,15 @@ import { renderWithDataSource, screen, userEvent, waitFor } from '@/test-utils';
 import { setupTestDatabase } from '@/test-utils/db';
 import { taskFactory } from '@/test-utils/factories/TaskFactory';
 
+const updateTaskMock = jest.fn();
+const mockTaskRepository = {
+  updateTask: updateTaskMock,
+};
+jest.mock('@/contexts/DataSourceContext', () => ({
+  ...jest.requireActual('@/contexts/DataSourceContext'),
+  useTaskRepository: () => mockTaskRepository,
+}));
+
 describe('BulkEditor', () => {
   const { getDataSource } = setupTestDatabase();
   const onSave = jest.fn();
@@ -30,8 +39,6 @@ describe('BulkEditor', () => {
   });
 
   it('Handles updating priority', async () => {
-    const taskRepository = getDataSource().getTaskRepository();
-
     renderWithDataSource(
       <BulkEditor tasks={tasks} onSave={onSave} onCancel={onCancel} />,
       getDataSource()
@@ -44,17 +51,16 @@ describe('BulkEditor', () => {
     const saveButton = screen.getByRole('button', { name: 'Update tasks' });
     await userEvent.click(saveButton);
 
-    await waitFor(() => expect(onSave).toHaveBeenCalled());
-
-    const updatedTasks = await taskRepository.getTasks({});
-
-    expect(updatedTasks[0].priority).toEqual(TaskPriority.High);
-    expect(updatedTasks[1].priority).toEqual(TaskPriority.High);
+    expect(updateTaskMock).toHaveBeenCalledTimes(2);
+    expect(updateTaskMock.mock.calls).toEqual(
+      expect.arrayContaining([
+        [expect.objectContaining({ _id: 'task-1', priority: TaskPriority.High })],
+        [expect.objectContaining({ _id: 'task-2', priority: TaskPriority.High })],
+      ])
+    );
   });
 
   it('Handles updating status', async () => {
-    const taskRepository = getDataSource().getTaskRepository();
-
     renderWithDataSource(
       <BulkEditor tasks={tasks} onSave={onSave} onCancel={onCancel} />,
       getDataSource()
@@ -67,17 +73,16 @@ describe('BulkEditor', () => {
     const saveButton = screen.getByRole('button', { name: 'Update tasks' });
     await userEvent.click(saveButton);
 
-    await waitFor(() => expect(onSave).toHaveBeenCalled());
-
-    const updatedTasks = await taskRepository.getTasks({});
-
-    expect(updatedTasks[0].status).toEqual(TaskStatus.Cancelled);
-    expect(updatedTasks[1].status).toEqual(TaskStatus.Cancelled);
+    expect(updateTaskMock).toHaveBeenCalledTimes(2);
+    expect(updateTaskMock.mock.calls).toEqual(
+      expect.arrayContaining([
+        [expect.objectContaining({ _id: 'task-1', status: TaskStatus.Cancelled })],
+        [expect.objectContaining({ _id: 'task-2', status: TaskStatus.Cancelled })],
+      ])
+    );
   });
 
   it('Handles clearing project', async () => {
-    const taskRepository = getDataSource().getTaskRepository();
-
     renderWithDataSource(
       <BulkEditor tasks={tasks} onSave={onSave} onCancel={onCancel} />,
       getDataSource()
@@ -88,17 +93,17 @@ describe('BulkEditor', () => {
 
     const saveButton = screen.getByRole('button', { name: 'Update tasks' });
     await userEvent.click(saveButton);
-    await waitFor(() => expect(onSave).toHaveBeenCalled());
 
-    const updatedTasks = await taskRepository.getTasks({});
-
-    expect(updatedTasks[0].project).toEqual('');
-    expect(updatedTasks[1].project).toEqual('');
+    expect(updateTaskMock).toHaveBeenCalledTimes(2);
+    expect(updateTaskMock.mock.calls).toEqual(
+      expect.arrayContaining([
+        [expect.objectContaining({ _id: 'task-1', project: '' })],
+        [expect.objectContaining({ _id: 'task-2', project: '' })],
+      ])
+    );
   });
 
   it('Handles setting project', async () => {
-    const taskRepository = getDataSource().getTaskRepository();
-
     renderWithDataSource(
       <BulkEditor tasks={tasks} onSave={onSave} onCancel={onCancel} />,
       getDataSource()
@@ -109,45 +114,17 @@ describe('BulkEditor', () => {
 
     const saveButton = screen.getByRole('button', { name: 'Update tasks' });
     await userEvent.click(saveButton);
-    await waitFor(() => expect(onSave).toHaveBeenCalled());
 
-    const updatedTasks = await taskRepository.getTasks({});
-
-    expect(updatedTasks[0].project).toEqual('newProject');
-    expect(updatedTasks[1].project).toEqual('newProject');
-  });
-
-  it('Handles setting waitUntil', async () => {
-    return;
-    // @ TODO Come back to this when I'm not on a plane. How does one test
-    // the DatePickerInput?
-    const taskRepository = getDataSource().getTaskRepository();
-
-    renderWithDataSource(
-      <BulkEditor tasks={tasks} onSave={onSave} onCancel={onCancel} />,
-      getDataSource()
+    expect(updateTaskMock).toHaveBeenCalledTimes(2);
+    expect(updateTaskMock.mock.calls).toEqual(
+      expect.arrayContaining([
+        [expect.objectContaining({ _id: 'task-1', project: 'newProject' })],
+        [expect.objectContaining({ _id: 'task-2', project: 'newProject' })],
+      ])
     );
-
-    const waitUntilInput = screen.getByRole('textbox', { name: 'Wait Until' });
-    await userEvent.type(waitUntilInput, '03/15/2026');
-
-    const saveButton = screen.getByRole('button', { name: 'Update tasks' });
-    await userEvent.click(saveButton);
-    await waitFor(() => expect(onSave).toHaveBeenCalled());
-
-    const updatedTasks = await taskRepository.getTasks({});
-
-    await waitFor(() => expect(onCancel).toHaveBeenCalled());
-
-    expect(updatedTasks[0].waitUntil).toEqual('2026-03-15');
-    expect(updatedTasks[0].status).toEqual(TaskStatus.Waiting);
-    expect(updatedTasks[1].waitUntil).toEqual('2026-03-15');
-    expect(updatedTasks[1].status).toEqual(TaskStatus.Waiting);
   });
 
   it('Handles adding tags', async () => {
-    const taskRepository = getDataSource().getTaskRepository();
-
     renderWithDataSource(
       <BulkEditor tasks={tasks} onSave={onSave} onCancel={onCancel} />,
       getDataSource()
@@ -158,17 +135,17 @@ describe('BulkEditor', () => {
 
     const saveButton = screen.getByRole('button', { name: 'Update tasks' });
     await userEvent.click(saveButton);
-    await waitFor(() => expect(onSave).toHaveBeenCalled());
 
-    const updatedTasks = await taskRepository.getTasks({});
-
-    expect(updatedTasks[0].tags).toEqual(['tag1', 'tag2', 'tag4']);
-    expect(updatedTasks[1].tags).toEqual(['tag2', 'tag3', 'tag4']);
+    expect(updateTaskMock).toHaveBeenCalledTimes(2);
+    expect(updateTaskMock.mock.calls).toEqual(
+      expect.arrayContaining([
+        [expect.objectContaining({ _id: 'task-1', tags: ['tag1', 'tag2', 'tag4'] })],
+        [expect.objectContaining({ _id: 'task-2', tags: ['tag2', 'tag3', 'tag4'] })],
+      ])
+    );
   });
 
   it('Handles removing tags', async () => {
-    const taskRepository = getDataSource().getTaskRepository();
-
     renderWithDataSource(
       <BulkEditor tasks={tasks} onSave={onSave} onCancel={onCancel} />,
       getDataSource()
@@ -179,12 +156,14 @@ describe('BulkEditor', () => {
 
     const saveButton = screen.getByRole('button', { name: 'Update tasks' });
     await userEvent.click(saveButton);
-    await waitFor(() => expect(onSave).toHaveBeenCalled());
 
-    const updatedTasks = await taskRepository.getTasks({});
-
-    expect(updatedTasks[0].tags).toEqual(['tag1']);
-    expect(updatedTasks[1].tags).toEqual(['tag3']);
+    expect(updateTaskMock).toHaveBeenCalledTimes(2);
+    expect(updateTaskMock.mock.calls).toEqual(
+      expect.arrayContaining([
+        [expect.objectContaining({ _id: 'task-1', tags: ['tag1'] })],
+        [expect.objectContaining({ _id: 'task-2', tags: ['tag3'] })],
+      ])
+    );
   });
 
   it('Calls onSave when update tasks is clicked', async () => {

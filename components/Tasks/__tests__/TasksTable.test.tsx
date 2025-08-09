@@ -3,7 +3,7 @@ import TasksTable from '@/components/Tasks/TasksTable';
 import { Task, TaskPriority } from '@/data/documentTypes/Task';
 import { renderWithDataSource, screen, userEvent } from '@/test-utils';
 import { setupTestDatabase } from '@/test-utils/db';
-import { taskFactory } from '@/test-utils/factories/TaskFactory';
+import { taskWithUrgencyFactory } from '@/test-utils/factories/TaskFactory';
 
 jest.mock('@/helpers/Tasks', () => {
   const actual = jest.requireActual('@/helpers/Tasks');
@@ -74,7 +74,7 @@ describe('TasksTable', () => {
   const { getDataSource } = setupTestDatabase();
 
   const tasks = [
-    taskFactory({
+    taskWithUrgencyFactory({
       _id: 'task-1',
       title: 'taskTitle',
       description: 'aDescription',
@@ -83,6 +83,7 @@ describe('TasksTable', () => {
       priority: TaskPriority.High,
       dueDate: '2024-01-01',
       createdAt: new Date(),
+      urgency: 1.23,
     }),
   ];
 
@@ -93,7 +94,7 @@ describe('TasksTable', () => {
     ['Priority', 'Priority', 'High Priority'],
     ['Due Date', 'Due', '2024-01-01'],
     ['Age', 'Age', '0 days'],
-    ['Urgency', 'Urgency', '123.45'],
+    ['Urgency', 'Urgency', '1.23'],
   ])(
     'Correctly shows column %s when included in visibleColumns prop',
     (columnKey: string, columnHeader: string, valueInTable: string) => {
@@ -115,7 +116,7 @@ describe('TasksTable', () => {
     ['Priority', 'Priority', 'High Priority'],
     ['Due Date', 'Due', '2024-01-01'],
     ['Age', 'Age', '0 days'],
-    ['Urgency', 'Urgency', '123.45'],
+    ['Urgency', 'Urgency', '1.23'],
   ])(
     'Correctly hides column %s when not included in visibleColumns prop',
     (_columnKey: string, columnHeader: string, valueInTable: string) => {
@@ -169,11 +170,13 @@ describe('TasksTable', () => {
         visibleColumns={[]}
         tasks={[
           ...tasks,
-          taskFactory({
+          taskWithUrgencyFactory({
             _id: 'task-2',
+            urgency: 2,
           }),
-          taskFactory({
+          taskWithUrgencyFactory({
             _id: 'task-3',
+            urgency: 3,
           }),
         ]}
       />,

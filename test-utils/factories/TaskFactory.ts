@@ -1,4 +1,4 @@
-import { Task, TaskPriority, TaskStatus } from '@/data/documentTypes/Task';
+import { Task, TaskPriority, TaskStatus, TaskWithUrgency } from '@/data/documentTypes/Task';
 
 export const taskFactory = (data: Partial<Task> = {}): Task => {
   return {
@@ -7,9 +7,10 @@ export const taskFactory = (data: Partial<Task> = {}): Task => {
 
     type: 'task',
     title: data.title || 'A task',
-    description: data.description || 'This is a sample task description.',
+    description:
+      data.description !== undefined ? data.description : 'This is a sample task description.',
     tags: data.tags || [],
-    project: data.project || 'a project',
+    project: data.project !== undefined ? data.project : 'a project',
     status: data.status || TaskStatus.Ready,
     priority: data.priority || TaskPriority.Medium,
     dueDate: data.dueDate || undefined,
@@ -21,4 +22,12 @@ export const taskFactory = (data: Partial<Task> = {}): Task => {
     createdAt: data.createdAt || new Date(),
     updatedAt: data.updatedAt || new Date(),
   };
+};
+
+export const taskWithUrgencyFactory = (
+  data: Partial<Task & { urgency?: number }> = {}
+): TaskWithUrgency => {
+  const task = taskFactory(data);
+  const urgency = data.urgency !== undefined ? data.urgency : 0;
+  return { ...task, urgency };
 };

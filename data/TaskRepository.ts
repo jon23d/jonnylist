@@ -50,6 +50,11 @@ export class TaskRepository implements Repository {
       updatedAt: new Date(),
     };
 
+    // If there is a waitUntil date, set the status to Waiting
+    if (task.waitUntil) {
+      task.status = TaskStatus.Waiting;
+    }
+
     try {
       const response = await this.db.put(task);
       return { ...task, _rev: response.rev }; // Return the task with the revision ID
@@ -84,6 +89,16 @@ export class TaskRepository implements Repository {
       updatedTask.completedAt
     ) {
       delete updatedTask.completedAt;
+    }
+
+    // Strip urgency from the task if it exists
+    if ('urgency' in updatedTask) {
+      delete updatedTask.urgency;
+    }
+
+    // If there is a waitUntil date, set the status to Waiting
+    if (updatedTask.waitUntil) {
+      updatedTask.status = TaskStatus.Waiting;
     }
 
     let response;
@@ -196,7 +211,7 @@ export class TaskRepository implements Repository {
   checkWaitingTasks(): Promise<void> {
     Logger.info('Checking for waiting tasks to update to ready status');
     this.getTasks({ statuses: [TaskStatus.Waiting] })
-      .then((waitingTasks) => {
+      .then(async (waitingTasks) => {
         const now = new Date();
         const tasksToUpdate = waitingTasks.filter((task) => {
           return (
@@ -206,10 +221,8 @@ export class TaskRepository implements Repository {
 
         if (tasksToUpdate.length > 0) {
           Logger.info(`Updating ${tasksToUpdate.length} waiting tasks to ready status`);
-          Promise.resolve(
-            tasksToUpdate.map((task) => {
-              return this.updateTask({ ...task, status: TaskStatus.Ready });
-            })
+          await Promise.all(
+            tasksToUpdate.map((task) => this.updateTask({ ...task, status: TaskStatus.Ready }))
           );
         }
       })

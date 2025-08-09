@@ -3,6 +3,7 @@ import PouchDB from 'pouchdb';
 import { ContextRepository } from '@/data/ContextRepository';
 import { DataSource } from '@/data/DataSource';
 import { DocumentTypes } from '@/data/documentTypes';
+import { PreferencesRepository } from '@/data/PreferencesRepository';
 import { TaskRepository } from '@/data/TaskRepository';
 import { Logger } from '@/helpers/Logger';
 import { Notifications } from '@/helpers/Notifications';
@@ -111,4 +112,9 @@ export const useTaskRepository = (): TaskRepository => {
 export const useContextRepository = (): ContextRepository => {
   const dataSource = useDataSource();
   return dataSource.getContextRepository();
+};
+
+export const usePreferencesRepository = (): PreferencesRepository => {
+  const dataSource = useDataSource();
+  return dataSource.getPreferencesRepository();
 };

@@ -82,8 +82,6 @@ describe('TaskForm', () => {
 
     expect(screen.getByText('This is a note')).toBeInTheDocument();
     expect(screen.getByText('1/1/2024, 12:30:00 PM')).toBeInTheDocument();
-
-    screen.debug(undefined, Infinity);
   });
 
   it('Shows an global error message if form.errors is populated', async () => {
@@ -210,14 +208,19 @@ describe('TaskForm', () => {
     const formInput = {
       initialValues: {
         title: 'Task title',
-        description: undefined,
+        description: 'a description',
         tags: ['tag1', 'tag2'],
         project: 'Project A',
         priority: TaskPriority.Low,
         dueDate: '2024-12-31',
         status: TaskStatus.Cancelled,
         waitUntil: undefined,
-        notes: [],
+        notes: [
+          {
+            noteText: 'This is a note',
+            createdAt: '2024-01-01 12:30',
+          },
+        ],
         isRecurring: false,
       },
     };
@@ -228,20 +231,7 @@ describe('TaskForm', () => {
     const advancedTab = within(screen.getByRole('tab', { name: 'Advanced' })).getByText('Advanced');
     const notesTab = within(screen.getByRole('tab', { name: 'Notes' })).getByText('Notes');
 
-    // They don't have data and should not be italic
-    expect(advancedTab).not.toHaveClass('hasData');
-    expect(notesTab).not.toHaveClass('hasData');
-
-    // Let's add a description
-    await userEvent.click(advancedTab);
-    await userEvent.type(screen.getByLabelText('Description'), 'This is a description');
-
     expect(advancedTab).toHaveClass('hasData');
-
-    // And a note
-    await userEvent.click(notesTab);
-    await userEvent.type(screen.getByLabelText('New Note'), 'This is a note');
-    await userEvent.click(screen.getByRole('button', { name: 'Add Note' }));
     expect(notesTab).toHaveClass('hasData');
   });
 

@@ -4,6 +4,7 @@ import { ContextRepository } from '@/data/ContextRepository';
 import { DocumentTypes } from '@/data/documentTypes';
 import { LocalSettings } from '@/data/documentTypes/LocalSettings';
 import { createDefaultPreferences, Preferences } from '@/data/documentTypes/Preferences';
+import { PreferencesRepository } from '@/data/PreferencesRepository';
 import { TaskRepository } from '@/data/TaskRepository';
 import { Logger } from '@/helpers/Logger';
 import { MigrationManager } from './migrations/MigrationManager';
@@ -19,6 +20,7 @@ export class DataSource {
   private syncHandler: PouchDB.Replication.Sync<{}> | null = null;
   private taskRepository: TaskRepository | null = null;
   private contextRepository: ContextRepository | null = null;
+  private preferencesRepository: PreferencesRepository | null = null;
 
   public onMigrationStatusChange?: (isMigrating: boolean) => void;
 
@@ -83,6 +85,17 @@ export class DataSource {
     }
 
     return this.contextRepository;
+  }
+
+  /**
+   * Create/return the PreferencesRepository singleton
+   */
+  getPreferencesRepository(): PreferencesRepository {
+    if (!this.preferencesRepository) {
+      this.preferencesRepository = new PreferencesRepository(this.db);
+    }
+
+    return this.preferencesRepository;
   }
 
   /**
@@ -174,43 +187,6 @@ export class DataSource {
       await this.migrationManager.runMigrations();
     } finally {
       this.onMigrationStatusChange?.(false);
-    }
-  }
-
-  /**
-   * Fetch the current preferences from the database.
-   * This will return a Preferences object with default values if no preferences are found.
-   */
-  async getPreferences(): Promise<Preferences> {
-    try {
-      return await this.db.get<Preferences>('preferences');
-    } catch (error) {
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'status' in error &&
-        error.status === 404
-      ) {
-        return createDefaultPreferences();
-      }
-      Logger.error('Error fetching preferences:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Set the preferences in the database.
-   * This will update or create the preferences document with the provided values.
-   *
-   * @param preferences
-   */
-  async setPreferences(preferences: Preferences): Promise<void> {
-    try {
-      Logger.info('Setting preferences');
-      await this.db.put<Preferences>(preferences);
-    } catch (error) {
-      Logger.error('Error setting preferences:', error);
-      throw error; // Re-throw to handle it in the calling code
     }
   }
 

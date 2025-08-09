@@ -11,6 +11,16 @@ jest.mock('next/router', () => ({
   }),
 }));
 
+const addTaskMock = jest.fn();
+
+const mockTaskRepository = {
+  addTask: addTaskMock,
+};
+jest.mock('@/contexts/DataSourceContext', () => ({
+  ...jest.requireActual('@/contexts/DataSourceContext'),
+  useTaskRepository: () => mockTaskRepository,
+}));
+
 // The DatePickerInput is not very testable, so we are going to use the DatePicker input in test instead
 jest.mock('@mantine/dates', () => ({
   ...jest.requireActual('@mantine/dates'),
@@ -23,7 +33,6 @@ describe('NewTaskForm', () => {
   it('Saves a new task when the form is submitted', async () => {
     const handleClose = jest.fn();
     const dataSource = getDataSource();
-    const taskRepository = dataSource.getTaskRepository();
 
     renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
 
@@ -53,55 +62,17 @@ describe('NewTaskForm', () => {
     const submitButton = screen.getByRole('button', { name: 'Save Task' });
     await userEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(handleClose).toHaveBeenCalled();
-    });
-
-    const tasks = await taskRepository.getTasks({});
-    expect(tasks).toHaveLength(1);
-    expect(tasks[0].title).toBe('Test Task');
-    expect(tasks[0].description).toBe('This is a test task description.');
-    expect(tasks[0].tags).toStrictEqual(['test-tag', 'another-tag']);
-    expect(tasks[0].priority).toBe(TaskPriority.Low);
-    expect(tasks[0].dueDate).toBe('2026-01-15');
-    expect(tasks[0].status).toBe(TaskStatus.Ready);
-    expect(tasks[0].project).toBe('Test Project');
-  });
-
-  it('Sets the status to waiting when the waitUntil date is present', async () => {
-    const handleClose = jest.fn();
-    const dataSource = getDataSource();
-    const taskRepository = dataSource.getTaskRepository();
-
-    renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
-
-    const titleInput = screen.getByRole('textbox', { name: 'Title' });
-    await userEvent.type(titleInput, 'Test Task');
-
-    const advancedTab = screen.getByRole('tab', { name: 'Advanced' });
-    await userEvent.click(advancedTab);
-
-    const dueDateInput = screen.getByRole('textbox', { name: 'Wait Until' });
-    await userEvent.type(dueDateInput, '03/15/2026');
-
-    const submitButton = screen.getByRole('button', { name: 'Save Task' });
-    await userEvent.click(submitButton);
-
-    await waitFor(
-      () => {
-        expect(handleClose).toHaveBeenCalled();
-      },
-      {
-        timeout: 5000,
-        interval: 100,
-      }
+    expect(addTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Test Task',
+        description: 'This is a test task description.',
+        tags: ['test-tag', 'another-tag'],
+        priority: TaskPriority.Low,
+        dueDate: '2026-01-15',
+        status: TaskStatus.Ready,
+        project: 'Test Project',
+      })
     );
-
-    const tasks = await taskRepository.getTasks({});
-    expect(tasks).toHaveLength(1);
-    expect(tasks[0].title).toBe('Test Task');
-    expect(tasks[0].status).toBe(TaskStatus.Waiting);
-    expect(tasks[0].waitUntil).toBe('2026-03-15');
   });
 
   it('Blurs the active element when the form is submitted', async () => {
@@ -136,7 +107,6 @@ describe('NewTaskForm', () => {
   it('Converts recurrence day of week to number', async () => {
     const handleClose = jest.fn();
     const dataSource = getDataSource();
-    const taskRepository = dataSource.getTaskRepository();
 
     renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
 
@@ -166,22 +136,21 @@ describe('NewTaskForm', () => {
     const submitButton = screen.getByRole('button', { name: 'Save Task' });
     await userEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(handleClose).toHaveBeenCalled();
-    });
-
-    const tasks = await taskRepository.getTasks({});
-    expect(tasks).toHaveLength(1);
-    expect(tasks[0].title).toBe('Recurring Task');
-    expect(tasks[0].recurrence?.interval).toBe(2);
-    expect(tasks[0].recurrence?.frequency).toBe('weekly');
-    expect(tasks[0].recurrence?.dayOfWeek).toBe(2); // strict equality, this must be a number
+    expect(addTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Recurring Task',
+        recurrence: expect.objectContaining({
+          interval: 2,
+          frequency: 'weekly',
+          dayOfWeek: 2,
+        }),
+      })
+    );
   });
 
   it('Converts recurrence day of month to number', async () => {
     const handleClose = jest.fn();
     const dataSource = getDataSource();
-    const taskRepository = dataSource.getTaskRepository();
 
     renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
 
@@ -207,22 +176,21 @@ describe('NewTaskForm', () => {
     const submitButton = screen.getByRole('button', { name: 'Save Task' });
     await userEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(handleClose).toHaveBeenCalled();
-    });
-
-    const tasks = await taskRepository.getTasks({});
-    expect(tasks).toHaveLength(1);
-    expect(tasks[0].title).toBe('Recurring Task');
-    expect(tasks[0].recurrence?.interval).toBe(1);
-    expect(tasks[0].recurrence?.frequency).toBe('monthly');
-    expect(tasks[0].recurrence?.dayOfMonth).toBe(15); // strict equality, this must be a number
+    expect(addTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Recurring Task',
+        recurrence: expect.objectContaining({
+          interval: 1,
+          frequency: 'monthly',
+          dayOfMonth: 15,
+        }),
+      })
+    );
   });
 
   it('Accepts sundays for recurrence day of week', async () => {
     const handleClose = jest.fn();
     const dataSource = getDataSource();
-    const taskRepository = dataSource.getTaskRepository();
 
     renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
 
@@ -252,15 +220,15 @@ describe('NewTaskForm', () => {
     const submitButton = screen.getByRole('button', { name: 'Save Task' });
     await userEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(handleClose).toHaveBeenCalled();
-    });
-
-    const tasks = await taskRepository.getTasks({});
-    expect(tasks).toHaveLength(1);
-    expect(tasks[0].title).toBe('Recurring Task');
-    expect(tasks[0].recurrence?.interval).toBe(2);
-    expect(tasks[0].recurrence?.frequency).toBe('weekly');
-    expect(tasks[0].recurrence?.dayOfWeek).toBe(0); // strict equality, this must be a number
+    expect(addTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Recurring Task',
+        recurrence: expect.objectContaining({
+          interval: 2,
+          frequency: 'weekly',
+          dayOfWeek: 0,
+        }),
+      })
+    );
   });
 });

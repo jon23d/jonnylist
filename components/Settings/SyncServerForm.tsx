@@ -1,11 +1,11 @@
-import { useEffect } from 'react';
 import { Button, Stack, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useDataSource } from '@/contexts/DataSourceContext';
+import { LocalSettings } from '@/data/documentTypes/LocalSettings';
 import { Logger } from '@/helpers/Logger';
 import { Notifications } from '@/helpers/Notifications';
 
-export default function SyncServerForm() {
+export default function SyncServerForm({ localSettings }: { localSettings: LocalSettings }) {
   const dataSource = useDataSource();
 
   const isUrlValid = (url: string) => {
@@ -22,32 +22,14 @@ export default function SyncServerForm() {
     accessToken: string;
   }>({
     initialValues: {
-      serverUrl: '',
-      accessToken: '',
+      serverUrl: localSettings.syncServerUrl || '',
+      accessToken: localSettings.syncServerAccessToken || '',
     },
     validate: {
       serverUrl: (value) => (isUrlValid(value) ? null : 'Server URL is required'),
       accessToken: (value) => (value ? null : 'Access token is required'),
     },
   });
-
-  useEffect(() => {
-    dataSource.getLocalSettings().then(
-      (settings) => {
-        form.setValues({
-          serverUrl: settings.syncServerUrl || '',
-          accessToken: settings.syncServerAccessToken || '',
-        });
-      },
-      (error) => {
-        Logger.error('Failed to load local settings', error);
-        Notifications.showError({
-          title: 'Error',
-          message: 'Failed to load sync server settings. Please try again.',
-        });
-      }
-    );
-  }, [dataSource]);
 
   const handleSubmit = async (values: typeof form.values) => {
     try {

@@ -5,9 +5,9 @@ import BulkEditor from '@/components/Tasks/BulkEditor';
 import EditTaskForm from '@/components/Tasks/EditTaskForm';
 import StatusChanger from '@/components/Tasks/StatusChanger';
 import classes from '@/components/Tasks/Tasks.module.css';
-import { Task } from '@/data/documentTypes/Task';
+import { Task, TaskWithUrgency } from '@/data/documentTypes/Task';
 import { Notifications } from '@/helpers/Notifications';
-import { describeRecurrence, getAgeInDays, getUrgency, priorityBadge } from '@/helpers/Tasks';
+import { describeRecurrence, getAgeInDays, priorityBadge } from '@/helpers/Tasks';
 
 export default function TasksTable({
   visibleColumns,
@@ -16,7 +16,7 @@ export default function TasksTable({
   tasksAreRecurring,
 }: {
   visibleColumns: string[];
-  tasks: Task[];
+  tasks: TaskWithUrgency[];
   tasksAreCompletedOrCancelled?: boolean;
   tasksAreRecurring?: boolean;
 }) {
@@ -134,9 +134,7 @@ export default function TasksTable({
                     {getAgeInDays(task.createdAt)} days
                   </Table.Td>
                 ) : null}
-                {visibleColumns.includes('Urgency') ? (
-                  <Table.Td>{getUrgency(task)}</Table.Td>
-                ) : null}
+                {visibleColumns.includes('Urgency') ? <Table.Td>{task.urgency}</Table.Td> : null}
                 {tasksAreCompletedOrCancelled ? (
                   <Table.Td onClick={() => showEditDialog(task)}>
                     {task.updatedAt.toLocaleDateString()}

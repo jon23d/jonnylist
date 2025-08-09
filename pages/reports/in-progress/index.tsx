@@ -2,14 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { Group, Title } from '@mantine/core';
 import ColumnSelector from '@/components/Tasks/ColumnSelector';
 import TasksTable from '@/components/Tasks/TasksTable';
-import { useDataSource, useTaskRepository } from '@/contexts/DataSourceContext';
-import { Task, TaskStatus } from '@/data/documentTypes/Task';
-import { getUrgency } from '@/helpers/Tasks';
+import {
+  useDataSource,
+  usePreferencesRepository,
+  useTaskRepository,
+} from '@/contexts/DataSourceContext';
+import { Task, TaskStatus, TaskWithUrgency } from '@/data/documentTypes/Task';
+import { UrgencyCalculator } from '@/helpers/UrgencyCalculator';
 
 export default function Page() {
   const dataSource = useDataSource();
+  const preferencesRepository = usePreferencesRepository();
   const taskRepository = useTaskRepository();
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<TaskWithUrgency[]>([]);
   const [visibleColumns, setVisibleColumns] = useState<string[]>([
     'Active',
     'Tags',
@@ -18,9 +23,19 @@ export default function Page() {
     'Due Date',
   ]);
 
-  const sortTasks = (tasks: Task[]): Task[] => {
+  const sortTasks = async (tasks: Task[]): Promise<TaskWithUrgency[]> => {
+    const tasksWithUrgency = await augmentTasksWithUrgency(tasks);
     // sort by task urgency
-    return tasks.sort((a, b) => getUrgency(b) - getUrgency(a));
+    return tasksWithUrgency.sort((a, b) => b.urgency - a.urgency);
+  };
+
+  const augmentTasksWithUrgency = async (tasks: Task[]): Promise<TaskWithUrgency[]> => {
+    const preferences = await preferencesRepository.getPreferences();
+    const calculator = new UrgencyCalculator(preferences);
+    return tasks.map((task) => ({
+      ...task,
+      urgency: calculator.getUrgency(task),
+    }));
   };
 
   // Subscribe to in-progress tasks
@@ -29,7 +44,7 @@ export default function Page() {
       {
         statuses: [TaskStatus.Started],
       },
-      (tasks) => setTasks(sortTasks(tasks))
+      async (tasks) => setTasks(await sortTasks(tasks))
     );
     return unsubscribe;
   }, []);

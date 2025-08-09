@@ -1,19 +1,12 @@
 import { waitFor } from '@testing-library/dom';
 import PouchDB from 'pouchdb';
 import { DataSource } from '@/data/DataSource';
-import { Preferences } from '@/data/documentTypes/Preferences';
 import { createTestDataSource, setupTestDatabase } from '@/test-utils/db';
 import { localSettingsFactory } from '@/test-utils/factories/LocalSettingsFactory';
 import { preferencesFactory } from '@/test-utils/factories/PreferencesFactory';
 import { taskFactory } from '@/test-utils/factories/TaskFactory';
 import { Task } from '../documentTypes/Task';
 import { MigrationManager } from '../migrations/MigrationManager';
-
-jest.mock('@/data/documentTypes/Preferences', () => ({
-  createDefaultPreferences: jest.fn(() => ({
-    lastSelectedContext: 'context1',
-  })),
-}));
 
 describe('DataSource', () => {
   const { getDataSource, getDb } = setupTestDatabase();
@@ -99,57 +92,6 @@ describe('DataSource', () => {
     });
   });
 
-  test('getPreferences should return default preferences', async () => {
-    const dataSource = getDataSource();
-    const preferences = await dataSource.getPreferences();
-    expect(preferences).toEqual({
-      lastSelectedContext: 'context1',
-    });
-  });
-
-  test('getPreferences should return stored preferences', async () => {
-    const database = getDb();
-    const dataSource = getDataSource();
-    await database.post<Preferences>(
-      preferencesFactory({
-        lastSelectedContext: 'context1',
-      })
-    );
-
-    const preferences = await dataSource.getPreferences();
-    expect(preferences.lastSelectedContext).toBe('context1');
-  });
-
-  test('setPreferences should create new preferences in the database', async () => {
-    const dataSource = getDataSource();
-    const newPreferences = preferencesFactory({
-      lastSelectedContext: 'foo-context',
-    });
-
-    await dataSource.setPreferences(newPreferences);
-
-    const preferences = await dataSource.getPreferences();
-    expect(preferences.lastSelectedContext).toBe('foo-context');
-  });
-
-  test('setPreferences should update existing preferences', async () => {
-    const dataSource = getDataSource();
-    const newPreferences = preferencesFactory({
-      lastSelectedContext: 'foo-context',
-    });
-
-    await dataSource.setPreferences(newPreferences);
-
-    const preferences = await dataSource.getPreferences();
-    expect(preferences.lastSelectedContext).toBe('foo-context');
-
-    preferences.lastSelectedContext = 'poo-context';
-    await dataSource.setPreferences(preferences);
-
-    const updatedPreferences = await dataSource.getPreferences();
-    expect(updatedPreferences.lastSelectedContext).toBe('poo-context');
-  });
-
   describe('runMigrations', () => {
     it('Should not call onMigrationStatusChange if no migrations are needed', async () => {
       const dataSource = getDataSource();
@@ -229,10 +171,11 @@ describe('DataSource', () => {
     it('should export all documents from the database, except for _local', async () => {
       const dataSource = getDataSource();
       const taskRepository = dataSource.getTaskRepository();
+      const preferencesRepository = dataSource.getPreferencesRepository();
 
       await Promise.all([
         dataSource.setLocalSettings(localSettingsFactory()),
-        dataSource.setPreferences(preferencesFactory()),
+        preferencesRepository.setPreferences(preferencesFactory()),
         taskRepository.addTask(taskFactory({})),
       ]);
 
