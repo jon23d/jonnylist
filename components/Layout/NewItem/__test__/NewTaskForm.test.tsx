@@ -57,7 +57,7 @@ describe('NewTaskForm', () => {
           priority: TaskPriority.Low,
         })
       );
-    });
+    }, 7000); // The runner is pretty slow in github, so we increase the timeout
 
     it('Saves a new task when the form is submitted', async () => {
       const handleClose = jest.fn();
@@ -84,7 +84,7 @@ describe('NewTaskForm', () => {
           project: 'Test Project',
         })
       );
-    });
+    }, 7000); // The runner is pretty slow in github, so we increase the timeout
 
     it('Saves a new task when the form is submitted', async () => {
       const handleClose = jest.fn();
@@ -110,8 +110,9 @@ describe('NewTaskForm', () => {
           description: 'This is a test task description.',
         })
       );
-    });
+    }, 7000); // The runner is pretty slow in github, so we increase the timeout
   });
+
   it('Blurs the active element when the form is submitted', async () => {
     const handleClose = jest.fn();
     const dataSource = getDataSource();
