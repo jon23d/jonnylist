@@ -96,8 +96,8 @@ export class TaskRepository implements Repository {
       delete updatedTask.urgency;
     }
 
-    // If there is a waitUntil date, set the status to Waiting
-    if (updatedTask.waitUntil) {
+    // If there is a waitUntil date and the date is not yet met, set the status to Waiting
+    if (updatedTask.waitUntil && new Date(updatedTask.waitUntil) > new Date()) {
       updatedTask.status = TaskStatus.Waiting;
     }
 
@@ -208,29 +208,21 @@ export class TaskRepository implements Repository {
    * This function will look for tasks that have a waitUntil date that is today or in the past,
    * and then update their status to TaskStatus.Ready if they are not already.
    */
-  checkWaitingTasks(): Promise<void> {
+  async checkWaitingTasks(): Promise<void> {
     Logger.info('Checking for waiting tasks to update to ready status');
-    this.getTasks({ statuses: [TaskStatus.Waiting] })
-      .then(async (waitingTasks) => {
-        const now = new Date();
-        const tasksToUpdate = waitingTasks.filter((task) => {
-          return (
-            task.waitUntil && new Date(task.waitUntil) <= now && task.status !== TaskStatus.Ready
-          );
-        });
 
-        if (tasksToUpdate.length > 0) {
-          Logger.info(`Updating ${tasksToUpdate.length} waiting tasks to ready status`);
-          await Promise.all(
-            tasksToUpdate.map((task) => this.updateTask({ ...task, status: TaskStatus.Ready }))
-          );
-        }
-      })
-      .catch((error) => {
-        Logger.error('Error checking waiting tasks:', error);
-      });
+    const waitingTasks = await this.getTasks({ statuses: [TaskStatus.Waiting] });
+    const now = new Date();
+    const tasksToUpdate = waitingTasks.filter((task) => {
+      return task.waitUntil && new Date(task.waitUntil) <= now && task.status !== TaskStatus.Ready;
+    });
 
-    return Promise.resolve();
+    if (tasksToUpdate.length > 0) {
+      Logger.info(`Updating ${tasksToUpdate.length} waiting tasks to ready status`);
+      await Promise.all(
+        tasksToUpdate.map((task) => this.updateTask({ ...task, status: TaskStatus.Ready }))
+      );
+    }
   }
 
   /**
@@ -263,6 +255,19 @@ export class TaskRepository implements Repository {
       );
       return;
     }
+    // If we have a task completed today, do not create a new instance
+    if (
+      occurrences.some(
+        ({ completedAt }) =>
+          completedAt && new Date(completedAt).toDateString() === now.toDateString()
+      )
+    ) {
+      Logger.info(
+        `Skipping creation of new instance for recurring task ${task._id} as it was completed today`
+      );
+      return;
+    }
+
     // Check if recurrence has ended
     if (this.hasRecurrenceEnded(task, occurrences, now)) {
       Logger.info(`Recurrence for task ${task._id} has ended, not creating new instance`);

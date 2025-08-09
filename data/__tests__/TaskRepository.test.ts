@@ -69,7 +69,7 @@ describe('TaskRepository', () => {
     expect(addedTask.status).toBe(TaskStatus.Waiting);
   });
 
-  test('updateTask sets status to waiting if waitUntil is set', async () => {
+  test('updateTask sets status to waiting if waitUntil date has not been met', async () => {
     const database = getDb();
     const repository = new TaskRepository(database);
     const newTask = taskFactory();
@@ -77,7 +77,7 @@ describe('TaskRepository', () => {
 
     const updatedTask = await repository.updateTask({
       ...task,
-      waitUntil: '2024-01-01',
+      waitUntil: '2060-01-01',
     });
 
     expect(updatedTask.status).toBe(TaskStatus.Waiting);
@@ -370,14 +370,13 @@ describe('TaskRepository', () => {
     await taskRepository.addTask(futureTask);
 
     // Check waiting tasks and update them
-    taskRepository.checkWaitingTasks().then(async () => {
-      // Fetch tasks to verify the update
-      const tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
+    await taskRepository.checkWaitingTasks();
 
-      expect(tasks).toHaveLength(1);
-      expect(tasks[0].status).toBe(TaskStatus.Ready);
-      expect(tasks[0].title).toBe('Waiting task');
-    });
+    const tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
+
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].status).toBe(TaskStatus.Ready);
+    expect(tasks[0].title).toBe('Waiting task');
   });
 
   describe('getOccurrencesFromRecurringTask', () => {
@@ -483,7 +482,11 @@ describe('TaskRepository', () => {
 
       // Let's mark the task as done, and try again -- we should still not see a new task created
       // until the following day
-      await taskRepository.updateTask({ ...spawnedTask, status: TaskStatus.Done });
+      await taskRepository.updateTask({
+        ...spawnedTask,
+        status: TaskStatus.Done,
+        completedAt: now,
+      });
       await taskRepository.checkRecurringTasks(now);
       tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
       expect(tasks).toHaveLength(0);

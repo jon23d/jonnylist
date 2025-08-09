@@ -18,7 +18,7 @@ export default function CoefficientsForm({ preferences }: { preferences: Prefere
   const form = useForm({
     initialValues: {
       ...defaultCoefficients,
-      ...dbPreferences.coefficients,
+      ...preferences.coefficients,
     },
     validate: {
       nextTag: isPresent,

@@ -1,13 +1,16 @@
 import PouchDB from 'pouchdb';
+import InMemoryAdapter from 'pouchdb-adapter-memory';
 import { DataSource } from '@/data/DataSource';
 import { DocumentTypes } from '@/data/documentTypes';
+
+PouchDB.plugin(InMemoryAdapter);
 
 export function createTestDataSource(): {
   dataSource: DataSource;
   database: PouchDB.Database<DocumentTypes>;
 } {
   const dbName = `test_db_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-  const database = new PouchDB<DocumentTypes>(dbName);
+  const database = new PouchDB<DocumentTypes>(dbName, { adapter: 'memory' });
 
   const dataSource = new DataSource(database);
 
@@ -30,8 +33,8 @@ export function setupTestDatabase(): {
   afterEach(async () => {
     try {
       await dataSource.cleanup();
-    } finally {
-      await db.destroy();
+    } catch (error) {
+      console.error('Error during cleanup:', error);
     }
   });
 
