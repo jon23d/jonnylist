@@ -133,4 +133,21 @@ describe('CoefficientsForm', () => {
       })
     );
   });
+
+  it('Uses the updated preference revision on subsequent submits', async () => {
+    const initialPreferences = preferencesFactory({ _rev: 'abc-123' });
+    (setPreferencesMock as jest.Mock).mockResolvedValue({ ...initialPreferences, _rev: 'def-456' });
+
+    renderWithDataSource(<CoefficientsForm preferences={initialPreferences} />, getDataSource());
+
+    // First click
+    const submitButton = screen.getByRole('button', { name: 'Save Coefficients' });
+    await userEvent.click(submitButton);
+
+    expect(setPreferencesMock).toHaveBeenCalledWith(expect.objectContaining({ _rev: 'abc-123' }));
+
+    // Second click
+    await userEvent.click(submitButton);
+    expect(setPreferencesMock).toHaveBeenCalledWith(expect.objectContaining({ _rev: 'def-456' }));
+  });
 });

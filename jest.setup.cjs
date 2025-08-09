@@ -1,3 +1,4 @@
+require('setimmediate');
 require('@testing-library/jest-dom');
 
 const { getComputedStyle } = window;

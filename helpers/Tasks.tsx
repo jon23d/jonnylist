@@ -1,8 +1,6 @@
 import React from 'react';
 import { Badge } from '@mantine/core';
-import { Preferences } from '@/data/documentTypes/Preferences';
-import { Task, TaskPriority, TaskWithUrgency } from '@/data/documentTypes/Task';
-import { UrgencyCalculator } from '@/helpers/UrgencyCalculator';
+import { Task, TaskPriority } from '@/data/documentTypes/Task';
 
 export type BaseCoefficients = {
   nextTag: number;

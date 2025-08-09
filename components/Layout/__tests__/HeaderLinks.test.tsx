@@ -1,5 +1,5 @@
 import HeaderLinks from '@/components/Layout/HeaderLinks';
-import { renderWithDataSource, screen } from '@/test-utils';
+import { renderWithDataSource, screen, waitFor } from '@/test-utils';
 import { setupTestDatabase } from '@/test-utils/db';
 
 jest.mock('@/components/Layout/NewItem/AddNewItemButton', () => ({
@@ -10,9 +10,9 @@ jest.mock('@/components/Layout/NewItem/AddNewItemButton', () => ({
 describe('HeaderLinks', () => {
   const { getDataSource } = setupTestDatabase();
 
-  it('Includes the AddNewItemButton component', () => {
+  it('Includes the AddNewItemButton component', async () => {
     renderWithDataSource(<HeaderLinks />, getDataSource());
 
-    expect(screen.getByText('Add new item')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Add new item')).toBeInTheDocument());
   });
 });

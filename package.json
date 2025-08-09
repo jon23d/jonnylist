@@ -34,6 +34,7 @@
     "dayjs": "^1.11.13",
     "next": "15.3.3",
     "pouchdb": "^9.0.0",
+    "pouchdb-adapter-memory": "^9.0.0",
     "pouchdb-find": "^9.0.0",
     "react": "19.1.0",
     "react-dom": "19.1.0"
@@ -53,6 +54,7 @@
     "@types/jsonwebtoken": "^9",
     "@types/node": "^22.13.11",
     "@types/react": "19.0.12",
+    "@types/setimmediate": "^1",
     "babel-loader": "^10.0.0",
     "eslint": "^9.23.0",
     "eslint-config-mantine": "^4.0.3",
@@ -65,6 +67,7 @@
     "postcss-preset-mantine": "1.17.0",
     "postcss-simple-vars": "^7.0.1",
     "prettier": "^3.5.3",
+    "setimmediate": "^1.0.5",
     "storybook": "^8.6.8",
     "storybook-dark-mode": "^4.0.2",
     "ts-jest": "^29.2.6",

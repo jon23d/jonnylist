@@ -93,7 +93,8 @@ describe('DataSourceContext', () => {
 
     renderWithDataSource(<TestComponent />, dataSource);
 
-    // Ensure initializeSync was called
-    expect(initializeSyncSpy).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(initializeSyncSpy).toHaveBeenCalled();
+    });
   });
 });

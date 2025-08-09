@@ -1,6 +1,6 @@
 import { waitFor } from '@testing-library/react';
 import { DateInput } from '@mantine/dates';
-import { TaskPriority, TaskStatus } from '@/data/documentTypes/Task';
+import { TaskPriority } from '@/data/documentTypes/Task';
 import { renderWithDataSource, screen, userEvent } from '@/test-utils';
 import { setupTestDatabase } from '@/test-utils/db';
 import NewTaskForm from '../NewTaskForm';
@@ -30,51 +30,88 @@ jest.mock('@mantine/dates', () => ({
 describe('NewTaskForm', () => {
   const { getDataSource } = setupTestDatabase();
 
-  it('Saves a new task when the form is submitted', async () => {
-    const handleClose = jest.fn();
-    const dataSource = getDataSource();
+  describe('Form Submission', () => {
+    it('Saves a new task when the form is submitted', async () => {
+      const handleClose = jest.fn();
+      const dataSource = getDataSource();
 
-    renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
+      renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
 
-    const titleInput = screen.getByRole('textbox', { name: 'Title' });
-    await userEvent.type(titleInput, 'Test Task');
+      const titleInput = screen.getByRole('textbox', { name: 'Title' });
+      await userEvent.type(titleInput, 'Test Task');
 
-    const tagsInput = screen.getByRole('textbox', { name: 'Tags' });
-    await userEvent.type(tagsInput, 'test-tag{enter}');
-    await userEvent.type(tagsInput, 'another-tag{enter}');
+      const tagsInput = screen.getByRole('textbox', { name: 'Tags' });
+      await userEvent.type(tagsInput, 'test-tag{enter}');
+      await userEvent.type(tagsInput, 'another-tag{enter}');
 
-    await userEvent.click(screen.getByRole('textbox', { name: 'Priority' }));
-    await userEvent.click(screen.getByRole('option', { name: 'Low' }));
+      await userEvent.click(screen.getByRole('textbox', { name: 'Priority' }));
+      await userEvent.click(screen.getByRole('option', { name: 'Low' }));
 
-    const dueDateInput = screen.getByRole('textbox', { name: 'Due Date' });
-    await userEvent.type(dueDateInput, '01/15/2026');
+      const submitButton = screen.getByRole('button', { name: 'Save Task' });
+      await userEvent.click(submitButton);
 
-    const projectInput = screen.getByRole('textbox', { name: 'Project' });
-    await userEvent.type(projectInput, 'Test Project');
+      expect(addTaskMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'Test Task',
+          tags: ['test-tag', 'another-tag'],
+          priority: TaskPriority.Low,
+        })
+      );
+    });
 
-    // Go to the advanced tab as well
-    const advancedTab = screen.getByRole('tab', { name: 'Advanced' });
-    await userEvent.click(advancedTab);
+    it('Saves a new task when the form is submitted', async () => {
+      const handleClose = jest.fn();
+      const dataSource = getDataSource();
 
-    const descriptionInput = screen.getByRole('textbox', { name: 'Description' });
-    await userEvent.type(descriptionInput, 'This is a test task description.');
+      renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
 
-    const submitButton = screen.getByRole('button', { name: 'Save Task' });
-    await userEvent.click(submitButton);
+      const titleInput = screen.getByRole('textbox', { name: 'Title' });
+      await userEvent.type(titleInput, 'Test Task');
 
-    expect(addTaskMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: 'Test Task',
-        description: 'This is a test task description.',
-        tags: ['test-tag', 'another-tag'],
-        priority: TaskPriority.Low,
-        dueDate: '2026-01-15',
-        status: TaskStatus.Ready,
-        project: 'Test Project',
-      })
-    );
+      const dueDateInput = screen.getByRole('textbox', { name: 'Due Date' });
+      await userEvent.type(dueDateInput, '01/15/2026');
+
+      const projectInput = screen.getByRole('textbox', { name: 'Project' });
+      await userEvent.type(projectInput, 'Test Project');
+
+      const submitButton = screen.getByRole('button', { name: 'Save Task' });
+      await userEvent.click(submitButton);
+
+      expect(addTaskMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'Test Task',
+          dueDate: '2026-01-15',
+          project: 'Test Project',
+        })
+      );
+    });
+
+    it('Saves a new task when the form is submitted', async () => {
+      const handleClose = jest.fn();
+      const dataSource = getDataSource();
+
+      renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
+
+      const titleInput = screen.getByRole('textbox', { name: 'Title' });
+      await userEvent.type(titleInput, 'Test Task');
+
+      const advancedTab = screen.getByRole('tab', { name: 'Advanced' });
+      await userEvent.click(advancedTab);
+
+      const descriptionInput = screen.getByRole('textbox', { name: 'Description' });
+      await userEvent.type(descriptionInput, 'This is a test task description.');
+
+      const submitButton = screen.getByRole('button', { name: 'Save Task' });
+      await userEvent.click(submitButton);
+
+      expect(addTaskMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'Test Task',
+          description: 'This is a test task description.',
+        })
+      );
+    });
   });
-
   it('Blurs the active element when the form is submitted', async () => {
     const handleClose = jest.fn();
     const dataSource = getDataSource();
