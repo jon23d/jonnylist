@@ -1,5 +1,5 @@
 import React from 'react';
-import { IconClockPlay } from '@tabler/icons-react';
+import { IconClockPlay, IconDotsVertical } from '@tabler/icons-react';
 import { Box, Menu, UnstyledButton } from '@mantine/core';
 import { useTaskRepository } from '@/contexts/DataSourceContext';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
@@ -31,9 +31,7 @@ export default function StatusChanger({ task }: { task: Task }) {
         <Menu shadow="xs">
           <Menu.Target>
             <UnstyledButton aria-label="Change task status">
-              <Box mt={3} mb={-3}>
-                <IconClockPlay color="green" size={16} />
-              </Box>
+              <IconClockPlay color="green" size={16} />
             </UnstyledButton>
           </Menu.Target>
 
@@ -55,7 +53,9 @@ export default function StatusChanger({ task }: { task: Task }) {
       <Box onClick={(e) => e.stopPropagation()}>
         <Menu shadow="xs">
           <Menu.Target>
-            <UnstyledButton aria-label="Change task status">⋮⋮</UnstyledButton>
+            <UnstyledButton aria-label="Change task status">
+              <IconDotsVertical size={16} />
+            </UnstyledButton>
           </Menu.Target>
 
           <Menu.Dropdown>
