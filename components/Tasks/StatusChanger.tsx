@@ -1,4 +1,5 @@
 import React from 'react';
+import { IconClockPlay } from '@tabler/icons-react';
 import { Box, Menu, UnstyledButton } from '@mantine/core';
 import { useTaskRepository } from '@/contexts/DataSourceContext';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
@@ -15,38 +16,33 @@ export default function StatusChanger({ task }: { task: Task }) {
     alwaysVisible: false,
   };
 
-  const handleStart = async () => {
-    await taskRepository.updateTask({
-      ...task,
-      status: TaskStatus.Started,
-    });
+  const updateTaskStatus = async (status: TaskStatus) => {
+    await taskRepository.updateTask({ ...task, status });
   };
 
-  const handleComplete = async () => {
-    await taskRepository.updateTask({
-      ...task,
-      status: TaskStatus.Done,
-    });
-  };
-
-  const handleStop = async () => {
-    await taskRepository.updateTask({
-      ...task,
-      status: TaskStatus.Ready,
-    });
-  };
+  const handleStart = () => updateTaskStatus(TaskStatus.Started);
+  const handleComplete = () => updateTaskStatus(TaskStatus.Done);
+  const handleCancel = () => updateTaskStatus(TaskStatus.Cancelled);
+  const handleStop = () => updateTaskStatus(TaskStatus.Ready);
 
   if (task.status === TaskStatus.Started) {
     configuration.icon = (
       <Box onClick={(e) => e.stopPropagation()}>
         <Menu shadow="xs">
           <Menu.Target>
-            <UnstyledButton>⏳</UnstyledButton>
+            <UnstyledButton aria-label="Change task status">
+              <Box mt={3} mb={-3}>
+                <IconClockPlay color="green" size={16} />
+              </Box>
+            </UnstyledButton>
           </Menu.Target>
 
           <Menu.Dropdown>
-            <Menu.Item onClick={handleStop}>Stop</Menu.Item>
+            <Menu.Label>Change status</Menu.Label>
+            <Menu.Item onClick={handleStop}>Ready</Menu.Item>
+            <Menu.Divider />
             <Menu.Item onClick={handleComplete}>Complete</Menu.Item>
+            <Menu.Item onClick={handleCancel}>Cancel</Menu.Item>
           </Menu.Dropdown>
         </Menu>
       </Box>
@@ -57,7 +53,19 @@ export default function StatusChanger({ task }: { task: Task }) {
   if (task.status === TaskStatus.Ready) {
     configuration.icon = (
       <Box onClick={(e) => e.stopPropagation()}>
-        <UnstyledButton onClick={handleStart}>▶️</UnstyledButton>
+        <Menu shadow="xs">
+          <Menu.Target>
+            <UnstyledButton aria-label="Change task status">⋮⋮</UnstyledButton>
+          </Menu.Target>
+
+          <Menu.Dropdown>
+            <Menu.Label>Change status</Menu.Label>
+            <Menu.Item onClick={handleStart}>Start</Menu.Item>
+            <Menu.Divider />
+            <Menu.Item onClick={handleComplete}>Complete</Menu.Item>
+            <Menu.Item onClick={handleCancel}>Cancel</Menu.Item>
+          </Menu.Dropdown>
+        </Menu>
       </Box>
     );
   }
