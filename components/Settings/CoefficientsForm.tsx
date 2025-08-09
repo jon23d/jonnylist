@@ -119,7 +119,7 @@ export default function CoefficientsForm({ preferences }: { preferences: Prefere
             />
           </Stack>
           <Button type="submit">Save Coefficients</Button>
-          <Button onClick={resetToDefaults}>Reset to defaults</Button>
+          <Button onClick={resetToDefaults}>Reset to Defaults</Button>
         </SimpleGrid>
       </form>
     </>

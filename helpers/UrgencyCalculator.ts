@@ -24,7 +24,7 @@ export class UrgencyCalculator {
       task.description ? coefficients.hasDescription : 0,
       task.tags?.length ? coefficients.hasTags : 0,
       task.project ? coefficients.hasProject : 0,
-      2.0 * (getAgeInDays(task.createdAt) / 365),
+      coefficients.ageCoefficient * (getAgeInDays(task.createdAt) / 365),
     ];
 
     return values.reduce((total, value) => total + value, 0);

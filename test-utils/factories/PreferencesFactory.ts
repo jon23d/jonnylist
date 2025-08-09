@@ -9,5 +9,6 @@ export const preferencesFactory = (data: Partial<Preferences> = {}): Preferences
 
     lastSelectedContext: data.lastSelectedContext || 'context1',
     lastSelectedStatuses: data.lastSelectedStatuses || [TaskStatus.Started],
+    coefficients: data.coefficients || {},
   };
 };

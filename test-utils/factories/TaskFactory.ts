@@ -7,9 +7,10 @@ export const taskFactory = (data: Partial<Task> = {}): Task => {
 
     type: 'task',
     title: data.title || 'A task',
-    description: data.description || 'This is a sample task description.',
+    description:
+      data.description !== undefined ? data.description : 'This is a sample task description.',
     tags: data.tags || [],
-    project: data.project || 'a project',
+    project: data.project !== undefined ? data.project : 'a project',
     status: data.status || TaskStatus.Ready,
     priority: data.priority || TaskPriority.Medium,
     dueDate: data.dueDate || undefined,
