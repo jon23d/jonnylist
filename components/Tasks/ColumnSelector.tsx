@@ -1,6 +1,6 @@
 import React from 'react';
 import { IconChevronRight } from '@tabler/icons-react';
-import { Button, Popover, Stack, Switch } from '@mantine/core';
+import { Button, Divider, Popover, Stack, Switch } from '@mantine/core';
 
 export default function ColumnSelector({
   choices,
@@ -28,9 +28,12 @@ export default function ColumnSelector({
       <Popover.Dropdown>
         <Switch.Group onChange={onChange} value={selected}>
           <Stack gap="xs">
-            {choices.map((choice) => (
-              <Switch label={choice} value={choice} key={choice} size="sm" />
-            ))}
+            {choices.map((choice, index) => {
+              if (choice === '-') {
+                return <Divider key={index} my="sm" />;
+              }
+              return <Switch label={choice} value={choice} key={choice} size="sm" />;
+            })}
           </Stack>
         </Switch.Group>
       </Popover.Dropdown>

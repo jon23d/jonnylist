@@ -174,6 +174,8 @@ export default function Page() {
                 'Due Date',
                 'Age',
                 'Urgency',
+                '-',
+                'Bulk Editor',
               ]}
               selected={visibleColumns}
               onChange={updateColumnVisibility}
