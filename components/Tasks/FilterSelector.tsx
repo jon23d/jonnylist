@@ -17,6 +17,7 @@ import {
   Tooltip,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
+import { useHotkeys } from '@mantine/hooks';
 import SaveContextModal from '@/components/Contexts/SaveContextModal';
 import { TaskFilter, TaskPriority } from '@/data/documentTypes/Task';
 
@@ -28,6 +29,8 @@ export default function FilterSelector({
 }) {
   const [popoverOpened, setPopoverOpened] = useState(false);
   const [saveModalOpened, setSaveModalOpened] = useState(false);
+
+  useHotkeys([['Escape', () => setPopoverOpened(false)]]);
 
   const form = useForm<TaskFilter>({
     initialValues: {
