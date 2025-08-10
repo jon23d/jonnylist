@@ -159,7 +159,10 @@ describe('TasksTable', () => {
   });
 
   it('Disables the bulk edit button when no tasks are selected', () => {
-    renderWithDataSource(<TasksTable visibleColumns={[]} tasks={tasks} />, getDataSource());
+    renderWithDataSource(
+      <TasksTable visibleColumns={['Bulk Editor']} tasks={tasks} />,
+      getDataSource()
+    );
 
     expect(screen.getByRole('button', { name: 'Edit Selected' })).toBeDisabled();
   });
@@ -167,7 +170,7 @@ describe('TasksTable', () => {
   it('Allows bulk editing when tasks are selected', async () => {
     renderWithDataSource(
       <TasksTable
-        visibleColumns={[]}
+        visibleColumns={['Bulk Editor']}
         tasks={[
           ...tasks,
           taskWithUrgencyFactory({

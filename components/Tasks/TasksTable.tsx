@@ -68,83 +68,87 @@ export default function TasksTable({
         <Table striped highlightOnHover>
           <Table.Thead>
             <Table.Tr>
-              {visibleColumns.includes('Active') ? <Table.Th w="25px" /> : null}
-              {tasksAreRecurring ? <Table.Th>Recurrence</Table.Th> : null}
+              {visibleColumns.includes('Active') && <Table.Th w="25px" />}
+              {tasksAreRecurring && <Table.Th>Recurrence</Table.Th>}
               <Table.Th>Title</Table.Th>
-              {visibleColumns.includes('Description') ? <Table.Th>Description</Table.Th> : null}
-              {visibleColumns.includes('Tags') ? <Table.Th>Tags</Table.Th> : null}
-              {visibleColumns.includes('Project') ? <Table.Th>Project</Table.Th> : null}
-              {visibleColumns.includes('Priority') ? <Table.Th>Priority</Table.Th> : null}
-              {visibleColumns.includes('Due Date') ? <Table.Th>Due</Table.Th> : null}
-              {visibleColumns.includes('Age') ? <Table.Th>Age</Table.Th> : null}
-              {visibleColumns.includes('Urgency') ? <Table.Th>Urgency</Table.Th> : null}
-              {tasksAreCompletedOrCancelled ? <Table.Th>Completed</Table.Th> : null}
-              <Table.Th ta="center">
-                <Button
-                  className={classes.bulkEditButton}
-                  variant="transparent"
-                  disabled={!selectedTasks.length}
-                  size="xs"
-                  onClick={() => showBulkEditDialog(selectedTasks)}
-                >
-                  Edit Selected
-                </Button>
-              </Table.Th>
+              {visibleColumns.includes('Description') && <Table.Th>Description</Table.Th>}
+              {visibleColumns.includes('Tags') && <Table.Th>Tags</Table.Th>}
+              {visibleColumns.includes('Project') && <Table.Th>Project</Table.Th>}
+              {visibleColumns.includes('Priority') && <Table.Th>Priority</Table.Th>}
+              {visibleColumns.includes('Due Date') && <Table.Th>Due</Table.Th>}
+              {visibleColumns.includes('Age') && <Table.Th>Age</Table.Th>}
+              {visibleColumns.includes('Urgency') && <Table.Th>Urgency</Table.Th>}
+              {tasksAreCompletedOrCancelled && <Table.Th>Completed</Table.Th>}
+              {visibleColumns.includes('Bulk Editor') && (
+                <Table.Th ta="center">
+                  <Button
+                    className={classes.bulkEditButton}
+                    variant="transparent"
+                    disabled={!selectedTasks.length}
+                    size="xs"
+                    onClick={() => showBulkEditDialog(selectedTasks)}
+                  >
+                    Edit Selected
+                  </Button>
+                </Table.Th>
+              )}
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
             {tasks.map((task) => (
               <Table.Tr key={task._id} className={classes.hasHoverControls}>
-                {visibleColumns.includes('Active') ? (
+                {visibleColumns.includes('Active') && (
                   <Table.Td>
                     <StatusChanger task={task} />
                   </Table.Td>
-                ) : null}
-                {tasksAreRecurring ? (
+                )}
+                {tasksAreRecurring && (
                   <Table.Td onClick={() => showEditDialog(task)}>
                     {describeRecurrence(task)}
                   </Table.Td>
-                ) : null}
+                )}
                 <Table.Td onClick={() => showEditDialog(task)}>{task.title}</Table.Td>
-                {visibleColumns.includes('Description') ? (
+                {visibleColumns.includes('Description') && (
                   <Table.Td onClick={() => showEditDialog(task)}>{task.description}</Table.Td>
-                ) : null}
-                {visibleColumns.includes('Tags') ? (
+                )}
+                {visibleColumns.includes('Tags') && (
                   <Table.Td onClick={() => showEditDialog(task)}>
                     {task.tags?.map((tag, index) => (
                       <Badge key={index} size="xs" mr={3} variant="light">{`#${tag}`}</Badge>
                     ))}
                   </Table.Td>
-                ) : null}
-                {visibleColumns.includes('Project') ? (
+                )}
+                {visibleColumns.includes('Project') && (
                   <Table.Td onClick={() => showEditDialog(task)}>{task.project}</Table.Td>
-                ) : null}
-                {visibleColumns.includes('Priority') ? (
+                )}
+                {visibleColumns.includes('Priority') && (
                   <Table.Td onClick={() => showEditDialog(task)}>
                     {priorityBadge(task.priority)}
                   </Table.Td>
-                ) : null}
-                {visibleColumns.includes('Due Date') ? (
+                )}
+                {visibleColumns.includes('Due Date') && (
                   <Table.Td c="orange.5" onClick={() => showEditDialog(task)}>
                     {task.dueDate}
                   </Table.Td>
-                ) : null}
-                {visibleColumns.includes('Age') ? (
+                )}
+                {visibleColumns.includes('Age') && (
                   <Table.Td onClick={() => showEditDialog(task)}>
                     {getAgeInDays(task.createdAt)} days
                   </Table.Td>
-                ) : null}
-                {visibleColumns.includes('Urgency') ? <Table.Td>{task.urgency}</Table.Td> : null}
-                {tasksAreCompletedOrCancelled ? (
+                )}
+                {visibleColumns.includes('Urgency') && <Table.Td>{task.urgency}</Table.Td>}
+                {tasksAreCompletedOrCancelled && (
                   <Table.Td onClick={() => showEditDialog(task)}>
                     {task.updatedAt.toLocaleDateString()}
                   </Table.Td>
-                ) : null}
-                <Table.Td>
-                  <Center>
-                    <Checkbox value={task._id} />
-                  </Center>
-                </Table.Td>
+                )}
+                {visibleColumns.includes('Bulk Editor') && (
+                  <Table.Td>
+                    <Center>
+                      <Checkbox value={task._id} />
+                    </Center>
+                  </Table.Td>
+                )}
               </Table.Tr>
             ))}
           </Table.Tbody>
