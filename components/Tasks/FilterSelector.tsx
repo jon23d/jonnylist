@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { IconInfoCircle } from '@tabler/icons-react';
+import React, { useState } from 'react';
+import { IconChevronRight, IconInfoCircle } from '@tabler/icons-react';
 import {
   Box,
   Button,
@@ -67,6 +67,9 @@ export default function FilterSelector({
     setPopoverOpened(false);
   };
 
+  // Create a label for the button that will open the filters popover.
+  // If any filter is applied, the label will be "Filters (!)", otherwise it will be "Filters".
+  // This is used to indicate to the user that there are filters applied.
   const hasTags =
     form.values.requireTags?.length || form.values.excludeTags?.length || form.values.hasNoTags;
   const hasProjects =
@@ -148,7 +151,18 @@ export default function FilterSelector({
         onDismiss={() => setPopoverOpened(false)}
       >
         <Popover.Target>
-          <Button onClick={() => setPopoverOpened((prev) => !prev)}>{targetLabel}</Button>
+          <Box>
+            <Button
+              size="xs"
+              bg="gray.1"
+              c="gray.7"
+              rightSection={<IconChevronRight size={15} />}
+              onClick={() => setPopoverOpened((prev) => !prev)}
+              bd="1px solid gray.3"
+            >
+              {targetLabel}
+            </Button>
+          </Box>
         </Popover.Target>
 
         <Popover.Dropdown>

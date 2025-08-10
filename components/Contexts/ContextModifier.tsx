@@ -1,3 +1,5 @@
+import React from 'react';
+import { IconChevronRight } from '@tabler/icons-react';
 import { Button, Menu, Modal } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import DeleteContextForm from '@/components/Contexts/DeleteContextForm';
@@ -10,9 +12,17 @@ export default function ContextModifier({ context }: { context: Context }) {
 
   return (
     <>
-      <Menu shadow="xs">
+      <Menu shadow="md">
         <Menu.Target>
-          <Button>Context</Button>
+          <Button
+            size="xs"
+            bg="gray.1"
+            c="gray.7"
+            rightSection={<IconChevronRight size={15} />}
+            bd="1px solid gray.3"
+          >
+            Context
+          </Button>
         </Menu.Target>
         <Menu.Dropdown>
           <Menu.Item onClick={openRename}>Rename</Menu.Item>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { IconList, IconTable } from '@tabler/icons-react';
+import { IconChevronRight, IconList, IconTable } from '@tabler/icons-react';
 import { Box, Button, Menu, SegmentedControl, Text } from '@mantine/core';
 
 export default function ViewTypeSelector({
@@ -14,7 +14,7 @@ export default function ViewTypeSelector({
   return (
     <>
       <SegmentedControl
-        visibleFrom="sm"
+        visibleFrom="lg"
         data={[
           {
             value: 'table',
@@ -38,11 +38,20 @@ export default function ViewTypeSelector({
         value={view}
         onChange={(value) => setView(value as 'list' | 'table')}
         size="xs"
+        bd="1px solid gray.3"
       />
-      <Box hiddenFrom="sm">
-        <Menu>
+      <Box hiddenFrom="lg">
+        <Menu shadow="md">
           <Menu.Target>
-            <Button size="xs">{view.charAt(0).toUpperCase() + view.slice(1)} view</Button>
+            <Button
+              size="xs"
+              rightSection={<IconChevronRight size={15} />}
+              bg="gray.1"
+              c="gray.7"
+              bd="1px solid gray.3"
+            >
+              {view.charAt(0).toUpperCase() + view.slice(1)} view
+            </Button>
           </Menu.Target>
           <Menu.Dropdown>
             <Menu.Item onClick={() => setView('table')}>

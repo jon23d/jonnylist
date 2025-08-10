@@ -11,7 +11,7 @@ export default function BulkOperationOverlay({
   return (
     <Overlay fixed blur={5} backgroundOpacity={0.6} h="100vh" w="100vw" zIndex={10000}>
       <Center h="100%">
-        <Card shadow="sm" padding="lg" radius="md" withBorder w="400px">
+        <Card shadow="md" padding="lg" radius="md" withBorder w="400px">
           <Card.Section>
             <Image src="/migrations.png" height={300} alt="Data migrating" />
           </Card.Section>

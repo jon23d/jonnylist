@@ -149,13 +149,13 @@ export default function Page() {
 
   return (
     <>
-      <Group justify="space-between">
-        <Group>
+      <Group justify="space-between" gap="xs">
+        <Group gap="xs">
           <StatusSelector setStatus={setStatus} status={status} />
           <ViewTypeSelector view={view} setView={updateView} />
         </Group>
 
-        <Group>
+        <Group gap="xs">
           {context && <ContextModifier context={context} />}
           <FilterSelector
             {...taskFilter}

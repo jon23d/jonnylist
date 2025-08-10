@@ -6,7 +6,7 @@ export default function DataMigrationOverlay() {
   return (
     <Overlay fixed blur={5} backgroundOpacity={0.25} h="100%">
       <Center h="100%">
-        <Card shadow="sm" padding="lg" radius="md" withBorder w="400px">
+        <Card shadow="md" padding="lg" radius="md" withBorder w="400px">
           <Card.Section>
             <Image src="/migrations.png" height={300} alt="Data migrating" />
           </Card.Section>

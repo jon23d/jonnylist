@@ -1,4 +1,5 @@
 import React from 'react';
+import { IconChevronRight } from '@tabler/icons-react';
 import { Box, Button, Menu, SegmentedControl } from '@mantine/core';
 
 export default function StatusSelector({
@@ -24,12 +25,23 @@ export default function StatusSelector({
         data={segmentedControlData}
         value={status}
         onChange={setStatus}
-        visibleFrom="sm"
+        visibleFrom="lg"
+        bg="gray.1"
+        size="sm"
+        bd="1px solid gray.3"
       />
-      <Box hiddenFrom="sm">
-        <Menu>
+      <Box hiddenFrom="lg">
+        <Menu withArrow shadow="md">
           <Menu.Target>
-            <Button size="xs">{status.charAt(0).toUpperCase() + status.slice(1)} tasks</Button>
+            <Button
+              size="xs"
+              rightSection={<IconChevronRight size={15} />}
+              bg="gray.1"
+              c="gray.7"
+              bd="1px solid gray.3"
+            >
+              {status.charAt(0).toUpperCase() + status.slice(1)} tasks
+            </Button>
           </Menu.Target>
           <Menu.Dropdown>
             <Menu.Item onClick={() => setStatus('pending')}>Pending</Menu.Item>

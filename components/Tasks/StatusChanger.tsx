@@ -28,7 +28,7 @@ export default function StatusChanger({ task }: { task: Task }) {
   if (task.status === TaskStatus.Started) {
     configuration.icon = (
       <Box onClick={(e) => e.stopPropagation()}>
-        <Menu shadow="xs">
+        <Menu shadow="md">
           <Menu.Target>
             <UnstyledButton aria-label="Change task status">
               <IconClockPlay color="green" size={16} />
@@ -51,7 +51,7 @@ export default function StatusChanger({ task }: { task: Task }) {
   if (task.status === TaskStatus.Ready) {
     configuration.icon = (
       <Box onClick={(e) => e.stopPropagation()}>
-        <Menu shadow="xs">
+        <Menu shadow="md">
           <Menu.Target>
             <UnstyledButton aria-label="Change task status">
               <IconDotsVertical size={16} />

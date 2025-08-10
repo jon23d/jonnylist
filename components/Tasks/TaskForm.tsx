@@ -116,7 +116,7 @@ export default function TaskForm({
   const notesDisplay =
     form.values.notes && form.values.notes.length > 0
       ? form.values.notes.map((note, index) => (
-          <Paper key={index} mb={10} shadow="xs" p={10} mr={20} data-testid={`note-${index}`}>
+          <Paper key={index} mb={10} shadow="md" p={10} mr={20} data-testid={`note-${index}`}>
             <Text span size="xs" fw={700} c="dimmed">
               {new Date(note.createdAt).toLocaleString()}
             </Text>

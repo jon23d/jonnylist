@@ -81,13 +81,13 @@ export default function TasksList({ tasks }: { tasks: Task[] }) {
     <Stack mt={30} gap="xs">
       {tasks.map((task) => (
         <Paper
-          shadow="xs"
+          shadow="md"
           p="sm"
           key={task._id}
           className={clsx(classes.hasHoverControls, classes.taskListItem)}
           onClick={() => showEditDialog(task)}
         >
-          <Stack gap="xs">
+          <Stack gap="0.25em">
             <Text>{task.title}</Text>
 
             <Group justify="flex-start">{secondRowItems(task).map((item) => item)}</Group>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { IconChevronRight } from '@tabler/icons-react';
 import { Button, Popover, Stack, Switch } from '@mantine/core';
 
 export default function ColumnSelector({
@@ -13,7 +14,15 @@ export default function ColumnSelector({
   return (
     <Popover shadow="md" width={200}>
       <Popover.Target>
-        <Button>Columns</Button>
+        <Button
+          size="xs"
+          c="gray.7"
+          bg="gray.1"
+          bd="1px solid gray.3"
+          rightSection={<IconChevronRight size={15} />}
+        >
+          Columns
+        </Button>
       </Popover.Target>
 
       <Popover.Dropdown>
