@@ -58,13 +58,6 @@ export default function HeaderLinks() {
 
   return (
     <>
-      <div>
-        <Text size="xs" fw={800} c="black" ml={{ xs: 0, sm: 60 }} visibleFrom="sm">
-          <Anchor component={Link} href="/">
-            JonnyList
-          </Anchor>
-        </Text>
-      </div>
       <AddNewItemButton />
       <div className={classes.withSeparators}>
         <Text size="xs" c="gray.6">

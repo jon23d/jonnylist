@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { IconSettingsFilled } from '@tabler/icons-react';
-import { AppShell, Burger, Group, NavLink, ScrollArea } from '@mantine/core';
+import { Anchor, AppShell, Burger, Flex, Group, NavLink, ScrollArea, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import BulkOperationOverlay from '@/components/Common/BulkOperationOverlay';
 import CommandPalette from '@/components/Layout/CommandPalette';
@@ -14,7 +15,8 @@ import { useBulkOperationOverlay } from '@/contexts/BulkOperationOverlayContext'
 import { useIsMigrating } from '@/contexts/DataSourceContext';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const [opened, { toggle }] = useDisclosure();
+  const [openedOnMobile, { toggle: toggleMobile }] = useDisclosure();
+  const [openedOnDesktop, { toggle: toggleDesktop }] = useDisclosure(true);
   const { opened: bulkOverlayOpened, config: bulkOverlayConfig } = useBulkOperationOverlay();
   const router = useRouter();
   const isMigrating = useIsMigrating();
@@ -42,8 +44,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const handleNavLinkClick = async (url: string) => {
     await router.push(url);
-    if (opened) {
-      toggle();
+    if (openedOnMobile) {
+      toggleMobile();
     }
   };
 
@@ -54,7 +56,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {showOverlay && <DataMigrationOverlay />}
       <AppShell
         header={{ height: 30 }}
-        navbar={{ width: 225, breakpoint: 'sm', collapsed: { mobile: !opened } }}
+        navbar={{
+          width: 225,
+          breakpoint: 'xs',
+          collapsed: { mobile: !openedOnMobile, desktop: !openedOnDesktop },
+        }}
         footer={{ height: 40 }}
         padding="md"
       >
@@ -67,12 +73,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             align="center"
             justify="space-between"
           >
-            <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+            <Flex justify="flex-start">
+              <Burger opened={openedOnMobile} onClick={toggleMobile} size="sm" hiddenFrom="xs" />
+              <Burger opened={openedOnDesktop} onClick={toggleDesktop} size="sm" visibleFrom="xs" />
+              <Text size="xs" fw={800} c="black" visibleFrom="xs" mt={5} ml={10}>
+                <Anchor component={Link} href="/">
+                  JonnyList
+                </Anchor>
+              </Text>
+            </Flex>
             <HeaderLinks />
           </Group>
         </AppShell.Header>
         <AppShell.Navbar p="md">
-          <AppShell.Section grow my="md" component={ScrollArea}>
+          <AppShell.Section grow component={ScrollArea}>
             <ContextLinks handleNavLinkClick={handleNavLinkClick} />
             <ReportLinks handleNavLinkClick={handleNavLinkClick} />
 
