@@ -37,7 +37,7 @@ export default function ViewTypeSelector({
         ]}
         value={view}
         onChange={(value) => setView(value as 'list' | 'table')}
-        size="xs"
+        size="sm"
         bd="1px solid gray.3"
       />
       <Box hiddenFrom="lg">
