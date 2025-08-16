@@ -5,7 +5,7 @@ This application uses [PouchDB](https://www.pouchdb.com) for nosql local storage
 
 ## Local Database
 
-The local database is made accessible through a class that implements the [ataSource](../data/DataSource.ts) class, which
+The local database is made accessible through a class that implements the [ataSource](../src/data/DataSource.ts) class, which
 is a wrapper around PouchDB. PouchDb's feeds will provide implicit local synchronization, meaning that any changes made
 to the local database will be immediately available  to any tab accessing the application.
 

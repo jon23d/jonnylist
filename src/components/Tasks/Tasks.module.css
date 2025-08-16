@@ -1,0 +1,28 @@
+.statusChangerButton {
+    cursor: pointer;
+
+}
+
+.hidden {
+    opacity: 0;
+}
+
+.hasHoverControls:hover .hidden {
+    opacity: 100;
+}
+
+.taskListItem {
+    border: 1px solid transparent;
+}
+
+.taskListItem:hover {
+    cursor: pointer;
+    border: 1px solid lightgray;
+}
+
+.bulkEditButton {
+    &:disabled,
+    &[data-disabled] {
+        background-color: transparent;
+    }
+}

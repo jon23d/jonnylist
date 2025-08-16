@@ -1,4 +1,4 @@
-import { Task, TaskPriority, TaskStatus, TaskWithUrgency } from '@/data/documentTypes/Task';
+import { Task, TaskPriority, TaskStatus } from '@/data/documentTypes/Task';
 
 export const taskFactory = (data: Partial<Task> = {}): Task => {
   return {
@@ -22,12 +22,4 @@ export const taskFactory = (data: Partial<Task> = {}): Task => {
     createdAt: data.createdAt || new Date(),
     updatedAt: data.updatedAt || new Date(),
   };
-};
-
-export const taskWithUrgencyFactory = (
-  data: Partial<Task & { urgency?: number }> = {}
-): TaskWithUrgency => {
-  const task = taskFactory(data);
-  const urgency = data.urgency !== undefined ? data.urgency : 0;
-  return { ...task, urgency };
 };
