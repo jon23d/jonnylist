@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Anchor, Text } from '@mantine/core';
 import AddNewItemButton from '@/components/Layout/NewItem/AddNewItemButton';
 import { useTaskRepository } from '@/contexts/DataSourceContext';
@@ -60,9 +61,13 @@ export default function HeaderLinks() {
       <AddNewItemButton />
       <div className={classes.withSeparators}>
         <Text size="xs" c="gray.6">
-          <Anchor href="/reports/due">{tasksDue.length} tasks due</Anchor>
-          <Anchor href="/reports/in-progress">{tasksInProgress.length} tasks in progress</Anchor>
-          <Anchor href="/reports/open-projects" visibleFrom="xs">
+          <Anchor to="/reports/due" component={Link}>
+            {tasksDue.length} tasks due
+          </Anchor>
+          <Anchor to="/reports/in-progress" component={Link}>
+            {tasksInProgress.length} tasks in progress
+          </Anchor>
+          <Anchor to="/reports/open-projects" visibleFrom="xs" component={Link}>
             {projectsInProgress} open projects
           </Anchor>
         </Text>
