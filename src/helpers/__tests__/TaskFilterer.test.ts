@@ -412,4 +412,48 @@ describe('TaskFilterer', () => {
       ])
     );
   });
+
+  it('Should do a case-insensitive search when requiring tags', () => {
+    const tasks = [taskFactory({ tags: ['WORK'] }), taskFactory({ tags: ['work'] })];
+    filter.requireTags = ['Work'];
+
+    const taskFilterer = new TaskFilterer(filter);
+
+    const result = taskFilterer.filterTasks(tasks);
+
+    expect(result.length).toBe(2);
+  });
+
+  it('Should do a case-insensitive search when excluding tags', () => {
+    const tasks = [taskFactory({ tags: ['WORK'] }), taskFactory({ tags: ['work'] })];
+    filter.excludeTags = ['Work'];
+
+    const taskFilterer = new TaskFilterer(filter);
+
+    const result = taskFilterer.filterTasks(tasks);
+
+    expect(result.length).toBe(0);
+  });
+
+  it('Should do a case insensitive search when requiring projects', () => {
+    const tasks = [taskFactory({ project: 'PROJECT A' }), taskFactory({ project: 'project a' })];
+    filter.requireProjects = ['Project a'];
+
+    const taskFilterer = new TaskFilterer(filter);
+
+    const result = taskFilterer.filterTasks(tasks);
+
+    expect(result.length).toBe(2);
+  });
+
+  it('Should do a case insensitive search when excluding projects', () => {
+    const tasks = [taskFactory({ project: 'PROJECT A' }), taskFactory({ project: 'project a' })];
+    filter.excludeProjects = ['Project a'];
+
+    const taskFilterer = new TaskFilterer(filter);
+
+    const result = taskFilterer.filterTasks(tasks);
+
+    expect(result.length).toBe(0);
+  });
 });
