@@ -2,6 +2,7 @@ import PouchDB from 'pouchdb';
 import InMemoryAdapter from 'pouchdb-adapter-memory';
 import { DataSource } from '@/data/DataSource';
 import { DocumentTypes } from '@/data/documentTypes';
+import { Logger } from '@/helpers/Logger';
 
 PouchDB.plugin(InMemoryAdapter);
 
@@ -34,7 +35,7 @@ export function setupTestDatabase(): {
     try {
       await dataSource.cleanup();
     } catch (error) {
-      console.error('Error during cleanup:', error);
+      Logger.error('Error during cleanup:', error);
     }
   });
 

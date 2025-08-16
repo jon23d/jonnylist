@@ -1,5 +1,6 @@
 import React, { ReactElement } from 'react';
 import { render as testingLibraryRender } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import {
   createTheme,
   MantineProvider,
@@ -63,7 +64,7 @@ export function render(ui: React.ReactNode) {
         <ModalsProvider>
           <BulkOperationOverlayProvider>
             <Notifications />
-            {children}
+            <MemoryRouter>{children}</MemoryRouter>
           </BulkOperationOverlayProvider>
         </ModalsProvider>
       </MantineProvider>

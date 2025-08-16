@@ -49,27 +49,27 @@ in the browser.
 ```bash
  yarn test
 ```
-This will run the tests using Jest. It will also check for TypeScript types, run ESLint, and check Prettier formatting.
+This will run the tests using Vitest. It will also check for TypeScript types, run ESLint, and check Prettier formatting.
 
 ```bash
  yarn serve
 ```
 This will build the application for production and start a server to serve the built application
-on `http://localhost:3000`. This is useful for testing the production build locally.
+on `http://localhost:4173`. This is useful for testing the production build locally.
 
 ```bash
  yarn build
 ```
 This will build the application for production. The built application will be in the `out` folder.
-   
+
 ## Technology stack
 This project is built using the following technologies:
-* [Next.js](https://nextjs.org/) - a React framework for building server-rendered applications
+* [Vite](https://vite.dev/) - a fast build tool that provides a modern development experience
 * [React](https://reactjs.org/) - a JavaScript library for building user interfaces
 * [TypeScript](https://www.typescriptlang.org/) - a typed superset of JavaScript that compiles to plain JavaScript
 * [Mantine](https://mantine.dev/) - a React component library with a focus on usability and accessibility
 * [PouchDB](https://pouchdb.com/) - a JavaScript database that syncs with CouchDB and other compatible servers
-* [Jest](https://jestjs.io/) - a JavaScript testing framework
+* [Vites](https://vitest.dev/) - a JavaScript testing framework
 * [React Testing Library](https://testing-library.com/docs/react-testing-library/intro) - a library for testing React components
 
 ## Additional documentation

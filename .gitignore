@@ -130,9 +130,4 @@ dist
 .pnp.*
 
 .DS_Store
-
 .idea
-
-# Test databases
-test_db_*
-jonnylist/
