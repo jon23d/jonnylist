@@ -93,11 +93,6 @@ export class TaskRepository implements Repository {
       delete updatedTask.completedAt;
     }
 
-    // Strip urgency from the task if it exists
-    if ('urgency' in updatedTask) {
-      delete updatedTask.urgency;
-    }
-
     // If there is a waitUntil date and the date is not yet met, set the status to Waiting
     if (updatedTask.waitUntil && new Date(updatedTask.waitUntil) > new Date()) {
       updatedTask.status = TaskStatus.Waiting;
@@ -194,7 +189,7 @@ export class TaskRepository implements Repository {
    * @param tag
    */
   cleanTag(tag: string): string {
-    // Remove leading/trailing whitespace and convert to lowercase
+    // Remove leading/trailing whitespace
     const newTag = tag.trim();
 
     // Strip and preceding #

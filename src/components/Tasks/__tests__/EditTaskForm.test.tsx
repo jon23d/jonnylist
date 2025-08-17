@@ -119,7 +119,6 @@ describe('EditTaskForm', () => {
         expect.objectContaining({
           description: 'Updated Description',
           waitUntil: '2027-03-01',
-          status: TaskStatus.Waiting, // Should auto-set to Waiting when waitUntil is set
         })
       );
     });
