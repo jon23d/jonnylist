@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { IconManualGearboxFilled } from '@tabler/icons-react';
+import clsx from 'clsx';
 import { useLocation, useSearchParams } from 'react-router-dom';
-import { NavLink } from '@mantine/core';
+import { Flex, NavLink } from '@mantine/core';
+import ContextModifier from '@/components/Contexts/ContextModifier';
 import { useContextRepository } from '@/contexts/DataSourceContext';
 import { Context } from '@/data/documentTypes/Context';
+import classes from './Layout.module.css';
 
 export default function ContextLinks({
   handleNavLinkClick,
@@ -14,6 +17,7 @@ export default function ContextLinks({
   const location = useLocation();
   const contextRepository = useContextRepository();
   const [contexts, setContexts] = useState<Context[]>([]);
+  const [hovered, setHovered] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = contextRepository.subscribeToContexts(setContexts);
@@ -35,12 +39,22 @@ export default function ContextLinks({
 
   contexts.forEach((context) => {
     links.push(
-      <NavLink
+      <Flex
+        align="center"
         key={context._id}
-        onClick={() => handleNavLinkClick(`/tasks?context=${context._id}`)}
-        label={context.name}
-        active={querystringContext === context._id}
-      />
+        onMouseEnter={() => setHovered(context._id)}
+        onMouseLeave={() => setHovered(null)}
+        className={clsx(
+          classes.contextNavLink,
+          querystringContext === context._id ? classes.active : ''
+        )}
+      >
+        <NavLink
+          onClick={() => handleNavLinkClick(`/tasks?context=${context._id}`)}
+          label={context.name}
+        />
+        <ContextModifier context={context} visible={hovered === context._id} />
+      </Flex>
     );
   });
 

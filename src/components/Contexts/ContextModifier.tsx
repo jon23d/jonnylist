@@ -1,12 +1,18 @@
 import React from 'react';
-import { IconChevronRight } from '@tabler/icons-react';
-import { Button, Menu, Modal } from '@mantine/core';
+import { IconDotsVertical } from '@tabler/icons-react';
+import { Menu, Modal } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import DeleteContextForm from '@/components/Contexts/DeleteContextForm';
 import RenameContextForm from '@/components/Contexts/RenameContextForm';
 import { Context } from '@/data/documentTypes/Context';
 
-export default function ContextModifier({ context }: { context: Context }) {
+export default function ContextModifier({
+  context,
+  visible,
+}: {
+  context: Context;
+  visible: boolean;
+}) {
   const [renameOpened, { open: openRename, close: closeRename }] = useDisclosure(false);
   const [deleteOpened, { open: openDelete, close: closeDelete }] = useDisclosure(false);
 
@@ -14,15 +20,7 @@ export default function ContextModifier({ context }: { context: Context }) {
     <>
       <Menu shadow="md">
         <Menu.Target>
-          <Button
-            size="xs"
-            bg="gray.1"
-            c="gray.7"
-            rightSection={<IconChevronRight size={15} />}
-            bd="1px solid gray.3"
-          >
-            Context
-          </Button>
+          <IconDotsVertical size={16} opacity={visible ? 100 : 0} />
         </Menu.Target>
         <Menu.Dropdown>
           <Menu.Item onClick={openRename}>Rename</Menu.Item>

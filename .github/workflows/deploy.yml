@@ -1,4 +1,4 @@
-name: Deploy Jonnylist to Pages
+name: Deploy JonnyList to Pages
 
 on:
   # Allows you to run this workflow manually from the Actions tab

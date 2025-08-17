@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Group } from '@mantine/core';
-import ContextModifier from '@/components/Contexts/ContextModifier';
 import ColumnSelector from '@/components/Tasks/ColumnSelector';
 import FilterSelector from '@/components/Tasks/FilterSelector';
 import StatusSelector from '@/components/Tasks/StatusSelector';
@@ -13,7 +12,6 @@ import {
   useDataSource,
   useTaskRepository,
 } from '@/contexts/DataSourceContext';
-import { Context } from '@/data/documentTypes/Context';
 import { Task, TaskFilter, TaskStatus } from '@/data/documentTypes/Task';
 import { Notifications } from '@/helpers/Notifications';
 
@@ -30,7 +28,6 @@ export default function Page() {
     'Due Date',
   ]);
   const [taskFilter, setTaskFilter] = useState<TaskFilter>({});
-  const [context, setContext] = useState<Context | null>(null);
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [status, setStatus] = useState('pending');
@@ -55,7 +52,6 @@ export default function Page() {
         try {
           const context = await contextRepository.getContext(querystringContext);
           setTaskFilter(context.filter);
-          setContext(context);
         } catch {
           Notifications.showError({
             title: 'Error',
@@ -65,7 +61,6 @@ export default function Page() {
       };
       fetchContext();
     } else {
-      setContext(null);
       setTaskFilter({});
     }
   }, [querystringContext]);
@@ -144,7 +139,6 @@ export default function Page() {
         </Group>
 
         <Group gap="xs">
-          {context && <ContextModifier context={context} />}
           <FilterSelector
             {...taskFilter}
             setTaskFilter={setTaskFilter}

@@ -1,6 +1,6 @@
 # JonnyList
 
-> See a running demo at [jonnylist.com](https://jonnylist.com)
+> Use the application at [jonnylist.com](https://jonnylist.com)!
 
 JonnyList is an open-source application that allows for the creation and management of:
 

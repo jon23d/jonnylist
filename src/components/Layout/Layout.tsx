@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { IconSettingsFilled } from '@tabler/icons-react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Anchor, AppShell, Burger, Flex, Group, NavLink, ScrollArea, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import BulkOperationOverlay from '@/components/Common/BulkOperationOverlay';
@@ -78,7 +78,9 @@ export default function Layout() {
               <Burger opened={openedOnMobile} onClick={toggleMobile} size="sm" hiddenFrom="xs" />
               <Burger opened={openedOnDesktop} onClick={toggleDesktop} size="sm" visibleFrom="xs" />
               <Text size="xs" fw={800} c="black" visibleFrom="xs" mt={5} ml={10}>
-                <Anchor href="/">JonnyList</Anchor>
+                <Anchor to="/" component={Link}>
+                  JonnyList
+                </Anchor>
               </Text>
             </Flex>
             <HeaderLinks />
