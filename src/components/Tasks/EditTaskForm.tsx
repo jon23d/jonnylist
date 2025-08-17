@@ -69,7 +69,7 @@ export default function EditTaskForm({
     try {
       // Clean up the recurrence object to remove unused values
       let recurrence: Recurrence | undefined;
-      let status: TaskStatus = form.values.waitUntil ? TaskStatus.Waiting : form.values.status;
+      let status: TaskStatus = form.values.status;
 
       if (
         form.values.isRecurring &&

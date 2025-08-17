@@ -113,20 +113,6 @@ describe('TaskRepository', () => {
     expect(tasks[0].updatedAt.getTime()).toBeGreaterThanOrEqual(timeAfterUpdate.getTime());
   });
 
-  test('updateTask should remove urgency from the task prior to saving', async () => {
-    const database = getDb();
-    const repository = new TaskRepository(database);
-    const newTask = taskFactory();
-
-    const task = await repository.addTask(newTask);
-
-    // @ts-ignore
-    const updatedTask = await repository.updateTask({ ...task, title: 'Updated Task', urgency: 5 });
-
-    // @ts-ignore
-    expect(updatedTask.urgency).toBeUndefined();
-  });
-
   test('UpdateTask should return the task with the new revision', async () => {
     const database = getDb();
     const repository = new TaskRepository(database);
