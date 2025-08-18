@@ -16,6 +16,9 @@ export interface Preferences extends Common {
     hasProject?: number;
     ageCoefficient?: number;
   };
+  dashboard?: {
+    hideIntro?: boolean;
+  };
 }
 
 export function createDefaultPreferences(): Preferences {

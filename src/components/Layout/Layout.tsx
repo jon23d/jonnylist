@@ -9,6 +9,7 @@ import ContextLinks from '@/components/Layout/ContextLinks';
 import DataMigrationOverlay from '@/components/Layout/DataMigrationOverlay';
 import Footer from '@/components/Layout/Footer';
 import HeaderLinks from '@/components/Layout/HeaderLinks';
+import AddNewItemButton from '@/components/Layout/NewItem/AddNewItemButton';
 import ReportLinks from '@/components/Layout/ReportLinks';
 import { useBulkOperationOverlay } from '@/contexts/BulkOperationOverlayContext';
 import { useIsMigrating } from '@/contexts/DataSourceContext';
@@ -87,12 +88,14 @@ export default function Layout() {
           </Group>
         </AppShell.Header>
         <AppShell.Navbar p="md">
+          <AddNewItemButton mb={10} />
+
           <AppShell.Section grow component={ScrollArea}>
             <ContextLinks handleNavLinkClick={handleNavLinkClick} />
             <ReportLinks handleNavLinkClick={handleNavLinkClick} />
-
             <CommandPalette />
           </AppShell.Section>
+
           <AppShell.Section>
             <NavLink
               onClick={() => handleNavLinkClick('/settings')}
