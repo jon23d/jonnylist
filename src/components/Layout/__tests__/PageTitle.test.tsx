@@ -21,6 +21,7 @@ describe('PageTitle', () => {
         params: {},
         data: {},
         handle: { title: 'My Test Title' },
+        loaderData: {},
       },
     ]);
     render(<PageTitle />);
@@ -35,6 +36,7 @@ describe('PageTitle', () => {
         params: {},
         data: {},
         handle: {},
+        loaderData: {},
       },
     ]);
     render(<PageTitle />);
