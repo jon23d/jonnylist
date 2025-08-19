@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Anchor, Text } from '@mantine/core';
+import { Anchor, Box, Text, Tooltip } from '@mantine/core';
 import AddNewItemButton from '@/components/Layout/NewItem/AddNewItemButton';
-import { useTaskRepository } from '@/contexts/DataSourceContext';
+import { useSyncStatus, useTaskRepository } from '@/contexts/DataSourceContext';
+import { SyncStatus } from '@/data/DataSource';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
 import classes from './Layout.module.css';
 
@@ -11,6 +12,7 @@ export default function HeaderLinks() {
   const [tasksInProgress, setTasksInProgress] = React.useState<Task[]>([]);
   const [projectsInProgress, setProjectsInProgress] = React.useState<number>(0);
   const taskRepository = useTaskRepository();
+  const syncStatus = useSyncStatus();
 
   const extractProjectsFromTasks = (tasks: Task[]): void => {
     const projects = new Set<string>();
@@ -71,6 +73,19 @@ export default function HeaderLinks() {
             {projectsInProgress} open projects
           </Anchor>
         </Text>
+        {syncStatus !== SyncStatus.INACTIVE && (
+          <Tooltip label={syncStatus === SyncStatus.ERROR ? 'Sync error' : 'Sync active'} withArrow>
+            <Box
+              ml="sm"
+              style={{
+                width: '10px',
+                height: '10px',
+                borderRadius: '50%',
+                backgroundColor: syncStatus === SyncStatus.ERROR ? 'red' : 'green',
+              }}
+            />
+          </Tooltip>
+        )}
       </div>
     </>
   );

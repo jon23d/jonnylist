@@ -1,16 +1,20 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
+import { SyncStatus } from '@/data/DataSource';
 import { setupTestDatabase } from '@/test-utils/db';
 import { renderWithDataSource } from '@/test-utils/index';
-import { useDataSource, useIsMigrating } from '../DataSourceContext';
+import { useDataSource, useIsMigrating, useSyncStatus } from '../DataSourceContext';
 
 const TestComponent = () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const dataSource = useDataSource();
   const isMigrating = useIsMigrating();
+  const syncStatus = useSyncStatus();
+
   return (
     <div>
       <div data-testid="is-migrating">{isMigrating.toString()}</div>
+      <div data-testid="sync-status">{syncStatus}</div>
     </div>
   );
 };
@@ -95,6 +99,27 @@ describe('DataSourceContext', () => {
 
     await waitFor(() => {
       expect(initializeSyncSpy).toHaveBeenCalled();
+    });
+  });
+
+  it('provides sync status', async () => {
+    const dataSource = getDataSource();
+    renderWithDataSource(<TestComponent />, dataSource);
+    expect(screen.getByTestId('sync-status')).toHaveTextContent(SyncStatus.INACTIVE);
+  });
+
+  it('updates sync status when it changes in the data source', async () => {
+    const dataSource = getDataSource();
+    renderWithDataSource(<TestComponent />, dataSource);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('sync-status')).toHaveTextContent(SyncStatus.INACTIVE);
+    });
+
+    dataSource.onSyncStatusChange?.(SyncStatus.ACTIVE);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('sync-status')).toHaveTextContent(SyncStatus.ACTIVE);
     });
   });
 });

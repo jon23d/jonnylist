@@ -8,6 +8,13 @@ import { TaskRepository } from '@/data/TaskRepository';
 import { Logger } from '@/helpers/Logger';
 import { MigrationManager } from './migrations/MigrationManager';
 
+export enum SyncStatus {
+  INACTIVE = 'inactive',
+  ACTIVE = 'active',
+  PAUSED = 'paused',
+  ERROR = 'error',
+}
+
 /**
  * @TODO This whole thing needs error handling
  * @TODO Absolutely use pouchdb indices once the dust settles\
@@ -22,6 +29,8 @@ export class DataSource {
   private preferencesRepository: PreferencesRepository | null = null;
 
   public onMigrationStatusChange?: (isMigrating: boolean) => void;
+  public onSyncStatusChange?: (status: SyncStatus) => void;
+  public syncStatus: SyncStatus = SyncStatus.INACTIVE;
 
   /**
    * Creates a new LocalDataSource instance.
@@ -108,6 +117,7 @@ export class DataSource {
 
     if (!settings.syncServerUrl || !settings.syncServerAccessToken) {
       Logger.info('No sync server settings found, skipping sync setup');
+      this.setSyncStatus(SyncStatus.INACTIVE);
       return;
     }
 
@@ -122,25 +132,31 @@ export class DataSource {
         })
         .on('change', (info) => {
           Logger.info('Sync change:', info);
+          this.setSyncStatus(SyncStatus.ACTIVE);
         })
         .on('paused', () => {
           Logger.info('Sync paused (up to date)');
+          this.setSyncStatus(SyncStatus.PAUSED);
         })
         .on('active', () => {
           Logger.info('Sync resumed');
+          this.setSyncStatus(SyncStatus.ACTIVE);
         })
         .on('denied', (err) => {
           Logger.error('Sync denied:', err);
+          this.setSyncStatus(SyncStatus.ERROR);
         })
         .on('complete', (info) => {
           Logger.info('Sync complete:', info);
+          this.setSyncStatus(SyncStatus.INACTIVE);
         })
         .on('error', (err) => {
           Logger.error('Error replicating to remote database:', err);
-          this.cancelSync();
+          this.setSyncStatus(SyncStatus.ERROR);
         });
     } catch (error) {
       Logger.error('Error initializing sync:', error);
+      this.setSyncStatus(SyncStatus.ERROR);
       this.cancelSync();
       throw error; // Re-throw to handle it in the calling code
     }
@@ -168,6 +184,9 @@ export class DataSource {
     if (this.syncHandler) {
       this.syncHandler.cancel();
       this.syncHandler = null;
+      if (this.syncStatus !== SyncStatus.ERROR) {
+        this.setSyncStatus(SyncStatus.INACTIVE);
+      }
     } else {
       Logger.info('No active sync to cancel');
     }
@@ -274,6 +293,22 @@ export class DataSource {
       throw new Error(
         'Failed to connect to sync database. Please check your sync server URL and access token.'
       );
+    }
+  }
+
+  // Is the error a PouchDB not found error?
+  /**
+   * Check if sync is configured.
+   */
+  async isSyncConfigured(): Promise<boolean> {
+    const settings = await this.getLocalSettings();
+    return !!settings.syncServerUrl;
+  }
+
+  private setSyncStatus(status: SyncStatus) {
+    if (this.syncStatus !== status) {
+      this.syncStatus = status;
+      this.onSyncStatusChange?.(this.syncStatus);
     }
   }
 

@@ -1,6 +1,7 @@
+import { EventEmitter } from 'events';
 import { waitFor } from '@testing-library/dom';
 import PouchDB from 'pouchdb';
-import { DataSource } from '@/data/DataSource';
+import { DataSource, SyncStatus } from '@/data/DataSource';
 import { createTestDataSource, setupTestDatabase } from '@/test-utils/db';
 import { localSettingsFactory } from '@/test-utils/factories/LocalSettingsFactory';
 import { preferencesFactory } from '@/test-utils/factories/PreferencesFactory';
@@ -211,6 +212,80 @@ describe('DataSource', () => {
 
       const settings = await dataSource.getLocalSettings();
       expect(settings).not.toEqual(expect.objectContaining(localSettings));
+    });
+  });
+
+  describe('syncStatus', () => {
+    const mockSyncHandler = new EventEmitter();
+    (mockSyncHandler as any).cancel = vi.fn();
+
+    beforeEach(() => {
+      vi.spyOn(PouchDB.prototype, 'sync').mockReturnValue(mockSyncHandler as any);
+      vi.spyOn(DataSource.prototype as any, 'verifySyncConnection').mockResolvedValue(undefined);
+    });
+
+    it('should have an initial status of INACTIVE', () => {
+      const dataSource = getDataSource();
+      expect(dataSource.syncStatus).toBe(SyncStatus.INACTIVE);
+    });
+
+    it('should have status of INACTIVE if sync is not configured', async () => {
+      const dataSource = getDataSource();
+      await dataSource.initializeSync();
+      expect(dataSource.syncStatus).toBe(SyncStatus.INACTIVE);
+    });
+
+    it('should update status to ACTIVE on "active" event', async () => {
+      const dataSource = getDataSource();
+      await dataSource.setLocalSettings(
+        localSettingsFactory({ syncServerUrl: 'http://a.b', syncServerAccessToken: 'token' })
+      );
+      await dataSource.initializeSync();
+
+      mockSyncHandler.emit('active');
+      expect(dataSource.syncStatus).toBe(SyncStatus.ACTIVE);
+    });
+
+    it('should update status to PAUSED on "paused" event', async () => {
+      const dataSource = getDataSource();
+      await dataSource.setLocalSettings(
+        localSettingsFactory({ syncServerUrl: 'http://a.b', syncServerAccessToken: 'token' })
+      );
+      await dataSource.initializeSync();
+
+      mockSyncHandler.emit('paused');
+      expect(dataSource.syncStatus).toBe(SyncStatus.PAUSED);
+    });
+
+    it('should update status to ERROR on "error" event', async () => {
+      const dataSource = getDataSource();
+      await dataSource.setLocalSettings(
+        localSettingsFactory({ syncServerUrl: 'http://a.b', syncServerAccessToken: 'token' })
+      );
+      await dataSource.initializeSync();
+
+      mockSyncHandler.emit('error', new Error('test error'));
+      expect(dataSource.syncStatus).toBe(SyncStatus.ERROR);
+    });
+
+    it('should call onSyncStatusChange with the correct status', async () => {
+      const dataSource = getDataSource();
+      const onSyncStatusChange = vi.fn();
+      dataSource.onSyncStatusChange = onSyncStatusChange;
+
+      await dataSource.setLocalSettings(
+        localSettingsFactory({ syncServerUrl: 'http://a.b', syncServerAccessToken: 'token' })
+      );
+      await dataSource.initializeSync();
+
+      mockSyncHandler.emit('active');
+      expect(onSyncStatusChange).toHaveBeenCalledWith(SyncStatus.ACTIVE);
+
+      mockSyncHandler.emit('paused');
+      expect(onSyncStatusChange).toHaveBeenCalledWith(SyncStatus.PAUSED);
+
+      mockSyncHandler.emit('error', new Error('test error'));
+      expect(onSyncStatusChange).toHaveBeenCalledWith(SyncStatus.ERROR);
     });
   });
 

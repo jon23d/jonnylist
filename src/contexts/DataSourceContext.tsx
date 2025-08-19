@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import PouchDB from 'pouchdb';
 import { ContextRepository } from '@/data/ContextRepository';
-import { DataSource } from '@/data/DataSource';
+import { DataSource, SyncStatus } from '@/data/DataSource';
 import { DocumentTypes } from '@/data/documentTypes';
 import { PreferencesRepository } from '@/data/PreferencesRepository';
 import { TaskRepository } from '@/data/TaskRepository';
@@ -11,6 +11,7 @@ import { Notifications } from '@/helpers/Notifications';
 export type DataSourceContextType = {
   dataSource: DataSource;
   isMigrating: boolean;
+  syncStatus: SyncStatus;
 };
 
 const DataSourceContext = createContext<DataSourceContextType | null>(null);
@@ -23,6 +24,7 @@ export const DataSourceContextProvider = ({
   children: React.ReactNode;
 }) => {
   const [isMigrating, setIsMigrating] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>(SyncStatus.INACTIVE);
   const [currentDataSource] = useState<DataSource>(
     // Use the provided dataSource if it exists, otherwise create a new one
     () =>
@@ -34,6 +36,8 @@ export const DataSourceContextProvider = ({
 
   useEffect(() => {
     currentDataSource.onMigrationStatusChange = setIsMigrating;
+    currentDataSource.onSyncStatusChange = setSyncStatus;
+    setSyncStatus(currentDataSource.syncStatus);
 
     // Run migrations when the application starts
     currentDataSource.runMigrations().catch((error) => {
@@ -82,7 +86,7 @@ export const DataSourceContextProvider = ({
   }, [currentDataSource]);
 
   return (
-    <DataSourceContext.Provider value={{ dataSource: currentDataSource, isMigrating }}>
+    <DataSourceContext.Provider value={{ dataSource: currentDataSource, isMigrating, syncStatus }}>
       {children}
     </DataSourceContext.Provider>
   );
@@ -102,6 +106,14 @@ export const useIsMigrating = (): boolean => {
     throw new Error('useIsMigrating must be used within a DataSourceContextProvider');
   }
   return context.isMigrating;
+};
+
+export const useSyncStatus = (): SyncStatus => {
+  const context = useContext(DataSourceContext);
+  if (!context) {
+    throw new Error('useSyncStatus must be used within a DataSourceContextProvider');
+  }
+  return context.syncStatus;
 };
 
 export const useTaskRepository = (): TaskRepository => {
