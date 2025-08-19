@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Anchor, Box, Text, Tooltip } from '@mantine/core';
+import { Anchor, Box, Group, Text, Tooltip } from '@mantine/core';
 import AddNewItemButton from '@/components/Layout/NewItem/AddNewItemButton';
 import { useSyncStatus, useTaskRepository } from '@/contexts/DataSourceContext';
 import { SyncStatus } from '@/data/DataSource';
@@ -58,35 +58,53 @@ export default function HeaderLinks() {
     return unsubscribe;
   }, []);
 
+  const syncColor =
+    syncStatus === SyncStatus.ERROR
+      ? 'red'
+      : syncStatus === SyncStatus.INACTIVE
+        ? 'orange'
+        : 'green';
+
+  const syncLabel =
+    syncStatus === SyncStatus.INACTIVE
+      ? 'Sync inactive'
+      : syncStatus === SyncStatus.ERROR
+        ? 'Sync error'
+        : 'Sync active';
+
   return (
     <>
       <AddNewItemButton />
-      <div className={classes.withSeparators}>
-        <Text size="xs" c="gray.6">
-          <Anchor to="/reports/due" component={Link}>
-            {tasksDue.length} tasks due
-          </Anchor>
-          <Anchor to="/reports/in-progress" component={Link}>
-            {tasksInProgress.length} tasks in progress
-          </Anchor>
-          <Anchor to="/reports/open-projects" visibleFrom="xs" component={Link}>
-            {projectsInProgress} open projects
-          </Anchor>
-        </Text>
-        {syncStatus !== SyncStatus.INACTIVE && (
-          <Tooltip label={syncStatus === SyncStatus.ERROR ? 'Sync error' : 'Sync active'} withArrow>
+      <Group>
+        <div className={classes.withSeparators}>
+          <Text size="xs" c="gray.6">
+            <Anchor to="/reports/due" component={Link}>
+              {tasksDue.length} tasks due
+            </Anchor>
+            <Anchor to="/reports/in-progress" component={Link}>
+              {tasksInProgress.length} tasks in progress
+            </Anchor>
+            <Anchor to="/reports/open-projects" visibleFrom="xs" component={Link}>
+              {projectsInProgress} open projects
+            </Anchor>
+          </Text>
+        </div>
+        {syncStatus !== SyncStatus.NOT_CONFIGURED && (
+          <Tooltip label={syncLabel} withArrow>
             <Box
-              ml="sm"
               style={{
                 width: '10px',
                 height: '10px',
                 borderRadius: '50%',
-                backgroundColor: syncStatus === SyncStatus.ERROR ? 'red' : 'green',
+                backgroundColor: syncColor,
               }}
-            />
+              data-testid="sync-status-indicator"
+            >
+              &nbsp;
+            </Box>
           </Tooltip>
         )}
-      </div>
+      </Group>
     </>
   );
 }

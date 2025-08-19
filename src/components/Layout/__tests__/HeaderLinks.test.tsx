@@ -19,10 +19,18 @@ describe('HeaderLinks', () => {
   });
 
   describe('SyncStatusIndicator', () => {
-    it('should not render the indicator when sync status is INACTIVE', () => {
-      vi.spyOn(DataSourceContext, 'useSyncStatus').mockReturnValue(SyncStatus.INACTIVE);
+    it('should not render the indicator when sync status is NOT_CONFIGURED', () => {
+      vi.spyOn(DataSourceContext, 'useSyncStatus').mockReturnValue(SyncStatus.NOT_CONFIGURED);
       renderWithDataSource(<HeaderLinks />, getDataSource());
-      expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('sync-status-indicator')).not.toBeInTheDocument();
+    });
+
+    it('should not render an orange dot for INACTIVE status', () => {
+      vi.spyOn(DataSourceContext, 'useSyncStatus').mockReturnValue(SyncStatus.INACTIVE);
+      const { container } = renderWithDataSource(<HeaderLinks />, getDataSource());
+
+      const indicator = container.querySelector('div[style*="background-color: orange"]');
+      expect(indicator).toBeInTheDocument();
     });
 
     it('should render a green dot for ACTIVE status', async () => {

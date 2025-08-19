@@ -224,15 +224,15 @@ describe('DataSource', () => {
       vi.spyOn(DataSource.prototype as any, 'verifySyncConnection').mockResolvedValue(undefined);
     });
 
-    it('should have an initial status of INACTIVE', () => {
+    it('should have an initial status of NOT_CONFIGURED', () => {
       const dataSource = getDataSource();
-      expect(dataSource.syncStatus).toBe(SyncStatus.INACTIVE);
+      expect(dataSource.syncStatus).toBe(SyncStatus.NOT_CONFIGURED);
     });
 
-    it('should have status of INACTIVE if sync is not configured', async () => {
+    it('should have status of NOT_CONFIGURED if sync is not configured', async () => {
       const dataSource = getDataSource();
       await dataSource.initializeSync();
-      expect(dataSource.syncStatus).toBe(SyncStatus.INACTIVE);
+      expect(dataSource.syncStatus).toBe(SyncStatus.NOT_CONFIGURED);
     });
 
     it('should update status to ACTIVE on "active" event', async () => {

@@ -20,7 +20,6 @@ describe('PageTitle', () => {
         pathname: '/',
         params: {},
         data: {},
-        loaderData: {},
         handle: { title: 'My Test Title' },
       },
     ]);
@@ -35,7 +34,6 @@ describe('PageTitle', () => {
         pathname: '/',
         params: {},
         data: {},
-        loaderData: {},
         handle: {},
       },
     ]);

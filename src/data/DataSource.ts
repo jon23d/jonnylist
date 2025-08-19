@@ -9,6 +9,7 @@ import { Logger } from '@/helpers/Logger';
 import { MigrationManager } from './migrations/MigrationManager';
 
 export enum SyncStatus {
+  NOT_CONFIGURED = 'not_configured',
   INACTIVE = 'inactive',
   ACTIVE = 'active',
   PAUSED = 'paused',
@@ -30,7 +31,7 @@ export class DataSource {
 
   public onMigrationStatusChange?: (isMigrating: boolean) => void;
   public onSyncStatusChange?: (status: SyncStatus) => void;
-  public syncStatus: SyncStatus = SyncStatus.INACTIVE;
+  public syncStatus: SyncStatus = SyncStatus.NOT_CONFIGURED;
 
   /**
    * Creates a new LocalDataSource instance.
@@ -117,7 +118,7 @@ export class DataSource {
 
     if (!settings.syncServerUrl || !settings.syncServerAccessToken) {
       Logger.info('No sync server settings found, skipping sync setup');
-      this.setSyncStatus(SyncStatus.INACTIVE);
+      this.setSyncStatus(SyncStatus.NOT_CONFIGURED);
       return;
     }
 
@@ -156,8 +157,8 @@ export class DataSource {
         });
     } catch (error) {
       Logger.error('Error initializing sync:', error);
-      this.setSyncStatus(SyncStatus.ERROR);
       this.cancelSync();
+      this.setSyncStatus(SyncStatus.ERROR);
       throw error; // Re-throw to handle it in the calling code
     }
   }
@@ -289,6 +290,7 @@ export class DataSource {
     try {
       await syncDb.info();
     } catch (error) {
+      this.setSyncStatus(SyncStatus.ERROR);
       Logger.error('Error connecting to sync database:', error);
       throw new Error(
         'Failed to connect to sync database. Please check your sync server URL and access token.'

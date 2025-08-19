@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { SyncStatus } from '@/data/DataSource';
 import { setupTestDatabase } from '@/test-utils/db';
 import { renderWithDataSource } from '@/test-utils/index';
@@ -105,7 +105,7 @@ describe('DataSourceContext', () => {
   it('provides sync status', async () => {
     const dataSource = getDataSource();
     renderWithDataSource(<TestComponent />, dataSource);
-    expect(screen.getByTestId('sync-status')).toHaveTextContent(SyncStatus.INACTIVE);
+    expect(screen.getByTestId('sync-status')).toHaveTextContent(SyncStatus.NOT_CONFIGURED);
   });
 
   it('updates sync status when it changes in the data source', async () => {
@@ -113,10 +113,10 @@ describe('DataSourceContext', () => {
     renderWithDataSource(<TestComponent />, dataSource);
 
     await waitFor(() => {
-      expect(screen.getByTestId('sync-status')).toHaveTextContent(SyncStatus.INACTIVE);
+      expect(screen.getByTestId('sync-status')).toHaveTextContent(SyncStatus.NOT_CONFIGURED);
     });
 
-    dataSource.onSyncStatusChange?.(SyncStatus.ACTIVE);
+    act(() => dataSource.onSyncStatusChange?.(SyncStatus.ACTIVE));
 
     await waitFor(() => {
       expect(screen.getByTestId('sync-status')).toHaveTextContent(SyncStatus.ACTIVE);
