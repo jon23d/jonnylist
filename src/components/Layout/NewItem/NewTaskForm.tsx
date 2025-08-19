@@ -75,50 +75,53 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
     }
   }, [queryContext]);
 
+  const saveTask = async () => {
+    let status = form.values.status;
+
+    // Clean up the recurrence object to remove unused values
+    let recurrence: Recurrence | undefined;
+
+    if (form.values.isRecurring) {
+      recurrence = form.values.recurrence as Recurrence;
+      status = TaskStatus.Recurring;
+
+      if (recurrence.frequency !== 'weekly') {
+        recurrence.dayOfWeek = undefined;
+      }
+      if (recurrence.frequency !== 'monthly') {
+        recurrence.dayOfMonth = undefined;
+      }
+      if (recurrence.frequency !== 'yearly') {
+        recurrence.yearlyFirstOccurrence = undefined;
+      }
+
+      recurrence.dayOfWeek = recurrence.dayOfWeek ? Number(recurrence.dayOfWeek) : undefined;
+      recurrence.dayOfMonth = recurrence.dayOfMonth ? Number(recurrence.dayOfMonth) : undefined;
+    } else {
+      recurrence = undefined;
+    }
+
+    const newTask: NewTask = {
+      ...form.getValues(),
+      recurrence,
+      status,
+    };
+
+    await taskRepository.addTask(newTask);
+
+    Notifications.showQuickSuccess('Task added');
+
+    form.reset();
+
+    // We want to make sure that we've cleared focus so that keyboard navigation works properly
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+  };
+
   const handleSave = async () => {
     try {
-      let status = form.values.status;
-
-      // Clean up the recurrence object to remove unused values
-      let recurrence: Recurrence | undefined;
-
-      if (form.values.isRecurring) {
-        recurrence = form.values.recurrence as Recurrence;
-        status = TaskStatus.Recurring;
-
-        if (recurrence.frequency !== 'weekly') {
-          recurrence.dayOfWeek = undefined;
-        }
-        if (recurrence.frequency !== 'monthly') {
-          recurrence.dayOfMonth = undefined;
-        }
-        if (recurrence.frequency !== 'yearly') {
-          recurrence.yearlyFirstOccurrence = undefined;
-        }
-
-        recurrence.dayOfWeek = recurrence.dayOfWeek ? Number(recurrence.dayOfWeek) : undefined;
-        recurrence.dayOfMonth = recurrence.dayOfMonth ? Number(recurrence.dayOfMonth) : undefined;
-      } else {
-        recurrence = undefined;
-      }
-
-      const newTask: NewTask = {
-        ...form.getValues(),
-        recurrence,
-        status,
-      };
-
-      await taskRepository.addTask(newTask);
-
-      Notifications.showQuickSuccess('Task added');
-
-      form.reset();
-
-      // We want to make sure that we've cleared focus so that keyboard navigation works properly
-      if (document.activeElement instanceof HTMLElement) {
-        document.activeElement.blur();
-      }
-
+      await saveTask();
       handleClose();
     } catch (error) {
       Notifications.showError({
@@ -129,5 +132,24 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
     }
   };
 
-  return <TaskForm form={form} handleSubmit={handleSave} isNewTask />;
+  const handleSaveAndCreateAnother = async () => {
+    try {
+      await saveTask();
+    } catch (error) {
+      Notifications.showError({
+        title: 'Error saving task',
+        message: 'There was an error while saving the task. Please try again.',
+      });
+      Logger.error('Error saving task:', error);
+    }
+  };
+
+  return (
+    <TaskForm
+      form={form}
+      handleSubmit={handleSave}
+      handleSaveAndCreateAnother={handleSaveAndCreateAnother}
+      isNewTask
+    />
+  );
 }

@@ -2,13 +2,16 @@ import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 import {
+  ActionIcon,
   Box,
   Button,
+  ButtonGroup,
   Chip,
   Fieldset,
   Flex,
   FocusTrap,
   Group,
+  Menu,
   NumberInput,
   Paper,
   Radio,
@@ -26,6 +29,7 @@ import {
 import { DatePickerInput } from '@mantine/dates';
 import { UseFormReturnType } from '@mantine/form';
 import { useHotkeys, useOs } from '@mantine/hooks';
+import { IconChevronDown } from '@tabler/icons-react';
 import sharedStyle from '@/components/style.module.css';
 import {
   NewTask,
@@ -46,10 +50,12 @@ export default function TaskForm({
   form,
   handleSubmit,
   isNewTask,
+  handleSaveAndCreateAnother,
 }: {
   form: UseFormReturnType<TaskFormType>;
   handleSubmit: () => void;
   isNewTask: boolean;
+  handleSaveAndCreateAnother?: () => void;
 }) {
   const [activeTab, setActiveTab] = useState<string | null>('basics');
   const [newNoteText, setNewNoteText] = useState<string>('');
@@ -147,6 +153,39 @@ export default function TaskForm({
 
   const pluralizeInterval = form.values.recurrence?.interval === 1;
 
+  const saveButton = (tabName: 'basics' | 'advanced') => (
+    <Group mt={20}>
+      <ButtonGroup>
+        <Button type="submit" data-testid={`save-button-${tabName}`}>
+          Save Task
+        </Button>
+        {isNewTask && (
+          <Menu>
+            <Menu.Target>
+              <ActionIcon
+                variant="filled"
+                color="blue"
+                size="lg"
+                aria-label="Save options"
+                data-testid={`save-options-${tabName}`}
+              >
+                <IconChevronDown size={14} />
+              </ActionIcon>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Item
+                onClick={handleSaveAndCreateAnother}
+                data-testid={`save-and-create-another-${tabName}`}
+              >
+                Save and create another
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+        )}
+      </ButtonGroup>
+    </Group>
+  );
+
   return (
     <form onSubmit={form.onSubmit(handleSubmit)}>
       <FocusTrap>
@@ -213,9 +252,7 @@ export default function TaskForm({
                 searchable
               />
 
-              <Button type="submit" mt={20}>
-                Save Task
-              </Button>
+              {saveButton('basics')}
             </Stack>
           </Tabs.Panel>
 
@@ -345,9 +382,7 @@ export default function TaskForm({
                 </Box>
               </Box>
 
-              <Button type="submit" mt={20}>
-                Save Task
-              </Button>
+              {saveButton('advanced')}
             </Stack>
           </Tabs.Panel>
 

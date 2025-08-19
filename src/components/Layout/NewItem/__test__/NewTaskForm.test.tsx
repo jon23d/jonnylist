@@ -55,7 +55,7 @@ describe('NewTaskForm', () => {
       await userEvent.click(screen.getByRole('textbox', { name: 'Priority' }));
       await userEvent.click(screen.getByRole('option', { name: 'Low' }));
 
-      const submitButton = screen.getByRole('button', { name: 'Save Task' });
+      const submitButton = screen.getByTestId('save-button-basics');
       await userEvent.click(submitButton);
 
       expect(addTaskMock).toHaveBeenCalledWith(
@@ -82,7 +82,7 @@ describe('NewTaskForm', () => {
       const projectInput = screen.getByRole('textbox', { name: 'Project' });
       await userEvent.type(projectInput, 'Test Project');
 
-      const submitButton = screen.getByRole('button', { name: 'Save Task' });
+      const submitButton = screen.getByTestId('save-button-basics');
       await userEvent.click(submitButton);
 
       expect(addTaskMock).toHaveBeenCalledWith(
@@ -109,7 +109,7 @@ describe('NewTaskForm', () => {
       const descriptionInput = screen.getByRole('textbox', { name: 'Description' });
       await userEvent.type(descriptionInput, 'This is a test task description.');
 
-      const submitButton = screen.getByRole('button', { name: 'Save Task' });
+      const submitButton = screen.getByTestId('save-button-advanced');
       await userEvent.click(submitButton);
 
       expect(addTaskMock).toHaveBeenCalledWith(
@@ -119,6 +119,54 @@ describe('NewTaskForm', () => {
         })
       );
     }, 7000); // The runner is pretty slow in github, so we increase the timeout
+
+    it('Saves a task and keeps the form open to create another', async () => {
+      const handleClose = vi.fn();
+      const dataSource = getDataSource();
+
+      renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
+
+      const titleInput = screen.getByRole('textbox', { name: 'Title' });
+      await userEvent.type(titleInput, 'First Task');
+
+      // Click the save options dropdown
+      const saveOptions = screen.getByTestId('save-options-basics');
+      await userEvent.click(saveOptions);
+
+      // Click the "Save and create another" button
+      const saveAndCreateAnotherButton = screen.getByTestId('save-and-create-another-basics');
+      await userEvent.click(saveAndCreateAnotherButton);
+
+      // The first task should be saved
+      expect(addTaskMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'First Task',
+        })
+      );
+
+      // The form should be reset
+      expect(titleInput).toHaveValue('');
+
+      // The modal should still be open
+      expect(handleClose).not.toHaveBeenCalled();
+
+      // Enter a second task
+      await userEvent.type(titleInput, 'Second Task');
+      const submitButton = screen.getByTestId('save-button-basics');
+      await userEvent.click(submitButton);
+
+      // The second task should be saved
+      expect(addTaskMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'Second Task',
+        })
+      );
+
+      // The modal should be closed
+      await waitFor(() => {
+        expect(handleClose).toHaveBeenCalled();
+      });
+    });
   });
 
   it('Blurs the active element when the form is submitted', async () => {
@@ -179,7 +227,7 @@ describe('NewTaskForm', () => {
     const recurrenceDaySelect = screen.getByRole('radio', { name: 'Tues' });
     await userEvent.click(recurrenceDaySelect);
 
-    const submitButton = screen.getByRole('button', { name: 'Save Task' });
+    const submitButton = screen.getByTestId('save-button-advanced');
     await userEvent.click(submitButton);
 
     expect(addTaskMock).toHaveBeenCalledWith(
@@ -219,7 +267,7 @@ describe('NewTaskForm', () => {
     await userEvent.clear(recurrenceDaySelect);
     await userEvent.type(recurrenceDaySelect, '15');
 
-    const submitButton = screen.getByRole('button', { name: 'Save Task' });
+    const submitButton = screen.getByTestId('save-button-advanced');
     await userEvent.click(submitButton);
 
     expect(addTaskMock).toHaveBeenCalledWith(
@@ -263,7 +311,7 @@ describe('NewTaskForm', () => {
     const recurrenceDaySelect = screen.getByRole('radio', { name: 'Sun' });
     await userEvent.click(recurrenceDaySelect);
 
-    const submitButton = screen.getByRole('button', { name: 'Save Task' });
+    const submitButton = screen.getByTestId('save-button-advanced');
     await userEvent.click(submitButton);
 
     expect(addTaskMock).toHaveBeenCalledWith(
