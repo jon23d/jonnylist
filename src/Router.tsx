@@ -15,26 +15,44 @@ const router = createHashRouter([
         path: '/',
         index: true,
         element: <HomePage />,
+        handle: {
+          title: 'Home',
+        },
       },
       {
         path: '/tasks',
         element: <TasksPage />,
+        handle: {
+          title: 'Tasks',
+        },
       },
       {
         path: '/reports/due',
         element: <ReportsDuePage />,
+        handle: {
+          title: 'Due Tasks Report',
+        },
       },
       {
         path: '/reports/in-progress',
         element: <ReportsInProgressPage />,
+        handle: {
+          title: 'In Progress Report',
+        },
       },
       {
         path: '/reports/open-projects',
         element: <ReportsOpenProjectsPage />,
+        handle: {
+          title: 'Open Projects Report',
+        },
       },
       {
         path: '/settings',
         element: <SettingsPage />,
+        handle: {
+          title: 'Settings',
+        },
       },
     ],
   },
