@@ -10,6 +10,7 @@ vi.mock('react-router-dom', async () => {
     useLocation: vi.fn().mockReturnValue({ pathname: '/' }),
     useNavigate: vi.fn().mockReturnValue(() => {}),
     Outlet: () => <div data-testid="page-content">Page Content</div>,
+    useMatches: vi.fn().mockReturnValue([{ handle: { title: 'Test Title' } }]),
   };
 });
 

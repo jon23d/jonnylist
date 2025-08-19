@@ -9,6 +9,7 @@ import ContextLinks from '@/components/Layout/ContextLinks';
 import DataMigrationOverlay from '@/components/Layout/DataMigrationOverlay';
 import Footer from '@/components/Layout/Footer';
 import HeaderLinks from '@/components/Layout/HeaderLinks';
+import PageTitle from '@/components/Layout/PageTitle';
 import ReportLinks from '@/components/Layout/ReportLinks';
 import { useBulkOperationOverlay } from '@/contexts/BulkOperationOverlayContext';
 import { useIsMigrating } from '@/contexts/DataSourceContext';
@@ -54,6 +55,7 @@ export default function Layout() {
 
   return (
     <>
+      <PageTitle />
       {showOverlay && <DataMigrationOverlay />}
       <AppShell
         header={{ height: 30 }}
