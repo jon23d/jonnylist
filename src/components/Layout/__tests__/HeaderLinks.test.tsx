@@ -1,6 +1,8 @@
 import HeaderLinks from '@/components/Layout/HeaderLinks';
+import * as DataSourceContext from '@/contexts/DataSourceContext';
+import { SyncStatus } from '@/data/DataSource';
 import { setupTestDatabase } from '@/test-utils/db';
-import { renderWithDataSource, screen, waitFor } from '@/test-utils/index';
+import { renderWithDataSource, screen, userEvent, waitFor } from '@/test-utils/index';
 
 vi.mock('@/components/Layout/NewItem/AddNewItemButton', () => ({
   __esModule: true,
@@ -14,5 +16,54 @@ describe('HeaderLinks', () => {
     renderWithDataSource(<HeaderLinks />, getDataSource());
 
     await waitFor(() => expect(screen.getByText('Add new item')).toBeInTheDocument());
+  });
+
+  describe('SyncStatusIndicator', () => {
+    it('should not render the indicator when sync status is NOT_CONFIGURED', () => {
+      vi.spyOn(DataSourceContext, 'useSyncStatus').mockReturnValue(SyncStatus.NOT_CONFIGURED);
+      renderWithDataSource(<HeaderLinks />, getDataSource());
+      expect(screen.queryByTestId('sync-status-indicator')).not.toBeInTheDocument();
+    });
+
+    it('should not render an orange dot for INACTIVE status', () => {
+      vi.spyOn(DataSourceContext, 'useSyncStatus').mockReturnValue(SyncStatus.INACTIVE);
+      const { container } = renderWithDataSource(<HeaderLinks />, getDataSource());
+
+      const indicator = container.querySelector('div[style*="background-color: orange"]');
+      expect(indicator).toBeInTheDocument();
+    });
+
+    it('should render a green dot for ACTIVE status', async () => {
+      vi.spyOn(DataSourceContext, 'useSyncStatus').mockReturnValue(SyncStatus.ACTIVE);
+      const { container } = renderWithDataSource(<HeaderLinks />, getDataSource());
+
+      const indicator = container.querySelector('div[style*="background-color: green"]');
+      expect(indicator).toBeInTheDocument();
+
+      await userEvent.hover(indicator!);
+      expect(await screen.findByText('Sync active')).toBeInTheDocument();
+    });
+
+    it('should render a green dot for PAUSED status', async () => {
+      vi.spyOn(DataSourceContext, 'useSyncStatus').mockReturnValue(SyncStatus.PAUSED);
+      const { container } = renderWithDataSource(<HeaderLinks />, getDataSource());
+
+      const indicator = container.querySelector('div[style*="background-color: green"]');
+      expect(indicator).toBeInTheDocument();
+
+      await userEvent.hover(indicator!);
+      expect(await screen.findByText('Sync active')).toBeInTheDocument();
+    });
+
+    it('should render a red dot for ERROR status', async () => {
+      vi.spyOn(DataSourceContext, 'useSyncStatus').mockReturnValue(SyncStatus.ERROR);
+      const { container } = renderWithDataSource(<HeaderLinks />, getDataSource());
+
+      const indicator = container.querySelector('div[style*="background-color: red"]');
+      expect(indicator).toBeInTheDocument();
+
+      await userEvent.hover(indicator!);
+      expect(await screen.findByText('Sync error')).toBeInTheDocument();
+    });
   });
 });

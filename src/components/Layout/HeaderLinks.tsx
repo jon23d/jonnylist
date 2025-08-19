@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Anchor, Text } from '@mantine/core';
+import { Anchor, Box, Group, Text, Tooltip } from '@mantine/core';
 import AddNewItemButton from '@/components/Layout/NewItem/AddNewItemButton';
-import { useTaskRepository } from '@/contexts/DataSourceContext';
+import { useSyncStatus, useTaskRepository } from '@/contexts/DataSourceContext';
+import { SyncStatus } from '@/data/DataSource';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
 import classes from './Layout.module.css';
 
@@ -11,6 +12,7 @@ export default function HeaderLinks() {
   const [tasksInProgress, setTasksInProgress] = React.useState<Task[]>([]);
   const [projectsInProgress, setProjectsInProgress] = React.useState<number>(0);
   const taskRepository = useTaskRepository();
+  const syncStatus = useSyncStatus();
 
   const extractProjectsFromTasks = (tasks: Task[]): void => {
     const projects = new Set<string>();
@@ -56,22 +58,53 @@ export default function HeaderLinks() {
     return unsubscribe;
   }, []);
 
+  const syncColor =
+    syncStatus === SyncStatus.ERROR
+      ? 'red'
+      : syncStatus === SyncStatus.INACTIVE
+        ? 'orange'
+        : 'green';
+
+  const syncLabel =
+    syncStatus === SyncStatus.INACTIVE
+      ? 'Sync inactive'
+      : syncStatus === SyncStatus.ERROR
+        ? 'Sync error'
+        : 'Sync active';
+
   return (
     <>
       <AddNewItemButton />
-      <div className={classes.withSeparators}>
-        <Text size="xs" c="gray.6">
-          <Anchor to="/reports/due" component={Link}>
-            {tasksDue.length} tasks due
-          </Anchor>
-          <Anchor to="/reports/in-progress" component={Link}>
-            {tasksInProgress.length} tasks in progress
-          </Anchor>
-          <Anchor to="/reports/open-projects" visibleFrom="xs" component={Link}>
-            {projectsInProgress} open projects
-          </Anchor>
-        </Text>
-      </div>
+      <Group>
+        <div className={classes.withSeparators}>
+          <Text size="xs" c="gray.6">
+            <Anchor to="/reports/due" component={Link}>
+              {tasksDue.length} tasks due
+            </Anchor>
+            <Anchor to="/reports/in-progress" component={Link}>
+              {tasksInProgress.length} tasks in progress
+            </Anchor>
+            <Anchor to="/reports/open-projects" visibleFrom="xs" component={Link}>
+              {projectsInProgress} open projects
+            </Anchor>
+          </Text>
+        </div>
+        {syncStatus !== SyncStatus.NOT_CONFIGURED && (
+          <Tooltip label={syncLabel} withArrow>
+            <Box
+              style={{
+                width: '10px',
+                height: '10px',
+                borderRadius: '50%',
+                backgroundColor: syncColor,
+              }}
+              data-testid="sync-status-indicator"
+            >
+              &nbsp;
+            </Box>
+          </Tooltip>
+        )}
+      </Group>
     </>
   );
 }

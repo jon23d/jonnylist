@@ -20,8 +20,8 @@ describe('PageTitle', () => {
         pathname: '/',
         params: {},
         data: {},
-        loaderData: {},
         handle: { title: 'My Test Title' },
+        loaderData: {},
       },
     ]);
     render(<PageTitle />);
@@ -35,8 +35,8 @@ describe('PageTitle', () => {
         pathname: '/',
         params: {},
         data: {},
-        loaderData: {},
         handle: {},
+        loaderData: {},
       },
     ]);
     render(<PageTitle />);
