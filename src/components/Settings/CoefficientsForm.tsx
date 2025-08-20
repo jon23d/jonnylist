@@ -1,5 +1,17 @@
 import React from 'react';
-import { Button, NumberInput, SimpleGrid, Stack } from '@mantine/core';
+import { IconTrash } from '@tabler/icons-react';
+import {
+  ActionIcon,
+  Box,
+  Button,
+  Group,
+  NumberInput,
+  Select,
+  SimpleGrid,
+  Stack,
+  TextInput,
+  Title,
+} from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { usePreferencesRepository } from '@/contexts/DataSourceContext';
 import { Preferences } from '@/data/documentTypes/Preferences';
@@ -19,6 +31,7 @@ export default function CoefficientsForm({ preferences }: { preferences: Prefere
     initialValues: {
       ...defaultCoefficients,
       ...preferences.coefficients,
+      customCoefficients: preferences.coefficients?.customCoefficients || [],
     },
     validate: {
       nextTag: isPresent,
@@ -31,6 +44,10 @@ export default function CoefficientsForm({ preferences }: { preferences: Prefere
       hasTags: isPresent,
       hasProject: isPresent,
       ageCoefficient: isPresent,
+      customCoefficients: {
+        name: (value) => (value.length < 1 ? 'Required' : null),
+        value: isPresent,
+      },
     },
   });
 
@@ -51,8 +68,36 @@ export default function CoefficientsForm({ preferences }: { preferences: Prefere
   };
 
   const resetToDefaults = () => {
-    form.setValues(defaultCoefficients);
+    form.setValues({ ...defaultCoefficients, customCoefficients: [] });
   };
+
+  const customCoefficientFields = form.values.customCoefficients.map((_item, index) => (
+    <Group key={index} mt="xs">
+      <Select
+        placeholder="Pick value"
+        data={['tag', 'project']}
+        {...form.getInputProps(`customCoefficients.${index}.type`)}
+      />
+      <TextInput
+        placeholder="Name"
+        withAsterisk
+        style={{ flex: 1 }}
+        {...form.getInputProps(`customCoefficients.${index}.name`)}
+      />
+      <NumberInput
+        placeholder="Coefficient"
+        withAsterisk
+        {...form.getInputProps(`customCoefficients.${index}.value`)}
+      />
+      <ActionIcon
+        color="red"
+        onClick={() => form.removeListItem('customCoefficients', index)}
+        aria-label="Delete coefficient"
+      >
+        <IconTrash size="1rem" />
+      </ActionIcon>
+    </Group>
+  ));
 
   return (
     <>
@@ -120,9 +165,29 @@ export default function CoefficientsForm({ preferences }: { preferences: Prefere
               description="Coefficient based on task age in days. Default 2"
             />
           </Stack>
+        </SimpleGrid>
+
+        <Box mt="xl">
+          <Title order={3}>Custom Coefficients</Title>
+          {customCoefficientFields}
+          <Button
+            mt="md"
+            onClick={() =>
+              form.insertListItem('customCoefficients', {
+                type: 'tag',
+                name: '',
+                value: 0,
+              })
+            }
+          >
+            Add Coefficient
+          </Button>
+        </Box>
+
+        <Group mt="xl">
           <Button type="submit">Save Coefficients</Button>
           <Button onClick={resetToDefaults}>Reset to Defaults</Button>
-        </SimpleGrid>
+        </Group>
       </form>
     </>
   );
