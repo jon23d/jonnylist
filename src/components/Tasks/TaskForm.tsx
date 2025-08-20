@@ -27,6 +27,7 @@ import { DatePickerInput } from '@mantine/dates';
 import { UseFormReturnType } from '@mantine/form';
 import { useHotkeys, useOs } from '@mantine/hooks';
 import sharedStyle from '@/components/style.module.css';
+import { SaveButton } from '@/components/Tasks/SaveButton';
 import {
   NewTask,
   Note,
@@ -48,12 +49,13 @@ export default function TaskForm({
   isNewTask,
 }: {
   form: UseFormReturnType<TaskFormType>;
-  handleSubmit: () => void;
+  handleSubmit: (createAnother?: boolean) => void;
   isNewTask: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<string | null>('basics');
   const [newNoteText, setNewNoteText] = useState<string>('');
   const os = useOs();
+  const formRef = useRef<HTMLFormElement>(null);
 
   // When the user changes tabs, we are going to focus on the first input in that tab
   // But only on desktop. This is really annoying on mobile, so we disable it there.
@@ -141,14 +143,28 @@ export default function TaskForm({
 
     // If this is not a new task, we will submit the form to save the note
     if (!isNewTask) {
-      handleSubmit();
+      doHandleSubmit();
     }
   };
 
   const pluralizeInterval = form.values.recurrence?.interval === 1;
 
+  const doHandleSubmit = (createNew: boolean = false) => {
+    handleSubmit(createNew);
+  };
+
+  const saveButton = (
+    <Group justify="flex-end" mt={20}>
+      <SaveButton
+        handleSave={() => doHandleSubmit(false)}
+        handleSaveAndNew={() => doHandleSubmit(true)}
+        isNewTask={isNewTask}
+      />
+    </Group>
+  );
+
   return (
-    <form onSubmit={form.onSubmit(handleSubmit)}>
+    <form onSubmit={form.onSubmit(() => doHandleSubmit(false))} ref={formRef}>
       <FocusTrap>
         <Tabs value={activeTab} onChange={setActiveTab}>
           <Tabs.List mb={10}>
@@ -213,9 +229,7 @@ export default function TaskForm({
                 searchable
               />
 
-              <Button type="submit" mt={20}>
-                Save Task
-              </Button>
+              {saveButton}
             </Stack>
           </Tabs.Panel>
 
@@ -345,9 +359,7 @@ export default function TaskForm({
                 </Box>
               </Box>
 
-              <Button type="submit" mt={20}>
-                Save Task
-              </Button>
+              {saveButton}
             </Stack>
           </Tabs.Panel>
 

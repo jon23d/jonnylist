@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import TaskForm, { TaskFormType } from '@/components/Tasks/TaskForm';
@@ -11,6 +11,7 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
   const [searchParams] = useSearchParams();
   const contextRepository = useContextRepository();
   const taskRepository = useTaskRepository();
+  const [formKey, setFormKey] = useState(0);
 
   const queryContext = searchParams.get('context');
 
@@ -75,7 +76,7 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
     }
   }, [queryContext]);
 
-  const handleSave = async () => {
+  const handleSave = async (createAnother: boolean = false) => {
     try {
       let status = form.values.status;
 
@@ -114,12 +115,17 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
 
       form.reset();
 
-      // We want to make sure that we've cleared focus so that keyboard navigation works properly
-      if (document.activeElement instanceof HTMLElement) {
-        document.activeElement.blur();
+      if (!createAnother) {
+        // We want to make sure that we've cleared focus so that keyboard navigation works properly
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
+        handleClose();
+      } else {
+        // We need to activate the basics tab and focus on title here
+        // We are going to do this by simply re-rendering the form!
+        setFormKey((prevState) => prevState + 1);
       }
-
-      handleClose();
     } catch (error) {
       Notifications.showError({
         title: 'Error saving task',
@@ -129,5 +135,5 @@ export default function NewTaskForm({ handleClose }: { handleClose: () => void }
     }
   };
 
-  return <TaskForm form={form} handleSubmit={handleSave} isNewTask />;
+  return <TaskForm form={form} handleSubmit={handleSave} isNewTask key={formKey} />;
 }
