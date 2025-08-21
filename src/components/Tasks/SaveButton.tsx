@@ -4,23 +4,21 @@ import { ActionIcon, Button, Group, Menu, useMantineTheme } from '@mantine/core'
 import classes from './SaveButton.module.css';
 
 export function SaveButton({
-  handleSave,
   handleSaveAndNew,
   isNewTask,
 }: {
-  handleSave: () => void;
   handleSaveAndNew: () => void;
   isNewTask: boolean;
 }) {
   const theme = useMantineTheme();
 
   if (!isNewTask) {
-    return <Button onClick={handleSave}>Save Task</Button>;
+    return <Button type="submit">Save Task</Button>;
   }
 
   return (
     <Group wrap="nowrap" gap={0}>
-      <Button className={classes.button} onClick={handleSave}>
+      <Button className={classes.button} type="submit">
         Save Task
       </Button>
       <Menu position="bottom-end" withinPortal>
