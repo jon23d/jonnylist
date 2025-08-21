@@ -277,4 +277,44 @@ describe('NewTaskForm', () => {
       })
     );
   });
+
+  it('Closes the form when a new task is saved without clicking the "Save and Create New" button', async () => {
+    const handleClose = vi.fn();
+    const dataSource = getDataSource();
+
+    renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
+
+    const titleInput = screen.getByRole('textbox', { name: 'Title' });
+    await userEvent.type(titleInput, 'Test Task');
+
+    const submitButton = screen.getByRole('button', { name: 'Save Task' });
+    await userEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(handleClose).toHaveBeenCalled();
+    });
+  });
+
+  it('Does not close the form when "Save and Create New" is clicked', async () => {
+    const handleClose = vi.fn();
+    const dataSource = getDataSource();
+
+    renderWithDataSource(<NewTaskForm handleClose={handleClose} />, dataSource);
+
+    const titleInput = screen.getByRole('textbox', { name: 'Title' });
+    await userEvent.type(titleInput, 'Test Task');
+
+    const dropdownButton = screen.getByRole('button', { name: 'Additional actions' });
+    await userEvent.click(dropdownButton);
+    const saveAndNewItem = screen.getByRole('menuitem', { name: 'Save and Create New' });
+    await userEvent.click(saveAndNewItem);
+
+    // The form should not close
+    expect(handleClose).not.toHaveBeenCalled();
+
+    // And the form should reset
+    await waitFor(() => {
+      expect(screen.getByRole('textbox', { name: 'Title' })).toHaveValue('');
+    });
+  });
 });

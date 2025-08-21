@@ -28,6 +28,7 @@ export function SaveButton({
             size={36}
             className={classes.menuControl}
             color={theme.primaryColor}
+            aria-label="Additional actions"
           >
             <IconChevronDown size={16} stroke={1.5} />
           </ActionIcon>
