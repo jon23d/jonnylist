@@ -135,14 +135,15 @@ describe('EditTaskForm', () => {
     expect(document.activeElement).not.toBe(saveButton);
   });
 
-  it('blurs the active element after saving', async () => {
+  it('Closes the modal after saving', async () => {
     const task = taskFactory();
+    const handleClose = vi.fn();
     const dataSource = getDataSource();
-    renderWithDataSource(<EditTaskForm task={task} handleClose={() => {}} />, dataSource);
+    renderWithDataSource(<EditTaskForm task={task} handleClose={handleClose} />, dataSource);
 
     const saveButton = screen.getByRole('button', { name: /save task/i });
     await userEvent.click(saveButton);
 
-    expect(document.activeElement).not.toBe(saveButton);
+    expect(handleClose).toHaveBeenCalled();
   });
 });
