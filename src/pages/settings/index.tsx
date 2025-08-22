@@ -32,18 +32,22 @@ export default function Page() {
 
   return (
     <>
-      <Tabs defaultValue="sync-server">
+      <Tabs defaultValue="coefficients">
         <Tabs.List mb={20}>
+          <Tabs.Tab value="coefficients" leftSection={<IconHash size={15} />}>
+            Coefficients
+          </Tabs.Tab>
           <Tabs.Tab value="sync-server" leftSection={<IconRefresh size={15} />}>
             Sync Server
           </Tabs.Tab>
           <Tabs.Tab value="data" leftSection={<IconDatabaseCog size={15} />}>
             Data
           </Tabs.Tab>
-          <Tabs.Tab value="coefficients" leftSection={<IconHash size={15} />}>
-            Coefficients
-          </Tabs.Tab>
         </Tabs.List>
+
+        <Tabs.Panel value="coefficients">
+          <CoefficientsForm preferences={preferences} />
+        </Tabs.Panel>
 
         <Tabs.Panel value="sync-server">
           <SyncServerForm localSettings={localSettings} />
@@ -61,10 +65,6 @@ export default function Page() {
           <Fieldset legend="Delete data" mb="md">
             <DeleteDataForm />
           </Fieldset>
-        </Tabs.Panel>
-
-        <Tabs.Panel value="coefficients">
-          <CoefficientsForm preferences={preferences} />
         </Tabs.Panel>
       </Tabs>
       <Stack />
