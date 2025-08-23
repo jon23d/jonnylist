@@ -199,11 +199,17 @@ export default function CoefficientsForm({ preferences }: { preferences: Prefere
                 variant="subtle"
                 leftSection={<IconCirclePlus size={16} stroke={1.5} color={theme.colors.blue[5]} />}
               >
-                Add Coefficient
+                Add Custom Coefficient
               </Button>
             </Group>
 
-            {customCoefficientFields}
+            {customCoefficientFields.length ? (
+              customCoefficientFields
+            ) : (
+              <Text c="gray.7" mt="sm">
+                No custom coefficients defined.
+              </Text>
+            )}
           </Box>
 
           <Group mt="xl">

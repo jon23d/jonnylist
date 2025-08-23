@@ -116,7 +116,7 @@ describe('CoefficientsForm', () => {
   it('Validates custom coefficients', async () => {
     renderWithDataSource(<CoefficientsForm preferences={preferencesFactory()} />, getDataSource());
 
-    const addButton = screen.getByRole('button', { name: 'Add Coefficient' });
+    const addButton = screen.getByRole('button', { name: 'Add Custom Coefficient' });
     await userEvent.click(addButton);
 
     const submitButton = screen.getByRole('button', { name: 'Save Coefficients' });
@@ -202,7 +202,7 @@ describe('CoefficientsForm', () => {
   it('Can add and persist a custom coefficient', async () => {
     renderWithDataSource(<CoefficientsForm preferences={preferencesFactory()} />, getDataSource());
 
-    const addButton = screen.getByRole('button', { name: 'Add Coefficient' });
+    const addButton = screen.getByRole('button', { name: 'Add Custom Coefficient' });
     await userEvent.click(addButton);
 
     await userEvent.type(screen.getByPlaceholderText('Name'), 'my-tag');

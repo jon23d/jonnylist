@@ -33,7 +33,7 @@ export class UrgencyCalculator {
       if (rule.type === 'tag' && task.tags?.includes(rule.name)) {
         values.push(rule.value);
       }
-      if (rule.type === 'project' && task.project === rule.name) {
+      if (rule.type === 'project' && task.project?.startsWith(rule.name)) {
         values.push(rule.value);
       }
     });
