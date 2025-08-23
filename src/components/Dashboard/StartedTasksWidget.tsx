@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { IconClockPlay } from '@tabler/icons-react';
-import { Anchor, Box, Center, Flex, Group, List, Paper, Text } from '@mantine/core';
+import { List, Paper, Text } from '@mantine/core';
+import TaskListItem from '@/components/Dashboard/TaskListItem';
 import WidgetTitle from '@/components/Dashboard/WidgetTitle';
 import { useTaskRepository } from '@/contexts/DataSourceContext';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
@@ -22,13 +23,7 @@ export default function StartedTasksWidget() {
   const listOfTasks = (
     <List listStyleType="none">
       {startedTasks &&
-        startedTasks.map((task, index) => (
-          <List.Item key={task._id} bg={index % 2 === 0 ? 'gray.0' : ''} p="2" mb={3}>
-            <Anchor href="#" size="sm">
-              {task.title}
-            </Anchor>
-          </List.Item>
-        ))}
+        startedTasks.map((task, index) => <TaskListItem task={task} isEvenRow={index % 2 === 0} />)}
     </List>
   );
 

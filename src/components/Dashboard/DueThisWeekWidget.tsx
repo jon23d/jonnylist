@@ -1,7 +1,8 @@
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
 import { IconCalendar } from '@tabler/icons-react';
-import { Anchor, Badge, List, Paper, Text } from '@mantine/core';
+import { Badge, List, Paper, Text } from '@mantine/core';
+import TaskListItem from '@/components/Dashboard/TaskListItem';
 import WidgetTitle from '@/components/Dashboard/WidgetTitle';
 import { useTaskRepository } from '@/contexts/DataSourceContext';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
@@ -48,12 +49,7 @@ export default function DueThisWeekWidget() {
     <List listStyleType="none">
       {tasksDueThisWeek &&
         tasksDueThisWeek.map((task, index) => (
-          <List.Item key={task._id} bg={index % 2 === 0 ? 'gray.0' : ''} p="2" mb={3}>
-            <Anchor href="#" size="sm">
-              {task.title}
-            </Anchor>
-            {dueTodayBadge(task)}
-          </List.Item>
+          <TaskListItem task={task} isEvenRow={index % 2 === 0} badge={dueTodayBadge(task)} />
         ))}
     </List>
   );

@@ -1,7 +1,8 @@
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
-import { IconClockCancel, IconClockPlay } from '@tabler/icons-react';
-import { Anchor, List, Paper, Text } from '@mantine/core';
+import { IconClockCancel } from '@tabler/icons-react';
+import { List, Paper, Text } from '@mantine/core';
+import TaskListItem from '@/components/Dashboard/TaskListItem';
 import WidgetTitle from '@/components/Dashboard/WidgetTitle';
 import { useTaskRepository } from '@/contexts/DataSourceContext';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
@@ -39,11 +40,7 @@ export default function OverdueWidget() {
     <List listStyleType="none">
       {overdueTasks &&
         overdueTasks.map((task, index) => (
-          <List.Item key={task._id} bg={index % 2 === 0 ? 'gray.0' : ''} p="2" mb={3}>
-            <Anchor href="#" size="sm">
-              {task.title}
-            </Anchor>
-          </List.Item>
+          <TaskListItem task={task} isEvenRow={index % 2 === 0} key={task._id} />
         ))}
     </List>
   );
