@@ -58,7 +58,7 @@ export default function HeaderLinks() {
 
   return (
     <>
-      <AddNewItemButton hiddenFrom="xs" size="compact-xs" />
+      <AddNewItemButton size="compact-xs" />
       <div className={classes.withSeparators}>
         <Text size="xs" c="gray.6">
           <Anchor to="/reports/due" component={Link}>

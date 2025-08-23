@@ -1,17 +1,14 @@
-import { Anchor, Badge, List, Paper, Title } from '@mantine/core';
+import { Anchor, List, Paper, Title } from '@mantine/core';
 
 
-export default function DueThisWeekWidget() {
+export default function OverdueWidget() {
   return <Paper shadow="sm" radius="md" withBorder p="lg">
-    <Title order={3}>Due this week</Title>
+    <Title order={3}>Overdue</Title>
     <List>
       <List.Item>
         <Anchor>
           Do not update status in form when waitUntil is present. Let taskrepo take care of it
         </Anchor>
-        <Badge color="yellow" ml={10}>
-          Today
-        </Badge>
       </List.Item>
       <List.Item>
         <Anchor>Refreshes result in a 404</Anchor>
