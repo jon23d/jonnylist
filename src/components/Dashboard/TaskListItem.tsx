@@ -17,9 +17,14 @@ export default function TaskListItem({
   badge?: React.ReactNode;
 }) {
   return (
-    <List.Item key={task._id} bg={isEvenRow ? 'gray.0' : ''} p="2" mb={3}>
-      <Flex className={clsx(classes.hasHoverControls)} align="center" pl={3}>
-        <Box mr={10} mt="6">
+    <List.Item
+      key={task._id}
+      bg={isEvenRow ? 'gray.0' : ''}
+      p="2"
+      className={clsx(classes.taskListItem, classes.dashboardTasklistItem)}
+    >
+      <Flex className={clsx(classes.hasHoverControls)} align="center" p={3}>
+        <Box mr={10}>
           <StatusChanger task={task} />
         </Box>
         <Box onClick={() => handleTaskClick(task)} c="black" style={{ cursor: 'pointer' }}>

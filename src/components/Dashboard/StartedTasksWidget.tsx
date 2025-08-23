@@ -28,7 +28,12 @@ export default function StartedTasksWidget({
     <List listStyleType="none">
       {startedTasks &&
         startedTasks.map((task, index) => (
-          <TaskListItem task={task} isEvenRow={index % 2 === 0} handleTaskClick={handleTaskClick} />
+          <TaskListItem
+            key={task._id}
+            task={task}
+            isEvenRow={index % 2 === 0}
+            handleTaskClick={handleTaskClick}
+          />
         ))}
     </List>
   );

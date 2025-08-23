@@ -2,7 +2,7 @@ import { Button, Paper, Typography } from '@mantine/core';
 
 export default function Intro({ toggleIntro }: { toggleIntro: () => void }) {
   return (
-    <Paper shadow="md" withBorder p={20}>
+    <Paper shadow="md" withBorder p={20} mb={15}>
       <Typography>
         <p>
           JonnyList is a task management application designed to fill the gaps in available

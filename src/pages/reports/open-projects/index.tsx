@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Group, Tabs, Title } from '@mantine/core';
 import ColumnSelector from '@/components/Tasks/ColumnSelector';
 import TasksTable from '@/components/Tasks/TasksTable';
@@ -16,6 +17,9 @@ export default function Page() {
     'Priority',
     'Due Date',
   ]);
+  const [searchParams] = useSearchParams();
+
+  const selectedProject = searchParams.get('project');
 
   const filterTasks = (tasks: Task[]): Task[] => {
     return tasks.filter((task) => !!task.project);
@@ -98,7 +102,7 @@ export default function Page() {
           onChange={updateColumnVisibility}
         />
       </Group>
-      <Tabs defaultValue={Object.keys(groupedTasks)[0]}>
+      <Tabs defaultValue={selectedProject || Object.keys(groupedTasks)[0]}>
         <Tabs.List>
           {Object.entries(groupedTasks).map(([project, tasks]) => (
             <Tabs.Tab key={project} value={project}>

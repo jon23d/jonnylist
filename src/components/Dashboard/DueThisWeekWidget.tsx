@@ -54,6 +54,7 @@ export default function DueThisWeekWidget({
       {tasksDueThisWeek &&
         tasksDueThisWeek.map((task, index) => (
           <TaskListItem
+            key={task._id}
             task={task}
             isEvenRow={index % 2 === 0}
             badge={dueTodayBadge(task)}

@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { IconClockPlay, IconPresentation } from '@tabler/icons-react';
-import { Anchor, Box, Flex, Paper, Table, Text } from '@mantine/core';
+import { IconPresentation } from '@tabler/icons-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Anchor, Paper, Table, Text } from '@mantine/core';
 import WidgetTitle from '@/components/Dashboard/WidgetTitle';
 import { useTaskRepository } from '@/contexts/DataSourceContext';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
 
 interface ProjectStats {
-  project: string;
+  projectName: string;
   open: number;
   closed: number;
 }
@@ -37,7 +38,7 @@ export default function ProjectsWidget() {
 
         const closed = tasks.length - open;
 
-        return { project, open, closed };
+        return { projectName: project, open, closed };
       });
 
       setProjects(projects);
@@ -72,7 +73,7 @@ export default function ProjectsWidget() {
   return (
     <Paper shadow="smw" radius="md" withBorder p="lg">
       <WidgetTitle title="Projects" icon={<IconPresentation color="blue" size={18} />} />
-      <Table verticalSpacing="2" striped>
+      <Table verticalSpacing="3" striped>
         <Table.Thead>
           <Table.Tr>
             <Table.Th />
@@ -82,15 +83,20 @@ export default function ProjectsWidget() {
         </Table.Thead>
         <Table.Tbody>
           {projects.map((project) => (
-            <Table.Tr key={project.project}>
+            <Table.Tr key={project.projectName}>
               <Table.Td>
-                <Anchor size="sm">{project.project}</Anchor>
+                <Anchor
+                  component={Link}
+                  to={`/reports/open-projects?project=${encodeURIComponent(project.projectName)}`}
+                >
+                  {project.projectName}
+                </Anchor>
               </Table.Td>
               <Table.Td>
-                <Text size="sm">{project.open}</Text>
+                <Text>{project.open}</Text>
               </Table.Td>
               <Table.Td>
-                <Text size="sm">{project.closed}</Text>
+                <Text>{project.closed}</Text>
               </Table.Td>
             </Table.Tr>
           ))}
