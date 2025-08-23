@@ -1,6 +1,12 @@
 import { Common } from '@/data/documentTypes/Common';
 import { TaskStatus } from '@/data/documentTypes/Task';
 
+export interface CoefficientRule {
+  type: 'tag' | 'project';
+  name: string;
+  value: number;
+}
+
 export interface Preferences extends Common {
   lastSelectedContext: string;
   lastSelectedStatuses?: TaskStatus[];
@@ -15,6 +21,7 @@ export interface Preferences extends Common {
     hasTags?: number;
     hasProject?: number;
     ageCoefficient?: number;
+    customCoefficients?: CoefficientRule[];
   };
 }
 

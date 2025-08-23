@@ -63,7 +63,7 @@ export default function HeaderLinks() {
       ? 'red'
       : syncStatus === SyncStatus.INACTIVE
         ? 'orange'
-        : 'green';
+        : 'rgb(87, 159, 11)';
 
   const syncLabel =
     syncStatus === SyncStatus.INACTIVE

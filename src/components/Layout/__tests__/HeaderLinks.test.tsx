@@ -37,7 +37,7 @@ describe('HeaderLinks', () => {
       vi.spyOn(DataSourceContext, 'useSyncStatus').mockReturnValue(SyncStatus.ACTIVE);
       const { container } = renderWithDataSource(<HeaderLinks />, getDataSource());
 
-      const indicator = container.querySelector('div[style*="background-color: green"]');
+      const indicator = container.querySelector('div[style*="background-color: rgb(87, 159, 11)"]');
       expect(indicator).toBeInTheDocument();
 
       await userEvent.hover(indicator!);
@@ -48,7 +48,7 @@ describe('HeaderLinks', () => {
       vi.spyOn(DataSourceContext, 'useSyncStatus').mockReturnValue(SyncStatus.PAUSED);
       const { container } = renderWithDataSource(<HeaderLinks />, getDataSource());
 
-      const indicator = container.querySelector('div[style*="background-color: green"]');
+      const indicator = container.querySelector('div[style*="background-color: rgb(87, 159, 11)"]');
       expect(indicator).toBeInTheDocument();
 
       await userEvent.hover(indicator!);

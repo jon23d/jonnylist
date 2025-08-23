@@ -86,6 +86,51 @@ describe('CoefficientsForm', () => {
     );
   });
 
+  it('Can remove a custom coefficient', async () => {
+    renderWithDataSource(
+      <CoefficientsForm
+        preferences={preferencesFactory({
+          coefficients: {
+            customCoefficients: [{ type: 'tag', name: 'my-tag', value: 123 }],
+          },
+        })}
+      />,
+      getDataSource()
+    );
+
+    const removeButton = screen.getByRole('button', { name: /delete/i });
+    await userEvent.click(removeButton);
+
+    const submitButton = screen.getByRole('button', { name: 'Save Coefficients' });
+    await userEvent.click(submitButton);
+
+    expect(setPreferencesMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        coefficients: expect.objectContaining({
+          customCoefficients: [],
+        }),
+      })
+    );
+  });
+
+  it('Validates custom coefficients', async () => {
+    renderWithDataSource(<CoefficientsForm preferences={preferencesFactory()} />, getDataSource());
+
+    const addButton = screen.getByRole('button', { name: 'Add Custom Coefficient' });
+    await userEvent.click(addButton);
+
+    const submitButton = screen.getByRole('button', { name: 'Save Coefficients' });
+    await userEvent.click(submitButton);
+
+    expect(screen.getByText('Required')).toBeInTheDocument();
+
+    const coefficientInput = screen.getByPlaceholderText('Coefficient');
+    await userEvent.clear(coefficientInput);
+    await userEvent.click(submitButton);
+
+    expect(screen.getByText('Must be numeric')).toBeInTheDocument();
+  });
+
   it('Uses default coefficients', async () => {
     renderWithDataSource(<CoefficientsForm preferences={preferencesFactory()} />, getDataSource());
 
@@ -152,5 +197,32 @@ describe('CoefficientsForm', () => {
     // Second click
     await userEvent.click(submitButton);
     expect(setPreferencesMock).toHaveBeenCalledWith(expect.objectContaining({ _rev: 'def-456' }));
+  });
+
+  it('Can add and persist a custom coefficient', async () => {
+    renderWithDataSource(<CoefficientsForm preferences={preferencesFactory()} />, getDataSource());
+
+    const addButton = screen.getByRole('button', { name: 'Add Custom Coefficient' });
+    await userEvent.click(addButton);
+
+    await userEvent.type(screen.getByPlaceholderText('Name'), 'my-tag');
+    await userEvent.type(screen.getByPlaceholderText('Coefficient'), '123');
+
+    const submitButton = screen.getByRole('button', { name: 'Save Coefficients' });
+    await userEvent.click(submitButton);
+
+    expect(setPreferencesMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        coefficients: expect.objectContaining({
+          customCoefficients: [
+            {
+              type: 'tag',
+              name: 'my-tag',
+              value: 123,
+            },
+          ],
+        }),
+      })
+    );
   });
 });
