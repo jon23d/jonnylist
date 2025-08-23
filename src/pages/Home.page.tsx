@@ -103,8 +103,9 @@ export default function Page() {
       <SimpleGrid cols={{ sm: 1, md: 2, lg: 3 }} spacing="xl">
         <HeatmapWidget completedTasks={completedTasks} />
         <TasksCompletedWidget completedTasks={completedTasks} />
-        <DueThisWeekWidget />
+
         <OverdueWidget />
+        <DueThisWeekWidget />
         <ProjectsWidget />
         <StartedTasksWidget />
       </SimpleGrid>

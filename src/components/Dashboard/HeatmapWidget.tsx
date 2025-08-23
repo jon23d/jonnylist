@@ -1,7 +1,9 @@
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { IconCalendar, IconCalendarCheck } from '@tabler/icons-react';
 import { Heatmap } from '@mantine/charts';
 import { Center, Paper, Text, useMatches } from '@mantine/core';
+import WidgetTitle from '@/components/Dashboard/WidgetTitle';
 import { Task } from '@/data/documentTypes/Task';
 
 export default function HeatmapWidget({ completedTasks }: { completedTasks?: Task[] }) {
@@ -65,6 +67,7 @@ export default function HeatmapWidget({ completedTasks }: { completedTasks?: Tas
 
   return (
     <Paper shadow="sm" radius="md" withBorder p="lg">
+      <WidgetTitle title="3-Month Activity" icon={<IconCalendarCheck color="purple" size={18} />} />
       <Center>
         {(heatmapData && (
           <Heatmap

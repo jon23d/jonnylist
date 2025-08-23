@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react';
-import { Anchor, Paper, Table, Text, Title } from '@mantine/core';
+import React, { useEffect, useState } from 'react';
+import { IconClockPlay, IconPresentation } from '@tabler/icons-react';
+import { Anchor, Box, Flex, Paper, Table, Text } from '@mantine/core';
+import WidgetTitle from '@/components/Dashboard/WidgetTitle';
 import { useTaskRepository } from '@/contexts/DataSourceContext';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
 
@@ -69,8 +71,8 @@ export default function ProjectsWidget() {
 
   return (
     <Paper shadow="smw" radius="md" withBorder p="lg">
-      <Title order={3}>Projects</Title>
-      <Table verticalSpacing="2">
+      <WidgetTitle title="Projects" icon={<IconPresentation color="blue" size={18} />} />
+      <Table verticalSpacing="2" striped>
         <Table.Thead>
           <Table.Tr>
             <Table.Th />
@@ -82,10 +84,14 @@ export default function ProjectsWidget() {
           {projects.map((project) => (
             <Table.Tr key={project.project}>
               <Table.Td>
-                <Anchor>{project.project}</Anchor>
+                <Anchor size="sm">{project.project}</Anchor>
               </Table.Td>
-              <Table.Td>{project.open}</Table.Td>
-              <Table.Td>{project.closed}</Table.Td>
+              <Table.Td>
+                <Text size="sm">{project.open}</Text>
+              </Table.Td>
+              <Table.Td>
+                <Text size="sm">{project.closed}</Text>
+              </Table.Td>
             </Table.Tr>
           ))}
         </Table.Tbody>

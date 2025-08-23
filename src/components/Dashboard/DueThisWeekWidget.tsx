@@ -1,6 +1,8 @@
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
-import { Anchor, Badge, List, Paper, Text, Title } from '@mantine/core';
+import React, { useEffect, useState } from 'react';
+import { IconCalendar } from '@tabler/icons-react';
+import { Anchor, Badge, List, Paper, Text } from '@mantine/core';
+import WidgetTitle from '@/components/Dashboard/WidgetTitle';
 import { useTaskRepository } from '@/contexts/DataSourceContext';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
 import { Logger } from '@/helpers/Logger';
@@ -31,29 +33,43 @@ export default function DueThisWeekWidget() {
   // Today in YYYY-MM-DD format
   const today = dayjs().format('YYYY-MM-DD');
 
+  const dueTodayBadge = (task: Task) => {
+    if (task.dueDate === today) {
+      return (
+        <Badge color="orange" size="xs" ml="5" mt={2} mb={5}>
+          Due Today
+        </Badge>
+      );
+    }
+    return null;
+  };
+
+  const listOfTasks = (
+    <List listStyleType="none">
+      {tasksDueThisWeek &&
+        tasksDueThisWeek.map((task, index) => (
+          <List.Item key={task._id} bg={index % 2 === 0 ? 'gray.0' : ''} p="2" mb={3}>
+            <Anchor href="#" size="sm">
+              {task.title}
+            </Anchor>
+            {dueTodayBadge(task)}
+          </List.Item>
+        ))}
+    </List>
+  );
+
   return (
     <Paper shadow="sm" radius="md" withBorder p="lg">
       {tasksDueThisWeek === null ? (
         <Text>Loading...</Text>
       ) : (
         <>
-          <Title order={3}>Due this week</Title>
-          <List>
-            {tasksDueThisWeek.length === 0 ? (
-              <Text>No tasks due this week</Text>
-            ) : (
-              tasksDueThisWeek.map((task) => (
-                <List.Item key={task._id}>
-                  <Anchor href="#">{task.title}</Anchor>
-                  {task.dueDate === today && (
-                    <Badge color="orange" ml={10}>
-                      Due today
-                    </Badge>
-                  )}
-                </List.Item>
-              ))
-            )}
-          </List>
+          <WidgetTitle
+            title="Due in the Next 7 Days"
+            icon={<IconCalendar color="orange" size={18} />}
+          />
+
+          {tasksDueThisWeek.length === 0 ? <Text>No tasks due this week</Text> : listOfTasks}
         </>
       )}
     </Paper>

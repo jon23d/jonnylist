@@ -26,7 +26,7 @@ export default function AddNewItemButton(buttonProps: ButtonProps) {
           onClick={() => setModalOpened(true)}
           color="blue"
           {...buttonProps}
-          rightSection={<IconCirclePlus size={20} />}
+          rightSection={<IconCirclePlus size={18} />}
         >
           Add Task
         </Button>

@@ -1,6 +1,8 @@
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
-import { Anchor, List, Paper, Text, Title } from '@mantine/core';
+import React, { useEffect, useState } from 'react';
+import { IconClockCancel, IconClockPlay } from '@tabler/icons-react';
+import { Anchor, List, Paper, Text } from '@mantine/core';
+import WidgetTitle from '@/components/Dashboard/WidgetTitle';
 import { useTaskRepository } from '@/contexts/DataSourceContext';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
 import { Logger } from '@/helpers/Logger';
@@ -33,24 +35,27 @@ export default function OverdueWidget() {
     fetchTasks();
   }, []);
 
+  const listOfTasks = (
+    <List listStyleType="none">
+      {overdueTasks &&
+        overdueTasks.map((task, index) => (
+          <List.Item key={task._id} bg={index % 2 === 0 ? 'gray.0' : ''} p="2" mb={3}>
+            <Anchor href="#" size="sm">
+              {task.title}
+            </Anchor>
+          </List.Item>
+        ))}
+    </List>
+  );
+
   return (
     <Paper shadow="sm" radius="md" withBorder p="lg">
       {overdueTasks === null ? (
         <Text>Loading...</Text>
       ) : (
         <>
-          <Title order={3}>Overdue</Title>
-          <List>
-            {overdueTasks.length === 0 ? (
-              <Text>No overdue tasks</Text>
-            ) : (
-              overdueTasks.map((task) => (
-                <List.Item key={task._id}>
-                  <Anchor href="#">{task.title}</Anchor>
-                </List.Item>
-              ))
-            )}
-          </List>
+          <WidgetTitle title="Overdue Tasks" icon={<IconClockCancel color="red" size={18} />} />
+          {overdueTasks.length === 0 ? <Text>No overdue tasks</Text> : listOfTasks}
         </>
       )}
     </Paper>

@@ -1,8 +1,13 @@
-import { Box, Center, Paper, Text, Title } from '@mantine/core';
+import React from 'react';
+import { IconCheck } from '@tabler/icons-react';
+import { Box, Center, Paper, Text } from '@mantine/core';
+import WidgetTitle from '@/components/Dashboard/WidgetTitle';
 import { Task } from '@/data/documentTypes/Task';
 
 export default function TasksCompletedWidget({ completedTasks }: { completedTasks?: Task[] }) {
   const tasksCompleted = completedTasks?.length ?? null;
+
+  // --tab-striped-color
 
   return (
     <Paper shadow="sm" radius="md" withBorder p="lg">
@@ -11,8 +16,8 @@ export default function TasksCompletedWidget({ completedTasks }: { completedTask
           <Text>Loading...</Text>
         ) : (
           <Box>
+            <WidgetTitle title="In-Progress Tasks" icon={<IconCheck color="green" size={20} />} />
             <Text size="100px">387</Text>
-            <Title order={3}>Tasks completed</Title>
           </Box>
         )}
       </Center>
