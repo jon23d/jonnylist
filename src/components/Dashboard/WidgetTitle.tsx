@@ -7,7 +7,9 @@ export default function WidgetTitle({ title, icon }: { title: string; icon: Reac
       <Box mr={10} mt={6}>
         {icon}
       </Box>
-      <Text fw={700}>{title}</Text>
+      <Text fw={700} c="blue.7">
+        {title}
+      </Text>
     </Flex>
   );
 }

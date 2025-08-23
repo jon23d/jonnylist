@@ -1,16 +1,19 @@
 import React from 'react';
 import clsx from 'clsx';
-import { Anchor, Box, Flex, List } from '@mantine/core';
+import { Box, Flex, List } from '@mantine/core';
 import StatusChanger from '@/components/Tasks/StatusChanger';
 import classes from '@/components/Tasks/Tasks.module.css';
+import { Task } from '@/data/documentTypes/Task';
 
 export default function TaskListItem({
   task,
   isEvenRow,
+  handleTaskClick,
   badge,
 }: {
   task: any;
   isEvenRow: boolean;
+  handleTaskClick: (task: Task) => void;
   badge?: React.ReactNode;
 }) {
   return (
@@ -19,10 +22,10 @@ export default function TaskListItem({
         <Box mr={10} mt="6">
           <StatusChanger task={task} />
         </Box>
-        <Anchor href="#" size="sm">
+        <Box onClick={() => handleTaskClick(task)} c="black" style={{ cursor: 'pointer' }}>
           {task.title}
           {badge}
-        </Anchor>
+        </Box>
       </Flex>
     </List.Item>
   );

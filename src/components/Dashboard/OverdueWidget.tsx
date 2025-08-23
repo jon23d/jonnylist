@@ -8,7 +8,11 @@ import { useTaskRepository } from '@/contexts/DataSourceContext';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
 import { Logger } from '@/helpers/Logger';
 
-export default function OverdueWidget() {
+export default function OverdueWidget({
+  handleTaskClick,
+}: {
+  handleTaskClick: (task: Task) => void;
+}) {
   const taskRepository = useTaskRepository();
   const [overdueTasks, setOverdueTasks] = useState<Task[] | null>(null);
 
@@ -40,7 +44,12 @@ export default function OverdueWidget() {
     <List listStyleType="none">
       {overdueTasks &&
         overdueTasks.map((task, index) => (
-          <TaskListItem task={task} isEvenRow={index % 2 === 0} key={task._id} />
+          <TaskListItem
+            task={task}
+            isEvenRow={index % 2 === 0}
+            key={task._id}
+            handleTaskClick={handleTaskClick}
+          />
         ))}
     </List>
   );

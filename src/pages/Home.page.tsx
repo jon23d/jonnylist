@@ -1,17 +1,6 @@
-import { useEffect, useState } from 'react';
-import {
-  Anchor,
-  Badge,
-  Button,
-  Group,
-  List,
-  Paper,
-  SimpleGrid,
-  Table,
-  Text,
-  Title,
-  Typography,
-} from '@mantine/core';
+import React, { useEffect, useState } from 'react';
+import { Button, Group, Modal, SimpleGrid, Title } from '@mantine/core';
+import { useDisclosure, useViewportSize } from '@mantine/hooks';
 import DueThisWeekWidget from '@/components/Dashboard/DueThisWeekWidget';
 import HeatmapWidget from '@/components/Dashboard/HeatmapWidget';
 import Intro from '@/components/Dashboard/Intro';
@@ -19,38 +8,30 @@ import OverdueWidget from '@/components/Dashboard/OverdueWidget';
 import ProjectsWidget from '@/components/Dashboard/ProjectsWidget';
 import StartedTasksWidget from '@/components/Dashboard/StartedTasksWidget';
 import TasksCompletedWidget from '@/components/Dashboard/TasksCompletedWidget';
+import EditTaskForm from '@/components/Tasks/EditTaskForm';
 import { usePreferencesRepository, useTaskRepository } from '@/contexts/DataSourceContext';
 import { Preferences } from '@/data/documentTypes/Preferences';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
 import { Logger } from '@/helpers/Logger';
-
-/**
- * This component serves as the home page for JonnyList.
- *
- * It should serve two distinct audiences:
- *
- * 1. New users who are just getting started with the application.
- * 2. Existing users who are returning to the application.
- *
- * For new users, the page should provide a brief introduction to the application,
- * highlighting its purpose and key features. It should also include a list of
- * keyboard shortcuts to help them get started quickly.
- *
- * For existing users, the page should provide:
- *  - A list of contexts with some basic stats
- *  - A list of tasks that are due today
- *  - A list of tasks that are overdue
- *  - A summary of open projects
- *  - A summary of started tasks
- *  - A visual depiction of productivity over time
- *  - Simple task counters
- */
 
 export default function Page() {
   const preferencesRepository = usePreferencesRepository();
   const taskRepository = useTaskRepository();
   const [preferences, setPreferences] = useState<Preferences | null>(null);
   const [completedTasks, setCompletedTasks] = useState<Task[] | undefined>(undefined);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [editorOpened, { open, close }] = useDisclosure(false);
+  const { height: viewportHeight, width: viewportWidth } = useViewportSize();
+
+  const showEditDialog = (task: Task) => {
+    setSelectedTask(task);
+    open();
+  };
+
+  const cancelEditing = () => {
+    setSelectedTask(null);
+    close();
+  };
 
   useEffect(() => {
     async function fetchPreferences() {
@@ -104,11 +85,21 @@ export default function Page() {
         <HeatmapWidget completedTasks={completedTasks} />
         <TasksCompletedWidget completedTasks={completedTasks} />
 
-        <OverdueWidget />
-        <DueThisWeekWidget />
+        <OverdueWidget handleTaskClick={showEditDialog} />
+        <DueThisWeekWidget handleTaskClick={showEditDialog} />
         <ProjectsWidget />
-        <StartedTasksWidget />
+        <StartedTasksWidget handleTaskClick={showEditDialog} />
       </SimpleGrid>
+
+      <Modal
+        opened={editorOpened}
+        onClose={close}
+        title="Edit Task"
+        size="lg"
+        fullScreen={viewportWidth < 768 || viewportHeight < 500}
+      >
+        {selectedTask && <EditTaskForm task={selectedTask} handleClose={cancelEditing} />}
+      </Modal>
     </>
   );
 }

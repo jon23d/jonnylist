@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
-import { IconCalendar, IconCalendarCheck } from '@tabler/icons-react';
+import { IconCalendarCheck } from '@tabler/icons-react';
 import { Heatmap } from '@mantine/charts';
 import { Center, Paper, Text, useMatches } from '@mantine/core';
 import WidgetTitle from '@/components/Dashboard/WidgetTitle';

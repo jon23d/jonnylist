@@ -8,7 +8,11 @@ import { useTaskRepository } from '@/contexts/DataSourceContext';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
 import { Logger } from '@/helpers/Logger';
 
-export default function DueThisWeekWidget() {
+export default function DueThisWeekWidget({
+  handleTaskClick,
+}: {
+  handleTaskClick: (task: Task) => void;
+}) {
   const taskRepository = useTaskRepository();
   const [tasksDueThisWeek, setTasksDueThisWeek] = useState<Task[] | null>(null);
 
@@ -49,7 +53,12 @@ export default function DueThisWeekWidget() {
     <List listStyleType="none">
       {tasksDueThisWeek &&
         tasksDueThisWeek.map((task, index) => (
-          <TaskListItem task={task} isEvenRow={index % 2 === 0} badge={dueTodayBadge(task)} />
+          <TaskListItem
+            task={task}
+            isEvenRow={index % 2 === 0}
+            badge={dueTodayBadge(task)}
+            handleTaskClick={handleTaskClick}
+          />
         ))}
     </List>
   );

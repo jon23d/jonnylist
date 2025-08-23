@@ -6,7 +6,11 @@ import WidgetTitle from '@/components/Dashboard/WidgetTitle';
 import { useTaskRepository } from '@/contexts/DataSourceContext';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
 
-export default function StartedTasksWidget() {
+export default function StartedTasksWidget({
+  handleTaskClick,
+}: {
+  handleTaskClick: (task: Task) => void;
+}) {
   const taskRepository = useTaskRepository();
   const [startedTasks, setStartedTasks] = useState<Task[] | null>(null);
 
@@ -23,7 +27,9 @@ export default function StartedTasksWidget() {
   const listOfTasks = (
     <List listStyleType="none">
       {startedTasks &&
-        startedTasks.map((task, index) => <TaskListItem task={task} isEvenRow={index % 2 === 0} />)}
+        startedTasks.map((task, index) => (
+          <TaskListItem task={task} isEvenRow={index % 2 === 0} handleTaskClick={handleTaskClick} />
+        ))}
     </List>
   );
 
