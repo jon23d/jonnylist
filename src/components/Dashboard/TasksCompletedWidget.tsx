@@ -14,7 +14,7 @@ export default function TasksCompletedWidget({ completedTasks }: { completedTask
           <Text>Loading...</Text>
         ) : (
           <Box>
-            <WidgetTitle title="In-Progress Tasks" icon={<IconCheck color="green" size={20} />} />
+            <WidgetTitle title="Tasks Completed" icon={<IconCheck color="green" size={20} />} />
             <Text size="100px">{tasksCompleted}</Text>
           </Box>
         )}
