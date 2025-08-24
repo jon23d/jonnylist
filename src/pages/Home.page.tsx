@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
 import { Button, Group, Modal, SimpleGrid, Title } from '@mantine/core';
 import { useDisclosure, useViewportSize } from '@mantine/hooks';
@@ -23,6 +24,11 @@ export default function Page() {
   const [editorOpened, { open, close }] = useDisclosure(false);
   const { height: viewportHeight, width: viewportWidth } = useViewportSize();
 
+  const [tasksDueThisWeek, setTasksDueThisWeek] = useState<Task[] | null>(null);
+  const [overdueTasks, setOverdueTasks] = useState<Task[] | null>(null);
+  const [startedTasks, setStartedTasks] = useState<Task[] | null>(null);
+  const [projectTasks, setProjectTasks] = useState<Task[] | null>(null);
+
   const showEditDialog = (task: Task) => {
     setSelectedTask(task);
     open();
@@ -33,6 +39,7 @@ export default function Page() {
     close();
   };
 
+  // We need preferences to determine whether to show or hide the intro
   useEffect(() => {
     async function fetchPreferences() {
       try {
@@ -46,12 +53,62 @@ export default function Page() {
     fetchPreferences();
   }, []);
 
+  // We need the completed tasks for the heatmap and tasks completed widgets
   useEffect(() => {
-    const fetchCompletedTasks = async () => {
-      const completedTasks = await taskRepository.getTasks({ statuses: [TaskStatus.Done] });
-      setCompletedTasks(completedTasks);
-    };
-    fetchCompletedTasks();
+    return taskRepository.subscribeToTasks({ statuses: [TaskStatus.Done] }, setCompletedTasks);
+  }, []);
+
+  // We need tasks due this week for the DueThisWeekWidget
+  useEffect(() => {
+    return taskRepository.subscribeToTasks(
+      {
+        statuses: [TaskStatus.Ready, TaskStatus.Started],
+        dueWithin: {
+          maximumNumberOfDaysFromToday: 7,
+          includeOverdueTasks: false,
+        },
+      },
+      setTasksDueThisWeek
+    );
+  }, []);
+
+  // We need tasks that are overdue for the OverdueWidget
+  useEffect(() => {
+    const today = dayjs().format('YYYY-MM-DD');
+    const filter = (tasks: Task[]) => tasks.filter((task) => task.dueDate && task.dueDate < today);
+
+    return taskRepository.subscribeToTasks(
+      {
+        statuses: [TaskStatus.Ready, TaskStatus.Started],
+        due: true,
+        dueWithin: {
+          includeOverdueTasks: true,
+        },
+      },
+      (tasks) => setOverdueTasks(filter(tasks))
+    );
+  }, []);
+
+  // We need started tasks for the StartedTasksWidget
+  useEffect(() => {
+    return taskRepository.subscribeToTasks(
+      {
+        statuses: [TaskStatus.Started],
+      },
+      setStartedTasks
+    );
+  }, []);
+
+  // We need tasks for the project widget
+  useEffect(() => {
+    const filter = (tasks: Task[]) => tasks.filter((task) => !!task.project);
+
+    return taskRepository.subscribeToTasks(
+      {
+        statuses: [TaskStatus.Started, TaskStatus.Ready, TaskStatus.Waiting],
+      },
+      (tasks) => setProjectTasks(filter(tasks))
+    );
   }, []);
 
   if (preferences === null) {
@@ -85,10 +142,10 @@ export default function Page() {
         <HeatmapWidget completedTasks={completedTasks} />
         <TasksCompletedWidget completedTasks={completedTasks} />
 
-        <OverdueWidget handleTaskClick={showEditDialog} />
-        <DueThisWeekWidget handleTaskClick={showEditDialog} />
-        <ProjectsWidget />
-        <StartedTasksWidget handleTaskClick={showEditDialog} />
+        <OverdueWidget tasks={overdueTasks} handleTaskClick={showEditDialog} />
+        <DueThisWeekWidget tasks={tasksDueThisWeek} handleTaskClick={showEditDialog} />
+        <ProjectsWidget tasks={projectTasks} />
+        <StartedTasksWidget tasks={startedTasks} handleTaskClick={showEditDialog} />
       </SimpleGrid>
 
       <Modal

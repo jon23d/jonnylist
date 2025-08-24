@@ -1,40 +1,17 @@
 import dayjs from 'dayjs';
-import React, { useEffect, useState } from 'react';
 import { IconCalendar } from '@tabler/icons-react';
 import { Badge, List, Paper, Text } from '@mantine/core';
 import TaskListItem from '@/components/Dashboard/TaskListItem';
 import WidgetTitle from '@/components/Dashboard/WidgetTitle';
-import { useTaskRepository } from '@/contexts/DataSourceContext';
-import { Task, TaskStatus } from '@/data/documentTypes/Task';
-import { Logger } from '@/helpers/Logger';
+import { Task } from '@/data/documentTypes/Task';
 
 export default function DueThisWeekWidget({
+  tasks,
   handleTaskClick,
 }: {
+  tasks: Task[] | null;
   handleTaskClick: (task: Task) => void;
 }) {
-  const taskRepository = useTaskRepository();
-  const [tasksDueThisWeek, setTasksDueThisWeek] = useState<Task[] | null>(null);
-
-  useEffect(() => {
-    async function fetchTasks() {
-      try {
-        const tasks = await taskRepository.getTasks({
-          statuses: [TaskStatus.Ready, TaskStatus.Started],
-          dueWithin: {
-            maximumNumberOfDaysFromToday: 7,
-            includeOverdueTasks: false,
-          },
-        });
-        setTasksDueThisWeek(tasks);
-      } catch (error) {
-        Logger.error('Error fetching tasks due this week:', error);
-      }
-    }
-
-    fetchTasks();
-  }, []);
-
   // Today in YYYY-MM-DD format
   const today = dayjs().format('YYYY-MM-DD');
 
@@ -51,8 +28,8 @@ export default function DueThisWeekWidget({
 
   const listOfTasks = (
     <List listStyleType="none">
-      {tasksDueThisWeek &&
-        tasksDueThisWeek.map((task, index) => (
+      {tasks &&
+        tasks.map((task, index) => (
           <TaskListItem
             key={task._id}
             task={task}
@@ -66,7 +43,7 @@ export default function DueThisWeekWidget({
 
   return (
     <Paper shadow="sm" radius="md" withBorder p="lg">
-      {tasksDueThisWeek === null ? (
+      {tasks === null ? (
         <Text>Loading...</Text>
       ) : (
         <>
@@ -75,7 +52,7 @@ export default function DueThisWeekWidget({
             icon={<IconCalendar color="orange" size={18} />}
           />
 
-          {tasksDueThisWeek.length === 0 ? <Text>No tasks due this week</Text> : listOfTasks}
+          {tasks.length === 0 ? <Text>No tasks due within 7 days</Text> : listOfTasks}
         </>
       )}
     </Paper>

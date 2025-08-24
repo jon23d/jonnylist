@@ -3,7 +3,6 @@ import { IconPresentation } from '@tabler/icons-react';
 import { Link } from 'react-router-dom';
 import { Anchor, Paper, Table, Text } from '@mantine/core';
 import WidgetTitle from '@/components/Dashboard/WidgetTitle';
-import { useTaskRepository } from '@/contexts/DataSourceContext';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
 
 interface ProjectStats {
@@ -12,40 +11,8 @@ interface ProjectStats {
   closed: number;
 }
 
-export default function ProjectsWidget() {
-  const taskRepository = useTaskRepository();
+export default function ProjectsWidget({ tasks }: { tasks: Task[] | null }) {
   const [projects, setProjects] = useState<ProjectStats[] | null>(null);
-
-  useEffect(() => {
-    const fetchTasks = async () => {
-      const tasks = await taskRepository.getTasks({
-        statuses: [TaskStatus.Started, TaskStatus.Ready, TaskStatus.Waiting],
-      });
-
-      // remove tasks without a project
-      const filteredTasks = tasks.filter((task) => !!task.project);
-
-      const grouped = groupTasksByProject(filteredTasks);
-
-      const projects = Object.entries(grouped).map(([project, tasks]) => {
-        const open = tasks.filter((task) => {
-          return (
-            task.status === TaskStatus.Started ||
-            task.status === TaskStatus.Ready ||
-            task.status === TaskStatus.Waiting
-          );
-        }).length;
-
-        const closed = tasks.length - open;
-
-        return { projectName: project, open, closed };
-      });
-
-      setProjects(projects);
-    };
-
-    fetchTasks();
-  }, []);
 
   const groupTasksByProject = (tasks: Task[]): Record<string, Task[]> => {
     return tasks.reduce(
@@ -62,10 +29,43 @@ export default function ProjectsWidget() {
     );
   };
 
-  if (!projects) {
+  useEffect(() => {
+    if (tasks === null) {
+      return;
+    }
+
+    const grouped = groupTasksByProject(tasks);
+
+    const projects = Object.entries(grouped).map(([project, tasks]) => {
+      const open = tasks.filter((task) => {
+        return (
+          task.status === TaskStatus.Started ||
+          task.status === TaskStatus.Ready ||
+          task.status === TaskStatus.Waiting
+        );
+      }).length;
+
+      const closed = tasks.length - open;
+
+      return { projectName: project, open, closed };
+    });
+
+    setProjects(projects);
+  }, [tasks]);
+
+  if (projects === null) {
     return (
       <Paper shadow="smw" radius="md" withBorder p="lg">
         <Text>Loading...</Text>
+      </Paper>
+    );
+  }
+
+  if (!projects.length) {
+    return (
+      <Paper shadow="smw" radius="md" withBorder p="lg">
+        <WidgetTitle title="Projects" icon={<IconPresentation color="blue" size={18} />} />
+        <Text>No projects found</Text>
       </Paper>
     );
   }

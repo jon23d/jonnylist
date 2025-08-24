@@ -7,8 +7,6 @@ import { Task } from '@/data/documentTypes/Task';
 export default function TasksCompletedWidget({ completedTasks }: { completedTasks?: Task[] }) {
   const tasksCompleted = completedTasks?.length ?? null;
 
-  // --tab-striped-color
-
   return (
     <Paper shadow="sm" radius="md" withBorder p="lg">
       <Center>
@@ -17,7 +15,7 @@ export default function TasksCompletedWidget({ completedTasks }: { completedTask
         ) : (
           <Box>
             <WidgetTitle title="In-Progress Tasks" icon={<IconCheck color="green" size={20} />} />
-            <Text size="100px">387</Text>
+            <Text size="100px">{tasksCompleted}</Text>
           </Box>
         )}
       </Center>

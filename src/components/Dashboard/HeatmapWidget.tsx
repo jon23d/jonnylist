@@ -24,8 +24,7 @@ export default function HeatmapWidget({ completedTasks }: { completedTasks?: Tas
   });
 
   useEffect(() => {
-    // Get a list of completed tasks over the last 3 months
-    if (!completedTasks) {
+    if (completedTasks === undefined) {
       return;
     }
 
@@ -78,7 +77,7 @@ export default function HeatmapWidget({ completedTasks }: { completedTasks?: Tas
             withWeekdayLabels
             withMonthLabels
             getTooltipLabel={heatmapCellLabel}
-            startDate={dayjs().subtract(3, 'month').toDate()}
+            startDate={dayjs().subtract(3, 'month').format('YYYY-MM-DD')}
             data={heatmapData}
           />
         )) || <Text>Loading...</Text>}
