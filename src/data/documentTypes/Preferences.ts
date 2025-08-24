@@ -23,6 +23,9 @@ export interface Preferences extends Common {
     ageCoefficient?: number;
     customCoefficients?: CoefficientRule[];
   };
+  dashboard?: {
+    hideIntro?: boolean;
+  };
 }
 
 export function createDefaultPreferences(): Preferences {

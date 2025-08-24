@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { IconSettingsFilled } from '@tabler/icons-react';
+import { IconHomeFilled, IconSettingsFilled } from '@tabler/icons-react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Anchor, AppShell, Burger, Flex, Group, NavLink, ScrollArea, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
@@ -90,11 +90,19 @@ export default function Layout() {
         </AppShell.Header>
         <AppShell.Navbar p="md">
           <AppShell.Section grow component={ScrollArea}>
+            <NavLink
+              component={Link}
+              to="/"
+              active={location.pathname === '/'}
+              label="Dashboard"
+              leftSection={<IconHomeFilled color="#0f6891" />}
+              mb={20}
+            />
             <ContextLinks handleNavLinkClick={handleNavLinkClick} />
             <ReportLinks handleNavLinkClick={handleNavLinkClick} />
-
             <CommandPalette />
           </AppShell.Section>
+
           <AppShell.Section>
             <NavLink
               onClick={() => handleNavLinkClick('/settings')}

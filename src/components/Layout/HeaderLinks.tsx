@@ -74,7 +74,7 @@ export default function HeaderLinks() {
 
   return (
     <>
-      <AddNewItemButton />
+      <AddNewItemButton size="compact-xs" />
       <Group>
         <div className={classes.withSeparators}>
           <Text size="xs" c="gray.6">

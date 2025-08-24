@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Button, Modal } from '@mantine/core';
+import { IconCirclePlus } from '@tabler/icons-react';
+import { Button, ButtonProps, Modal, Tooltip } from '@mantine/core';
 import { useHotkeys, useViewportSize } from '@mantine/hooks';
 import NewTaskForm from '@/components/Layout/NewItem/NewTaskForm';
 
-export default function AddNewItemButton() {
+export default function AddNewItemButton(buttonProps: ButtonProps) {
   const [modalOpened, setModalOpened] = useState(false);
   const { height: viewportHeight, width: viewportWidth } = useViewportSize();
 
@@ -15,9 +16,21 @@ export default function AddNewItemButton() {
 
   return (
     <>
-      <Button size="compact-xs" onClick={() => setModalOpened(true)} key="a">
-        Add Task (a)
-      </Button>
+      <Tooltip
+        label="Press 'a' to quickly add a new task"
+        withArrow
+        position="bottom"
+        openDelay={300}
+      >
+        <Button
+          onClick={() => setModalOpened(true)}
+          color="blue"
+          {...buttonProps}
+          rightSection={<IconCirclePlus size={18} />}
+        >
+          Add Task
+        </Button>
+      </Tooltip>
 
       {modalOpened && (
         <Modal
