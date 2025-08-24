@@ -29,6 +29,7 @@
 .dashboardTasklistItem {
     border-top: 1px solid var(--mantine-color-gray-3);
 }
+
 .dashboardTasklistItem:hover {
     background-color: var(--mantine-color-gray-1);
 }

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { IconPresentation } from '@tabler/icons-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Anchor, Paper, Table, Text } from '@mantine/core';
 import WidgetTitle from '@/components/Dashboard/WidgetTitle';
 import { useTaskRepository } from '@/contexts/DataSourceContext';
