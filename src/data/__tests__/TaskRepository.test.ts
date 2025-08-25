@@ -49,12 +49,12 @@ describe('TaskRepository', () => {
     const repository = new TaskRepository(database);
 
     const newTask = taskFactory({
-      tags: ['#tag1'], // no # allowed at start of string
+      tags: ['#tag1', 'SHOULD-BE-LOWERCASED'], // no # allowed at start of string
     });
 
     const addedTask = await repository.addTask(newTask);
 
-    expect(addedTask.tags).toEqual(['tag1']);
+    expect(addedTask.tags).toEqual(['tag1', 'should-be-lowercased']);
   });
 
   test('addTask sets status to waiting if waitUntil is set', async () => {
@@ -90,9 +90,9 @@ describe('TaskRepository', () => {
     const newTask = taskFactory({});
 
     const task = await repository.addTask(newTask);
-    const updatedTask = await repository.updateTask({ ...task, tags: ['#tag2'] });
+    const updatedTask = await repository.updateTask({ ...task, tags: ['#tag2', 'TAG'] });
 
-    expect(updatedTask.tags).toEqual(['tag2']);
+    expect(updatedTask.tags).toEqual(['tag2', 'tag']);
   });
 
   test('updateTask should update an existing task in the database', async () => {

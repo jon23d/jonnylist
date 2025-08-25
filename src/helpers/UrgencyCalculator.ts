@@ -30,10 +30,13 @@ export class UrgencyCalculator {
     ];
 
     this.customCoefficients.forEach((rule) => {
-      if (rule.type === 'tag' && task.tags?.includes(rule.name)) {
+      if (rule.type === 'tag' && task.tags?.includes(rule.name.toLowerCase())) {
         values.push(rule.value);
       }
-      if (rule.type === 'project' && task.project?.startsWith(rule.name)) {
+      if (
+        rule.type === 'project' &&
+        task.project?.toLowerCase().startsWith(rule.name.toLowerCase())
+      ) {
         values.push(rule.value);
       }
     });
