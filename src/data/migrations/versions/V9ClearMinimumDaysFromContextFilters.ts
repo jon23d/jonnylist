@@ -2,7 +2,7 @@ import { Context } from '@/data/documentTypes/Context';
 import { MigrationsDoc } from '@/data/documentTypes/MigrationsDoc';
 import { Migration } from '../Migration';
 
-class V8UpdateRecurrenceParamsToNumbers implements Migration {
+class V9ClearMinimumDaysFromContextFilters implements Migration {
   getVersion(): number {
     return 9;
   }
@@ -48,4 +48,4 @@ class V8UpdateRecurrenceParamsToNumbers implements Migration {
   }
 }
 
-export default V8UpdateRecurrenceParamsToNumbers;
+export default V9ClearMinimumDaysFromContextFilters;

@@ -189,10 +189,10 @@ export class TaskRepository implements Repository {
    * @param tag
    */
   cleanTag(tag: string): string {
-    // Remove leading/trailing whitespace
-    const newTag = tag.trim();
+    // Remove leading/trailing whitespace and lowercase
+    const newTag = tag.trim().toLowerCase();
 
-    // Strip and preceding #
+    // Strip any preceding #
     return newTag.startsWith('#') ? newTag.slice(1) : newTag;
   }
 

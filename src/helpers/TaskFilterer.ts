@@ -42,16 +42,12 @@ export class TaskFilterer {
     const { requireTags, excludeTags } = this.filter;
 
     return tasks.filter((task) => {
-      const tags = task.tags?.map((tag) => tag.toLowerCase());
+      const tags = task.tags ?? [];
 
       const hasRequiredTags =
-        requireTags && requireTags.length
-          ? requireTags.some((tag) => tags?.includes(tag.toLowerCase()))
-          : true;
+        requireTags && requireTags.length ? requireTags.some((tag) => tags?.includes(tag)) : true;
       const hasExcludedTags =
-        excludeTags && excludeTags.length
-          ? excludeTags.some((tag) => tags?.includes(tag.toLowerCase()))
-          : false;
+        excludeTags && excludeTags.length ? excludeTags.some((tag) => tags?.includes(tag)) : false;
 
       return hasRequiredTags && !hasExcludedTags;
     });

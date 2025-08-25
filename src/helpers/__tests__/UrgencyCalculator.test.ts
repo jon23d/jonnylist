@@ -35,4 +35,24 @@ describe('UrgencyCalculator', () => {
     expect(calculator.getUrgency(taskWithBoth)).toBe(150);
     expect(calculator.getUrgency(taskWithNeither)).toBe(0);
   });
+
+  it('Converts tag rules to lowercase before comparison', () => {
+    const preferences = preferencesFactory({
+      coefficients: {
+        hasTags: 0,
+        hasProject: 0,
+        mediumPriority: 0,
+        hasDescription: 0,
+        ageCoefficient: 0,
+        customCoefficients: [{ type: 'tag', name: 'Urgent', value: 100 }],
+      },
+    });
+
+    const calculator = new UrgencyCalculator(preferences);
+
+    const taskWithTag = taskFactory({ tags: ['urgent'], project: '', description: '' });
+
+    // Base urgency is 0 for a new task with no other attributes
+    expect(calculator.getUrgency(taskWithTag)).toBe(100);
+  });
 });
