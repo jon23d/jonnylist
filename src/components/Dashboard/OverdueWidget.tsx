@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import { IconClockCancel } from '@tabler/icons-react';
-import { Badge, List, Paper, Text } from '@mantine/core';
-import TaskListItem from '@/components/Dashboard/TaskListItem';
+import { Badge, Box, Paper, Text } from '@mantine/core';
+import DashboardTaskListItem from '@/components/Dashboard/DashboardTaskListItem';
 import WidgetTitle from '@/components/Dashboard/WidgetTitle';
 import { Task } from '@/data/documentTypes/Task';
 
@@ -13,12 +13,11 @@ export default function OverdueWidget({
   handleTaskClick: (task: Task) => void;
 }) {
   const listOfTasks = (
-    <List listStyleType="none">
+    <Box>
       {tasks &&
-        tasks.map((task, index) => (
-          <TaskListItem
+        tasks.map((task) => (
+          <DashboardTaskListItem
             task={task}
-            isEvenRow={index % 2 === 0}
             key={task._id}
             handleTaskClick={handleTaskClick}
             badge={
@@ -28,7 +27,7 @@ export default function OverdueWidget({
             }
           />
         ))}
-    </List>
+    </Box>
   );
 
   return (

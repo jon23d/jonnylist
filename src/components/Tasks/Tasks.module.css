@@ -6,6 +6,10 @@
     opacity: 0;
 }
 
+.taskTableRow:hover {
+    cursor: pointer;
+}
+
 .hasHoverControls:hover .hidden {
     opacity: 100;
 }
@@ -16,7 +20,6 @@
 
 .taskListItem:hover {
     cursor: pointer;
-    border: 1px solid lightgray;
 }
 
 .bulkEditButton {
@@ -31,5 +34,13 @@
 }
 
 .dashboardTasklistItem:hover {
+    background-color: var(--mantine-color-gray-1);
+}
+
+.dashboardTasklistItem:nth-child(odd) {
+    background-color: var(--mantine-color-gray-0);
+}
+
+.dashboardTasklistItem:nth-child(odd):hover {
     background-color: var(--mantine-color-gray-1);
 }

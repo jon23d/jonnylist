@@ -4,10 +4,10 @@ import { Button, Group, Modal, SimpleGrid, Title } from '@mantine/core';
 import { useDisclosure, useViewportSize } from '@mantine/hooks';
 import DueThisWeekWidget from '@/components/Dashboard/DueThisWeekWidget';
 import HeatmapWidget from '@/components/Dashboard/HeatmapWidget';
+import InProgressTasksWidget from '@/components/Dashboard/InProgressTasksWidget';
 import Intro from '@/components/Dashboard/Intro';
 import OverdueWidget from '@/components/Dashboard/OverdueWidget';
 import ProjectsWidget from '@/components/Dashboard/ProjectsWidget';
-import StartedTasksWidget from '@/components/Dashboard/StartedTasksWidget';
 import TasksCompletedWidget from '@/components/Dashboard/TasksCompletedWidget';
 import EditTaskForm from '@/components/Tasks/EditTaskForm';
 import { usePreferencesRepository, useTaskRepository } from '@/contexts/DataSourceContext';
@@ -130,7 +130,6 @@ export default function Page() {
   return (
     <>
       <Group justify="space-between" mb={20}>
-        <Title order={1}>Welcome to JonnyList!</Title>
         {preferences.dashboard?.hideIntro === true && (
           <Button onClick={toggleIntro}>Show intro</Button>
         )}
@@ -145,7 +144,7 @@ export default function Page() {
         <OverdueWidget tasks={overdueTasks} handleTaskClick={showEditDialog} />
         <DueThisWeekWidget tasks={tasksDueThisWeek} handleTaskClick={showEditDialog} />
         <ProjectsWidget tasks={projectTasks} />
-        <StartedTasksWidget tasks={startedTasks} handleTaskClick={showEditDialog} />
+        <InProgressTasksWidget tasks={startedTasks} handleTaskClick={showEditDialog} />
       </SimpleGrid>
 
       <Modal

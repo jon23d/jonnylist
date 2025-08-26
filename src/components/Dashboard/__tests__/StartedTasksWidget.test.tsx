@@ -1,10 +1,10 @@
 import { vi } from 'vitest';
-import StartedTasksWidget from '@/components/Dashboard/StartedTasksWidget';
+import InProgressTasksWidget from '@/components/Dashboard/InProgressTasksWidget';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
 import { taskFactory } from '@/test-utils/factories/TaskFactory';
 import { render, screen, userEvent } from '@/test-utils/index';
 
-vi.mock('@/components/Dashboard/TaskListItem', () => {
+vi.mock('@/components/Dashboard/DashboardTaskListItem', () => {
   return {
     default: ({
       task,
@@ -33,13 +33,13 @@ describe('StartedTasksWidget', () => {
   });
 
   it('Shows a loading state when tasks are being fetched', () => {
-    render(<StartedTasksWidget tasks={null} handleTaskClick={vi.fn()} />);
+    render(<InProgressTasksWidget tasks={null} handleTaskClick={vi.fn()} />);
 
     expect(screen.getByText('Loading...')).toBeInTheDocument();
   });
 
   it('Shows a message when there are no started tasks', () => {
-    render(<StartedTasksWidget tasks={[]} handleTaskClick={vi.fn()} />);
+    render(<InProgressTasksWidget tasks={[]} handleTaskClick={vi.fn()} />);
 
     // Wait for loading to finish
     const noTasksMessage = screen.getByText('No in-progress tasks');
@@ -62,7 +62,7 @@ describe('StartedTasksWidget', () => {
       }),
     ];
 
-    render(<StartedTasksWidget tasks={tasks} handleTaskClick={vi.fn()} />);
+    render(<InProgressTasksWidget tasks={tasks} handleTaskClick={vi.fn()} />);
 
     // Wait for loading to finish and tasks to be displayed
     const task1 = screen.getByText('Task 1');
@@ -86,7 +86,7 @@ describe('StartedTasksWidget', () => {
       }),
     ];
 
-    render(<StartedTasksWidget tasks={tasks} handleTaskClick={handleTaskClick} />);
+    render(<InProgressTasksWidget tasks={tasks} handleTaskClick={handleTaskClick} />);
 
     const task1 = screen.getByText('Task 1');
     expect(task1).toBeInTheDocument();

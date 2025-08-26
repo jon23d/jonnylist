@@ -4,7 +4,7 @@ import { Task, TaskStatus } from '@/data/documentTypes/Task';
 import { taskFactory } from '@/test-utils/factories/TaskFactory';
 import { render, screen, userEvent } from '@/test-utils/index';
 
-vi.mock('@/components/Dashboard/TaskListItem', () => {
+vi.mock('@/components/Dashboard/DashboardTaskListItem', () => {
   return {
     default: ({
       task,

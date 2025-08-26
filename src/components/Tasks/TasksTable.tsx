@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import clsx from 'clsx';
 import { Badge, Button, Center, Checkbox, Modal, Table, Text } from '@mantine/core';
 import { useDisclosure, useViewportSize } from '@mantine/hooks';
 import BulkEditor from '@/components/Tasks/BulkEditor';
@@ -116,7 +117,10 @@ export default function TasksTable({
           </Table.Thead>
           <Table.Tbody>
             {tasks.map((task) => (
-              <Table.Tr key={task._id} className={classes.hasHoverControls}>
+              <Table.Tr
+                key={task._id}
+                className={clsx(classes.hasHoverControls, classes.taskTableRow)}
+              >
                 {visibleColumns.includes('Active') && (
                   <Table.Td>
                     <StatusChanger task={task} />

@@ -1,11 +1,11 @@
 import React from 'react';
 import { IconClockPlay } from '@tabler/icons-react';
-import { List, Paper, Text } from '@mantine/core';
-import TaskListItem from '@/components/Dashboard/TaskListItem';
+import { Box, Paper, Text } from '@mantine/core';
+import DashboardTaskListItem from '@/components/Dashboard/DashboardTaskListItem';
 import WidgetTitle from '@/components/Dashboard/WidgetTitle';
 import { Task } from '@/data/documentTypes/Task';
 
-export default function StartedTasksWidget({
+export default function InProgressTasksWidget({
   tasks,
   handleTaskClick,
 }: {
@@ -13,17 +13,12 @@ export default function StartedTasksWidget({
   handleTaskClick: (task: Task) => void;
 }) {
   const listOfTasks = (
-    <List listStyleType="none">
+    <Box>
       {tasks &&
-        tasks.map((task, index) => (
-          <TaskListItem
-            key={task._id}
-            task={task}
-            isEvenRow={index % 2 === 0}
-            handleTaskClick={handleTaskClick}
-          />
+        tasks.map((task) => (
+          <DashboardTaskListItem key={task._id} task={task} handleTaskClick={handleTaskClick} />
         ))}
-    </List>
+    </Box>
   );
 
   return (
