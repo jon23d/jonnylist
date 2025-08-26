@@ -16,10 +16,6 @@ export enum SyncStatus {
   ERROR = 'error',
 }
 
-/**
- * @TODO This whole thing needs error handling
- * @TODO Absolutely use pouchdb indices once the dust settles\
- */
 export class DataSource {
   protected db: PouchDB.Database<DocumentTypes>;
 
@@ -109,8 +105,6 @@ export class DataSource {
 
   /**
    * Initialize the sync process with the remote server.
-   *
-   * TODO: This doesn't have nearly enough error handling.
    */
   async initializeSync() {
     Logger.info('Initializing sync');

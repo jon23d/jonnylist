@@ -1,5 +1,6 @@
 import { Migration } from '@/data/migrations/Migration';
-import V1AddMigrationsDoc from '@/data/migrations/versions/V1AddMigrationsDoc';
+import V0AddMigrationsDoc from '@/data/migrations/versions/V0AddMigrationsDoc';
+import V1AddSampleData from '@/data/migrations/versions/V1AddSampleData';
 import V2AddSortOrderToTasks from '@/data/migrations/versions/V2AddSortOrderToTasks';
 import V3AddArchivedAtToContexts from '@/data/migrations/versions/V3AddArchivedAtToContexts';
 import V4UpdateSortsToFractionalString from '@/data/migrations/versions/V4UpdateSortsToFractionalString';
@@ -13,7 +14,8 @@ import V10ConvertTagsToLowercase from '@/data/migrations/versions/V10ConvertTags
 export const DATABASE_VERSION = 10;
 
 export const VERSIONS: Migration[] = [
-  new V1AddMigrationsDoc(),
+  new V0AddMigrationsDoc(),
+  new V1AddSampleData(),
   new V2AddSortOrderToTasks(),
   new V3AddArchivedAtToContexts(),
   new V4UpdateSortsToFractionalString(),

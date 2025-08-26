@@ -1,8 +1,8 @@
 import { Migration } from '../Migration';
 
-class V1AddMigrationsDoc implements Migration {
+class V0AddMigrationsDoc implements Migration {
   getVersion(): number {
-    return 1;
+    return 0;
   }
 
   _isPouchNotFoundError(err: any): err is PouchDB.Core.Error {
@@ -24,7 +24,7 @@ class V1AddMigrationsDoc implements Migration {
   async up(db: PouchDB.Database): Promise<void> {
     const migrationsDoc = {
       _id: 'migrations',
-      version: 1,
+      version: 0,
       migrations: [],
     };
 
@@ -32,4 +32,4 @@ class V1AddMigrationsDoc implements Migration {
   }
 }
 
-export default V1AddMigrationsDoc;
+export default V0AddMigrationsDoc;

@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
-import { Button, Group, Modal, SimpleGrid, Title } from '@mantine/core';
+import { Button, Group, Modal, SimpleGrid } from '@mantine/core';
 import { useDisclosure, useViewportSize } from '@mantine/hooks';
 import DueThisWeekWidget from '@/components/Dashboard/DueThisWeekWidget';
 import HeatmapWidget from '@/components/Dashboard/HeatmapWidget';
