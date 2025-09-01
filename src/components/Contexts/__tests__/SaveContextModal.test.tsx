@@ -7,14 +7,14 @@ describe('SaveContextModal', () => {
   const { getDataSource } = setupTestDatabase();
 
   it('Saves the context when the form is submitted', async () => {
-    const onCLose = vi.fn();
+    const onClose = vi.fn();
     renderWithDataSource(
       <SaveContextModal
         filter={{
           requireTags: ['tag1', 'tag2'],
         }}
         opened
-        onClose={onCLose}
+        onClose={onClose}
       />,
       getDataSource()
     );
@@ -39,7 +39,7 @@ describe('SaveContextModal', () => {
     expect(contextNameInput).toHaveValue('');
 
     // The modal should be closed
-    expect(onCLose).toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalled();
 
     // And the context should be in the database
     const contexts = await getDataSource().getContextRepository().getContexts();

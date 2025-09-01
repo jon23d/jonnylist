@@ -169,12 +169,10 @@ describe('FilterSelector', () => {
     await userEvent.click(screen.getByRole('tab', { name: 'Priority' }));
 
     // Get the required priority chip input
-    screen.debug(undefined, Infinity);
     const requiredInput = screen.getByLabelText('Require priority');
     await userEvent.click(within(requiredInput).getByLabelText('Low'));
 
     // Now do the same with the excluded priority chip input
-    screen.debug(undefined, Infinity);
     const excludedInput = screen.getByLabelText('Exclude priority');
     await userEvent.click(within(excludedInput).getByLabelText('Low'));
 
