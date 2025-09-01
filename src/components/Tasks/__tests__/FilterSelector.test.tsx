@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import FilterSelector from '@/components/Tasks/FilterSelector';
-import { TaskPriority, TaskStatus } from '@/data/documentTypes/Task';
+import { TaskPriority } from '@/data/documentTypes/Task';
 import { render, screen, userEvent, waitFor, within } from '@/test-utils/index';
 
 describe('FilterSelector', () => {

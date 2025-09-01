@@ -19,7 +19,7 @@ import {
 import { useForm } from '@mantine/form';
 import { useHotkeys } from '@mantine/hooks';
 import SaveContextModal from '@/components/Contexts/SaveContextModal';
-import { TaskFilter, TaskPriority, TaskStatus } from '@/data/documentTypes/Task';
+import { TaskFilter, TaskPriority } from '@/data/documentTypes/Task';
 
 export default function FilterSelector({
   setTaskFilter,
