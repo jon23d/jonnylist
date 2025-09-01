@@ -44,10 +44,13 @@ export class TaskFilterer {
     return tasks.filter((task) => {
       const tags = task.tags ?? [];
 
+      const required = requireTags?.map((tag) => tag.toLowerCase());
+      const excluded = excludeTags?.map((tag) => tag.toLowerCase());
+
       const hasRequiredTags =
-        requireTags && requireTags.length ? requireTags.some((tag) => tags?.includes(tag)) : true;
+        required && required.length ? required.some((tag) => tags?.includes(tag)) : true;
       const hasExcludedTags =
-        excludeTags && excludeTags.length ? excludeTags.some((tag) => tags?.includes(tag)) : false;
+        excluded && excluded.length ? excluded.some((tag) => tags?.includes(tag)) : false;
 
       return hasRequiredTags && !hasExcludedTags;
     });
@@ -59,13 +62,16 @@ export class TaskFilterer {
     return tasks.filter((task) => {
       const taskProject = task.project?.toLowerCase();
 
+      const required = requireProjects?.map((project) => project.toLowerCase());
+      const excluded = excludeProjects?.map((project) => project.toLowerCase());
+
       const hasRequiredProjects =
-        requireProjects && requireProjects.length
-          ? requireProjects.some((project) => taskProject?.startsWith(project.toLowerCase()))
+        required && required.length
+          ? required.some((project) => taskProject?.startsWith(project.toLowerCase()))
           : true;
       const hasExcludedProjects =
-        excludeProjects && excludeProjects.length
-          ? excludeProjects.some((project) => taskProject?.startsWith(project.toLowerCase()))
+        excluded && excluded.length
+          ? excluded.some((project) => taskProject?.startsWith(project.toLowerCase()))
           : false;
 
       const hasNoProject = this.filter.hasNoProject ? !task.project : true;
