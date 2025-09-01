@@ -6,7 +6,7 @@ export default function Footer() {
   return (
     <Text size="xs" ta="center" c="gray">
       <Anchor href="https://github.com/jon23d/jonnylist" mr="0.5em">
-        JonnyList 2.01
+        JonnyList 2.0.2
       </Anchor>
       © 2025 by
       <Anchor href="https://www.linkedin.com/in/jon23d/" ml="0.5em">

@@ -72,8 +72,8 @@ describe('TaskFilterer', () => {
       taskFactory({ tags: ['work'] }),
       taskFactory({ tags: [] }),
     ];
-    filter.requireTags = ['work'];
-    filter.excludeTags = ['urgent'];
+    filter.requireTags = ['Work']; // this is upper case to test case insensitivity
+    filter.excludeTags = ['Urgent'];
 
     const taskFilterer = new TaskFilterer(filter);
 
@@ -96,7 +96,7 @@ describe('TaskFilterer', () => {
       taskFactory({ tags: ['work'] }),
       taskFactory({ tags: [] }),
     ];
-    filter.requireTags = ['work'];
+    filter.requireTags = ['Work']; // this is upper case to test case insensitivity
 
     const taskFilterer = new TaskFilterer(filter);
 
@@ -120,7 +120,7 @@ describe('TaskFilterer', () => {
       taskFactory({ tags: ['work'] }),
       taskFactory({ tags: [] }),
     ];
-    filter.excludeTags = ['urgent'];
+    filter.excludeTags = ['Urgent']; // this is upper case to test case insensitivity
 
     const taskFilterer = new TaskFilterer(filter);
 
@@ -144,8 +144,8 @@ describe('TaskFilterer', () => {
       taskFactory({ project: 'Project C' }),
       { ...taskFactory(), project: undefined },
     ];
-    filter.requireProjects = ['Project A', 'Project B'];
-    filter.excludeProjects = ['Project C'];
+    filter.requireProjects = ['project A', 'project B']; // lower case to test case insensitivity
+    filter.excludeProjects = ['project C'];
 
     const taskFilterer = new TaskFilterer(filter);
 
@@ -167,7 +167,7 @@ describe('TaskFilterer', () => {
       taskFactory({ project: 'Project C' }),
       { ...taskFactory(), project: undefined },
     ];
-    filter.requireProjects = ['Project A'];
+    filter.requireProjects = ['project A']; // lower case to test case insensitivity
 
     const taskFilterer = new TaskFilterer(filter);
 
@@ -186,7 +186,7 @@ describe('TaskFilterer', () => {
       taskFactory({ project: 'Project C' }),
       { ...taskFactory(), project: undefined },
     ];
-    filter.excludeProjects = ['Project C'];
+    filter.excludeProjects = ['project C']; // lower case to test case insensitivity
 
     const taskFilterer = new TaskFilterer(filter);
 

@@ -29,9 +29,9 @@ export default function ContextLinks({
 
   const links = [
     <NavLink
-      key="None"
+      key="All Tasks"
       onClick={() => handleNavLinkClick(`/tasks`)}
-      label="None"
+      label="All Tasks"
       active={location.pathname === '/tasks' && !querystringContext}
       data-testid="context-link-none"
     />,
