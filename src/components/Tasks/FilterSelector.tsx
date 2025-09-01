@@ -244,31 +244,41 @@ export default function FilterSelector({
 
               <Tabs.Panel value="priority" p={5}>
                 <Stack gap="xs">
-                  <Input.Wrapper label="Require priority" size="xs">
+                  <Input.Wrapper
+                    label="Require priority"
+                    size="xs"
+                    aria-label="Require priority"
+                    mb=".3em"
+                  >
                     <Chip.Group multiple {...requirePriorityInputProps}>
                       <Group justify="space-evenly">
-                        <Chip value={TaskPriority.Low} size="xs">
+                        <Chip value={TaskPriority.Low} size="xs" aria-label="Low">
                           Low
                         </Chip>
-                        <Chip value={TaskPriority.Medium} size="xs">
+                        <Chip value={TaskPriority.Medium} size="xs" aria-label="Medium">
                           Medium
                         </Chip>
-                        <Chip value={TaskPriority.High} size="xs">
+                        <Chip value={TaskPriority.High} size="xs" aria-label="High">
                           High
                         </Chip>
                       </Group>
                     </Chip.Group>
                   </Input.Wrapper>
-                  <Input.Wrapper label="Exclude priority" size="xs" mt=".3em">
+                  <Input.Wrapper
+                    label="Exclude priority"
+                    size="xs"
+                    mt=".3em"
+                    aria-label="Exclude priority"
+                  >
                     <Chip.Group multiple {...excludePriorityInputProps}>
                       <Group justify="space-evenly">
-                        <Chip value={TaskPriority.Low} size="xs">
+                        <Chip value={TaskPriority.Low} size="xs" aria-label="Low">
                           Low
                         </Chip>
-                        <Chip value={TaskPriority.Medium} size="xs">
+                        <Chip value={TaskPriority.Medium} size="xs" aria-label="Medium">
                           Medium
                         </Chip>
-                        <Chip value={TaskPriority.High} size="xs">
+                        <Chip value={TaskPriority.High} size="xs" aria-label="High">
                           High
                         </Chip>
                       </Group>
@@ -352,11 +362,13 @@ export default function FilterSelector({
           </form>
         </Popover.Dropdown>
 
-        <SaveContextModal
-          filter={form.values}
-          opened={saveModalOpened}
-          onClose={() => setSaveModalOpened(false)}
-        />
+        {saveModalOpened && (
+          <SaveContextModal
+            filter={form.values}
+            opened={saveModalOpened}
+            onClose={() => setSaveModalOpened(false)}
+          />
+        )}
       </Popover>
     </>
   );
