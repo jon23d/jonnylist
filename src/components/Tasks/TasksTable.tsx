@@ -89,7 +89,7 @@ export default function TasksTable({
         <Table striped highlightOnHover>
           <Table.Thead>
             <Table.Tr>
-              {visibleColumns.includes('Active') && <Table.Th w="25px" />}
+              <Table.Th w="25px" />
               {tasksAreRecurring && <Table.Th>Recurrence</Table.Th>}
               <Table.Th>Title</Table.Th>
               {visibleColumns.includes('Description') && <Table.Th>Description</Table.Th>}
@@ -121,11 +121,9 @@ export default function TasksTable({
                 key={task._id}
                 className={clsx(classes.hasHoverControls, classes.taskTableRow)}
               >
-                {visibleColumns.includes('Active') && (
-                  <Table.Td>
-                    <StatusChanger task={task} />
-                  </Table.Td>
-                )}
+                <Table.Td>
+                  <StatusChanger task={task} />
+                </Table.Td>
                 {tasksAreRecurring && (
                   <Table.Td onClick={() => showEditDialog(task)}>
                     {describeRecurrence(task)}

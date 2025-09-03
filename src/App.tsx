@@ -7,6 +7,7 @@ import '@mantine/charts/styles.css';
 import { MantineProvider } from '@mantine/core';
 import { ModalsProvider } from '@mantine/modals';
 import { Notifications } from '@mantine/notifications';
+import UpdateApplicationPrompt from '@/components/Common/UpdateApplicationPrompt';
 import { DataSourceContextProvider } from '@/contexts/DataSourceContext';
 import { BulkOperationOverlayProvider } from './contexts/BulkOperationOverlayContext';
 import { Router } from './Router';
@@ -22,6 +23,7 @@ export default function App() {
             <Router />
           </DataSourceContextProvider>
         </BulkOperationOverlayProvider>
+        <UpdateApplicationPrompt />
       </ModalsProvider>
     </MantineProvider>
   );
