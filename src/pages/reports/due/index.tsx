@@ -54,16 +54,7 @@ export default function Page() {
           Due and Overdue Tasks
         </Title>
         <ColumnSelector
-          choices={[
-            'Active',
-            'Description',
-            'Tags',
-            'Project',
-            'Priority',
-            'Due Date',
-            'Age',
-            'Urgency',
-          ]}
+          choices={['Description', 'Tags', 'Project', 'Priority', 'Due Date', 'Age', 'Urgency']}
           selected={visibleColumns}
           onChange={updateColumnVisibility}
         />

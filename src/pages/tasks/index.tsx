@@ -148,7 +148,6 @@ export default function Page() {
           {view === 'table' && (
             <ColumnSelector
               choices={[
-                'Active',
                 'Description',
                 'Tags',
                 'Project',

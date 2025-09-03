@@ -145,17 +145,11 @@ describe('TasksTable', () => {
     await waitFor(() => expect(screen.getByText('10.12')).toBeInTheDocument());
   });
 
-  it('Shows active column with StatusChanger component', () => {
-    renderWithDataSource(<TasksTable visibleColumns={['Active']} tasks={tasks} />, getDataSource());
+  it('Shows active column with StatusChanger component always', () => {
+    renderWithDataSource(<TasksTable visibleColumns={[]} tasks={tasks} />, getDataSource());
 
     expect(screen.getByTestId('task-1')).toBeInTheDocument();
     expect(screen.queryByText('status changer')).toBeInTheDocument();
-  });
-
-  it('Hides active column', () => {
-    renderWithDataSource(<TasksTable visibleColumns={[]} tasks={tasks} />, getDataSource());
-
-    expect(screen.queryByText('status changer')).not.toBeInTheDocument();
   });
 
   it('Shows the task editor with the selected task when a task is clicked', async () => {

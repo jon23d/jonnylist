@@ -88,16 +88,7 @@ export default function Page() {
           Projects With Open Tasks
         </Title>
         <ColumnSelector
-          choices={[
-            'Active',
-            'Description',
-            'Tags',
-            'Project',
-            'Priority',
-            'Due Date',
-            'Age',
-            'Urgency',
-          ]}
+          choices={['Description', 'Tags', 'Project', 'Priority', 'Due Date', 'Age', 'Urgency']}
           selected={visibleColumns}
           onChange={updateColumnVisibility}
         />
