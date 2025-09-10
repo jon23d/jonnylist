@@ -75,7 +75,7 @@ export default function CommandPalette() {
     }
 
     return actionsArray;
-  }, [openTasks]);
+  }, [openTasks, contexts]);
 
   // Subscribe to open tasks
   useEffect(() => {
