@@ -1,20 +1,25 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { IconSearch } from '@tabler/icons-react';
+import { useNavigate } from 'react-router-dom';
 import { Modal } from '@mantine/core';
 import { useDisclosure, useViewportSize } from '@mantine/hooks';
 import { Spotlight, SpotlightActionData, SpotlightActionGroupData } from '@mantine/spotlight';
 import NewTaskForm from '@/components/Layout/NewItem/NewTaskForm';
 import EditTaskForm from '@/components/Tasks/EditTaskForm';
-import { useTaskRepository } from '@/contexts/DataSourceContext';
+import { useContextRepository, useTaskRepository } from '@/contexts/DataSourceContext';
+import { Context } from '@/data/documentTypes/Context';
 import { Task, TaskStatus } from '@/data/documentTypes/Task';
 
 export default function CommandPalette() {
   const taskRepository = useTaskRepository();
+  const contextRepository = useContextRepository();
   const [openTasks, setOpenTasks] = useState<Task[]>([]);
+  const [contexts, setContexts] = useState<Context[]>([]);
   const [taskOpened, { open, close }] = useDisclosure(false);
   const [newTaskOpened, { open: openNewTask, close: closeNewTask }] = useDisclosure(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const { height: viewportHeight, width: viewportWidth } = useViewportSize();
+  const navigate = useNavigate();
 
   const cancelEditing = () => {
     setSelectedTask(null);
@@ -36,6 +41,21 @@ export default function CommandPalette() {
     };
     actionsArray.push(newTaskAction);
 
+    // Context actions
+    const contextActions = contexts.map((context) => ({
+      id: `context-${context._id}`,
+      label: context.name,
+      onClick: () => {
+        navigate(`/tasks?context=${context._id}`);
+      },
+    }));
+    if (contextActions.length > 0) {
+      actionsArray.push({
+        group: 'Contexts',
+        actions: contextActions,
+      });
+    }
+
     // Open tasks actions
     const openTaskActions = openTasks.map((task) => ({
       id: `task-${task._id}`,
@@ -55,7 +75,7 @@ export default function CommandPalette() {
     }
 
     return actionsArray;
-  }, [openTasks]);
+  }, [openTasks, contexts]);
 
   // Subscribe to open tasks
   useEffect(() => {
@@ -66,9 +86,14 @@ export default function CommandPalette() {
       setOpenTasks
     );
 
-    return () => {
-      unsubscribe();
-    };
+    return unsubscribe;
+  }, []);
+
+  // Subscribe to contexts
+  useEffect(() => {
+    const unsubscribe = contextRepository.subscribeToContexts(setContexts);
+
+    return unsubscribe;
   }, []);
 
   return (
