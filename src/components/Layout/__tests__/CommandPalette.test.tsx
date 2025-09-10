@@ -3,6 +3,7 @@ import { spotlight } from '@mantine/spotlight';
 import CommandPalette from '@/components/Layout/CommandPalette';
 import { TaskStatus } from '@/data/documentTypes/Task';
 import { setupTestDatabase } from '@/test-utils/db';
+import { contextFactory } from '@/test-utils/factories/ContextFactory';
 import { taskFactory } from '@/test-utils/factories/TaskFactory';
 import { renderWithDataSource, screen, userEvent } from '@/test-utils/index';
 
@@ -51,5 +52,20 @@ describe('CommandPalette', () => {
 
     // Check if the task editor opens
     expect(screen.getByText('Edit Task')).toBeInTheDocument();
+  });
+
+  it('Adds contexts to the command palette actions', async () => {
+    const dataSource = getDataSource();
+    await dataSource.getContextRepository().addContext(contextFactory({ name: 'Work' }));
+
+    renderWithDataSource(<CommandPalette />, dataSource);
+
+    // Simulate pressing modifier+k
+    await userEvent.keyboard('{Meta>}{k}{/Meta}');
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('Search...')).toBeInTheDocument();
+      expect(screen.getByText('Work')).toBeInTheDocument();
+    });
   });
 });
