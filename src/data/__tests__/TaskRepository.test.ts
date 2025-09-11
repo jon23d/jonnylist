@@ -530,6 +530,35 @@ describe('TaskRepository', () => {
       expect(tasks).toHaveLength(1);
     });
 
+    it('Does not create a new task from template if a spawned one was cancelled today', async () => {
+      const taskRepository = new TaskRepository(getDb());
+      const template = taskFactory({
+        recurrence: {
+          frequency: 'daily',
+          interval: 1,
+        },
+        status: TaskStatus.Recurring,
+      });
+      await taskRepository.addTask(template);
+
+      // This should create a new task from the template
+      const now = new Date();
+      await taskRepository.checkRecurringTasks(now);
+
+      // Did it?
+      const tasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
+      expect(tasks).toHaveLength(1);
+
+      // Cancel the task
+      await taskRepository.updateTask({ ...tasks[0], status: TaskStatus.Cancelled });
+
+      // Now it should NOT create a new task because the spawned one was cancelled today
+      await taskRepository.checkRecurringTasks(now);
+
+      const newTasks = await taskRepository.getTasks({ statuses: [TaskStatus.Ready] });
+      expect(newTasks).toHaveLength(0);
+    });
+
     it('Correctly figures out the last completed time for a recurring task', async () => {
       // Create the recurring task template
       const taskRepository = new TaskRepository(getDb());

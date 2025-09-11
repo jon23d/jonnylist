@@ -7,7 +7,7 @@ import EditTaskForm from '@/components/Tasks/EditTaskForm';
 import StatusChanger from '@/components/Tasks/StatusChanger';
 import classes from '@/components/Tasks/Tasks.module.css';
 import { usePreferencesRepository } from '@/contexts/DataSourceContext';
-import { Task } from '@/data/documentTypes/Task';
+import { Task, TaskStatus } from '@/data/documentTypes/Task';
 import { Notifications } from '@/helpers/Notifications';
 import { describeRecurrence, getAgeInDays, priorityBadge } from '@/helpers/Tasks';
 import { UrgencyCalculator } from '@/helpers/UrgencyCalculator';
@@ -81,6 +81,18 @@ export default function TasksTable({
     if (urgencyCalculator) {
       return urgencyCalculator.getUrgency(task);
     }
+  };
+
+  const completedDateValue = (task: Task): string => {
+    if (task.status === TaskStatus.Cancelled) {
+      return task.updatedAt ? task.updatedAt.toLocaleDateString() : '';
+    }
+
+    if (task.status === TaskStatus.Done) {
+      return task.completedAt ? task.completedAt.toLocaleDateString() : '';
+    }
+
+    return '';
   };
 
   return (
@@ -161,7 +173,7 @@ export default function TasksTable({
                 {visibleColumns.includes('Urgency') && <Table.Td>{getUrgency(task)}</Table.Td>}
                 {tasksAreCompletedOrCancelled && (
                   <Table.Td onClick={() => showEditDialog(task)}>
-                    {task.updatedAt.toLocaleDateString()}
+                    {completedDateValue(task)}
                   </Table.Td>
                 )}
                 {visibleColumns.includes('Bulk Editor') && (
