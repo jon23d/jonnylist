@@ -280,6 +280,7 @@ export class TaskRepository implements Repository {
       );
       return;
     }
+
     // If we have a task completed today, do not create a new instance
     if (
       occurrences.some(
@@ -289,6 +290,21 @@ export class TaskRepository implements Repository {
     ) {
       Logger.info(
         `Skipping creation of new instance for recurring task ${task._id} as it was completed today`
+      );
+      return;
+    }
+
+    // If we have a task cancelled today, do not create a new instance
+    if (
+      occurrences.some(
+        ({ updatedAt, status }) =>
+          updatedAt &&
+          new Date(updatedAt).toDateString() === now.toDateString() &&
+          status === TaskStatus.Cancelled
+      )
+    ) {
+      Logger.info(
+        `Skipping creation of new instance for recurring task ${task._id} as it was cancelled today`
       );
       return;
     }
