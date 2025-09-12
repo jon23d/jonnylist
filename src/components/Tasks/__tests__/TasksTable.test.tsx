@@ -1,7 +1,7 @@
 import React from 'react';
 import { waitFor } from '@testing-library/react';
 import TasksTable from '@/components/Tasks/TasksTable';
-import { Task, TaskPriority } from '@/data/documentTypes/Task';
+import { Task, TaskPriority, TaskStatus } from '@/data/documentTypes/Task';
 import { setupTestDatabase } from '@/test-utils/db';
 import { taskFactory } from '@/test-utils/factories/TaskFactory';
 import { renderWithDataSource, screen, userEvent } from '@/test-utils/index';
@@ -39,6 +39,18 @@ vi.mock('@/helpers/UrgencyCalculator', () => ({
     }
   },
 }));
+
+const setPreferencesMock = vi.fn();
+const mockPreferencesRepository = {
+  getPreferences: setPreferencesMock,
+};
+vi.mock('@/contexts/DataSourceContext', async () => {
+  const actual = await import('@/contexts/DataSourceContext');
+  return {
+    ...actual,
+    usePreferencesRepository: () => mockPreferencesRepository,
+  };
+});
 
 vi.mock('@/components/Tasks/EditTaskForm', () => ({
   default: function EditTaskForm({ task, handleClose }: { task: Task; handleClose: () => void }) {
@@ -207,9 +219,7 @@ describe('TasksTable', () => {
     expect(screen.queryByText('Bulk Edit Tasks')).not.toBeInTheDocument();
   });
 
-  // The following test cause intermittent failures, and I can't figure out why.
-  // @TODO come back to these
-  /*it('Shows the completed at date for completed tasks in the completed column', () => {
+  it('Shows the completed at date for completed tasks in the completed column', async () => {
     renderWithDataSource(
       <TasksTable
         visibleColumns={['Completed']}
@@ -225,11 +235,11 @@ describe('TasksTable', () => {
       getDataSource()
     );
 
+    await waitFor(() => expect(screen.getByText('1/2/2024')).toBeInTheDocument());
     expect(screen.getByText('Completed')).toBeInTheDocument();
-    expect(screen.getByText('1/2/2024')).toBeInTheDocument();
   });
 
-  it('Shows the updated at date for cancelled tasks in the completed column', () => {
+  it('Shows the updated at date for cancelled tasks in the completed column', async () => {
     renderWithDataSource(
       <TasksTable
         visibleColumns={['Completed']}
@@ -246,7 +256,7 @@ describe('TasksTable', () => {
       getDataSource()
     );
 
+    await waitFor(() => expect(screen.getByText('1/3/2024')).toBeInTheDocument());
     expect(screen.getByText('Completed')).toBeInTheDocument();
-    expect(screen.getByText('1/3/2024')).toBeInTheDocument();
-  });*/
+  });
 });
