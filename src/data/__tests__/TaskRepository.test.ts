@@ -203,6 +203,24 @@ describe('TaskRepository', () => {
     });
   });
 
+  it('Converts completedAt to a date object in getTasks', async () => {
+    const database = getDb();
+    const repository = new TaskRepository(database);
+
+    const task1 = taskFactory({
+      completedAt: new Date(2024, 0, 1),
+      status: TaskStatus.Done,
+    });
+
+    await repository.addTask(task1);
+
+    const tasks = await repository.getTasks({});
+
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].completedAt).toBeInstanceOf(Date);
+    expect(tasks[0].completedAt?.toISOString()).toBe(new Date(2024, 0, 1).toISOString());
+  });
+
   test('getTasks should return tasks filtered', async () => {
     const database = getDb();
     const repository = new TaskRepository(database);
