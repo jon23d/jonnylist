@@ -133,6 +133,9 @@ export class TaskRepository implements Repository {
       }
       task.createdAt = new Date(task.createdAt);
       task.updatedAt = new Date(task.updatedAt);
+      if (task.completedAt) {
+        task.completedAt = new Date(task.completedAt);
+      }
     });
 
     const filteredTasks = this.filterTasks(allTasks, filter);
